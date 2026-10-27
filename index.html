@@ -1980,11 +1980,12 @@ body {
 header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 h1 { font-family: var(--display); font-weight: 700; font-size: 1.9rem; letter-spacing: .01em; margin: 0; text-transform: uppercase; }
 h1 .a { color: var(--red); } h1 .b { color: var(--blue); }
+h1 .tld { font-size: .62em; text-transform: none; margin-left: 1px; }
 header p { margin: 0; color: var(--muted); font-size: .9rem; }
 
 .stage { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; background: var(--screen); border-radius: 10px; overflow: hidden; height: min(58svh, 560px); min-height: 260px; }
 .panel { position: relative; min-width: 0; display: grid; touch-action: none; user-select: none; -webkit-user-select: none; cursor: ew-resize; }
-.panel video { width: 100%; height: 100%; object-fit: contain; background: #000; pointer-events: none; }
+.panel video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #000; pointer-events: none; }
 .pick {
   position: absolute; inset: 0; display: grid; place-content: center; gap: 8px; text-align: center;
   color: #dfe7ee; padding: 12px; cursor: pointer; font-weight: 600;
@@ -2000,7 +2001,7 @@ header p { margin: 0; color: var(--muted); font-size: .9rem; }
 .panel[data-k="A"] .tag { background: var(--red); } .panel[data-k="B"] .tag { background: var(--blue); }
 .hud { position: absolute; left: 6px; right: 6px; bottom: 6px; display: flex; align-items: center; justify-content: space-between; gap: 4px; }
 .hud button { min-width: 40px; height: 36px; background: rgba(0,0,0,.55); color: #fff; border: 1px solid rgba(255,255,255,.25); border-radius: 6px; font-size: 1rem; }
-.hint { position: absolute; top: 8px; right: 8px; font-size: .75rem; color: #fff; background: rgba(0,0,0,.5); padding: 2px 6px; border-radius: 4px; }
+.hint { position: absolute; top: 36px; right: 8px; font-size: .75rem; color: #fff; background: rgba(0,0,0,.5); padding: 2px 6px; border-radius: 4px; }
 .change { position: absolute; top: 36px; left: 8px; font-size: .75rem; color: #dfe7ee; background: rgba(0,0,0,.5); border: 0; padding: 3px 6px; border-radius: 4px; }
 
 .clockrow { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 12px; }
@@ -2034,15 +2035,194 @@ ol.how { margin: 0; padding-left: 1.2em; color: var(--muted); font-size: .92rem;
 ol.how b { color: var(--ink); }
 @media (max-width: 520px) { .play { width: 56px; height: 56px; } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+/* ---- tabs + naming view ---- */
+.view { display: grid; gap: 14px; }
+.tabs { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.tabs button { font: 600 .95rem var(--display); letter-spacing: .03em; text-transform: uppercase; background: var(--surface); color: var(--ink); border: 0; min-height: 40px; padding: 0 14px; cursor: pointer; }
+.tabs button[aria-selected="true"] { background: var(--ink); color: var(--bg); }
+.tabs button:focus-visible, .thumb:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+.btn.file { position: relative; overflow: hidden; }
+/* ---- meny øverst til høyre ---- */
+.hright { display: flex; align-items: center; gap: 8px; }
+.menu { position: relative; }
+.menubtn { width: 42px; height: 42px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); cursor: pointer; padding: 0; }
+.menubtn svg { width: 22px; height: 22px; }
+.menubtn:focus-visible, .menulist button:focus-visible, .aboutx:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+.menulist { position: absolute; right: 0; top: calc(100% + 6px); z-index: 50; min-width: 200px; margin: 0; padding: 6px; list-style: none; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.18); }
+.menulist button { width: 100%; text-align: left; background: none; border: 0; color: var(--ink); font: inherit; font-size: 1rem; padding: 10px 12px; border-radius: 6px; cursor: pointer; }
+.menulist button:hover { background: var(--bg); }
+dialog.about { box-sizing: border-box; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink); padding: 22px 22px 18px; width: min(520px, calc(100% - 32px)); max-height: calc(100% - 32px); }
+dialog.about::backdrop { background: rgba(0,0,0,.5); }
+dialog.about h2 { margin: 0 36px 12px 0; font: 700 1.6rem var(--display); text-transform: uppercase; letter-spacing: .02em; }
+dialog.about p { margin: 0 0 12px; line-height: 1.5; }
+dialog.about a { color: var(--blue); font-weight: 600; word-break: break-all; }
+dialog.about .ver { color: var(--muted); font-size: .85rem; margin: 16px 0 0; }
+.aboutx { position: absolute; right: 12px; top: 12px; width: 40px; height: 40px; border: 0; background: none; color: var(--ink); font-size: 1.4rem; cursor: pointer; border-radius: 8px; }
+@media (max-width: 767px) {
+  dialog.about { margin: auto 0 0; width: 100%; max-width: 100%; border-radius: 16px 16px 0 0; border-bottom: 0; padding-bottom: calc(18px + env(safe-area-inset-bottom)); }
+  dialog.about[open] { animation: aboutup .22s ease-out; }
+}
+@keyframes aboutup { from { transform: translateY(100%); } to { transform: none; } }
+/* Navngi videoer er laget for PC, og vises ikke på mobil */
+@media (max-width: 767px), (pointer: coarse) { .tabs button[data-view="nameView"] { display: none; } }
+.btn.file input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.clips { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); }
+.clip { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--line); border-radius: 10px; padding: 10px; display: grid; grid-template-columns: 112px 1fr; gap: 10px; align-items: start; }
+.clip[data-state="heard"] { border-left-color: #2e9e5b; }
+.clip[data-state="check"] { border-left-color: #d9a21b; }
+.clip[data-state="missing"] { border-left-color: var(--red); }
+.thumb { position: relative; width: 112px; aspect-ratio: 9 / 12; padding: 0; border: 0; border-radius: 6px; overflow: hidden; background: #000; cursor: pointer; display: block; }
+.thumb img, .thumb video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.thumb video { object-fit: contain; }
+.thumb .dur { position: absolute; right: 4px; bottom: 4px; font-size: .72rem; color: #fff; background: rgba(0,0,0,.6); padding: 1px 5px; border-radius: 3px; }
+.clip .body { display: grid; gap: 6px; min-width: 0; }
+.clip .status { font-size: .88rem; color: var(--muted); }
+.clip[data-state="missing"] .status { color: var(--red); }
+.clip input[type=text] { padding: 9px 10px; }
+.clip .fname { font-size: .75rem; color: var(--muted); overflow-wrap: anywhere; }
+.clip .row .btn { min-height: 38px; padding: 0 10px; font-size: .9rem; }
+.clips.only-missing .clip.has-name { display: none; }
+.check { display: inline-flex; align-items: center; gap: 8px; font-weight: 500; font-size: .92rem; min-height: 32px; cursor: pointer; }
+.check input { width: 18px; height: 18px; accent-color: var(--ink); }
+.clip .fname.saved { color: #2e9e5b; }
+.savebar { position: sticky; bottom: 8px; box-shadow: 0 4px 18px rgba(0,0,0,.18); }
+
+/* ---- løpernavn i Duo ---- */
+.main, .side { display: contents; }
+#stage { order: 1; } #how, .kbd { order: 2; } .clockrow { order: 3; } .controls { order: 4; } #runners { order: 5; } #saveCard { order: 6; }
+.runner { display: grid; gap: 4px; padding-left: 10px; border-left: 4px solid var(--line); }
+.runner[data-k="A"] { border-left-color: var(--red); } .runner[data-k="B"] { border-left-color: var(--blue); }
+.runner .rs { font-size: .85rem; color: var(--muted); min-height: 1.2em; }
+.runner[data-state="missing"] .rs { color: var(--red); }
+.runner[data-state="listening"] .rs::before { content: "● "; color: #d9a21b; }
+.runners { display: grid; gap: 12px; grid-template-columns: 1fr 1fr; }
+@media (max-width: 420px) { .runners { grid-template-columns: 1fr; } }
+.tag { max-width: calc(100% - 16px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; box-sizing: border-box; }
+.hud .zbtn { flex: 1; max-width: 130px; font-size: .9rem; font-weight: 600; }
+.panel.drop { outline: 3px dashed #fff; outline-offset: -6px; }
+.kbd { display: none; }
+.diag { font-size: .8rem; background: var(--bg); border: 1px dashed var(--line); border-radius: 8px; padding: 8px 10px; overflow-wrap: anywhere; }
+
+/* ---- mens videoen lages: videoene holdes synlige i fullskjerm (mobilen pauser videoer som er utenfor skjermen) ---- */
+body.exporting { overflow: hidden; }
+body.exporting #stage { position: fixed; inset: 0; z-index: 60; height: auto; min-height: 0; border-radius: 0; padding-bottom: 92px; }
+body.exporting .panel .hud, body.exporting .panel .hint, body.exporting .panel .change { display: none !important; }
+.busy { position: fixed; left: 0; right: 0; bottom: 0; z-index: 61; background: #0b1016; color: #fff; padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px)); display: grid; grid-template-columns: 1fr auto; gap: 8px 12px; align-items: center; }
+.busy .bar { grid-column: 1 / -1; background: #2a3742; }
+.busy .btn { background: #18212a; color: #fff; border-color: #33414d; min-height: 40px; }
+#busyTxt { font-size: .95rem; }
+
+/* ---- forstørret visning ---- */
+body.zoomed { overflow: hidden; }
+.zoom { position: fixed; inset: 0; z-index: 50; background: #000; color: #fff; display: grid; grid-template-rows: auto minmax(0, 1fr) auto;
+  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); }
+.ztop { display: flex; align-items: center; gap: 8px; padding: 8px 10px; flex-wrap: wrap; background: #0b1016; }
+.ztop .zname { flex: 1; min-width: 0; font-family: var(--display); font-weight: 700; font-size: 1.15rem; letter-spacing: .03em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.zseg { display: inline-flex; border: 1px solid #33414d; border-radius: 8px; overflow: hidden; }
+.zseg button { font: 700 1rem var(--display); letter-spacing: .03em; min-height: 40px; min-width: 42px; padding: 0 10px; background: #18212a; color: #fff; border: 0; cursor: pointer; }
+.zseg button[aria-pressed="true"] { background: #fff; color: #000; }
+.zseg button[data-zk="A"][aria-pressed="true"] { background: #ef4b5c; color: #fff; }
+.zseg button[data-zk="B"][aria-pressed="true"] { background: #4d86f0; color: #fff; }
+.zseg button:disabled { opacity: .35; cursor: default; }
+.zview { position: relative; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; cursor: ew-resize; }
+.zview.zin { cursor: grab; }
+.zview video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; transform-origin: 0 0; pointer-events: none; background: #000; }
+.zhint { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); font-size: .8rem; background: rgba(0,0,0,.6); padding: 3px 10px; border-radius: 12px; white-space: nowrap; pointer-events: none; }
+.zctl { display: grid; gap: 10px; padding: 10px 12px 14px; background: #0b1016; }
+.zctl .zrow { display: flex; gap: 8px; align-items: center; }
+.zctl .zrow .btn { flex: 1; padding: 0 8px; }
+.ztime { font-family: var(--display); font-weight: 700; font-size: 1.25rem; font-variant-numeric: tabular-nums; min-width: 6.5em; }
+.zctl input[type=range] { accent-color: #fff; }
+.jog { height: 54px; border-radius: 10px; border: 1px solid #33414d; touch-action: none; cursor: ew-resize; display: grid; place-content: center; font-size: .85rem; color: #c9d4dd; user-select: none; -webkit-user-select: none;
+  background-color: #18212a; background-image: repeating-linear-gradient(90deg, rgba(255,255,255,.28) 0 2px, transparent 2px 12px); }
+.zoom .btn { background: #18212a; color: #fff; border-color: #33414d; }
+.zoom .btn.primary { background: #fff; color: #000; border-color: #fff; }
+.zoom .btn:focus-visible, .zseg button:focus-visible { outline: 3px solid #4d86f0; outline-offset: 2px; }
+@media (orientation: landscape) and (max-height: 560px) {
+  .zoom { grid-template-columns: minmax(0, 1fr) minmax(250px, 36%); grid-template-rows: auto minmax(0, 1fr); }
+  .zview { grid-column: 1; grid-row: 1 / 3; }
+  .ztop { grid-column: 2; grid-row: 1; }
+  .zctl { grid-column: 2; grid-row: 2; align-content: end; overflow: auto; }
+  .jog { height: 64px; }
+}
+
+/* ---- PC: video til venstre, løpere og lagring til høyre ---- */
+@media (min-width: 1024px) {
+  body { padding-inline: 24px; padding-top: 18px; }
+  .wrap { max-width: 1480px; }
+  #duoView { grid-template-columns: minmax(0, 1fr) 360px; column-gap: 20px; align-items: start; }
+  .main, .side { display: grid; gap: 14px; align-content: start; }
+  .side { position: sticky; top: 14px; }
+  .stage { height: min(74vh, 860px); }
+  .card.how-card { padding: 14px 16px; }
+  .zctl { grid-template-columns: auto 1fr; align-items: center; column-gap: 16px; padding-inline: 20px; }
+  .zctl > * { grid-column: 2; }
+  .zctl > .ztime { grid-column: 1; grid-row: 1 / span 3; }
+  .zctl .zrow { max-width: 720px; }
+}
+@media (hover: hover) and (pointer: fine) {
+  .kbd { display: block; }
+  .panel:hover .hud button { background: rgba(0,0,0,.75); }
+}
+/* ---- Singel: vinkelanalyse av ett bilde ---- */
+#singleView .sstage { position: relative; background: var(--screen); border-radius: 10px; overflow: hidden; height: min(62svh, 620px); min-height: 280px; display: grid; }
+#singleView .sstage { touch-action: none; user-select: none; -webkit-user-select: none; }
+#singleView .sstage video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #000; transform-origin: 0 0; pointer-events: none; }
+#singleView .sstage.zin { cursor: grab; }
+#singleView .sstage .pick .big { color: #fff; }
+#sCanvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; user-select: none; -webkit-user-select: none; cursor: crosshair; background: #000; }
+#sCanvas.grab { cursor: grabbing; }
+.shint { position: absolute; left: 50%; top: 8px; transform: translateX(-50%); font-size: .8rem; color: #fff; background: rgba(0,0,0,.62); padding: 3px 10px; border-radius: 12px; white-space: nowrap; pointer-events: none; max-width: calc(100% - 16px); overflow: hidden; text-overflow: ellipsis; }
+.angles { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; }
+.ang { border: 1px solid var(--line); border-left: 5px solid var(--c, var(--line)); border-radius: 8px; padding: 6px 10px; background: var(--bg); }
+.ang b { display: block; font-family: var(--display); font-size: 1.7rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.ang span { font-size: .82rem; color: var(--muted); }
+.ang.warn b::after { content: " ?"; color: #d9a21b; }
+#singleView .controls .btn { flex: 0 1 auto; }
+#singleView .clockrow, #singleView .controls { order: 0; }
+#singleView #sResult, #sMsg { order: 1; }
+#singleView #sHow, #singleView .side > .note { order: 2; }
+@media (min-width: 1024px) {
+  #singleView { grid-template-columns: minmax(0, 1fr) 360px; column-gap: 20px; align-items: start; }
+  #singleView .sstage { height: min(74vh, 860px); }
+}
 </style>
 </head>
 <body>
 
 <div class="wrap">
   <header>
-    <h1>Athlete<span class="a">vi</span><span class="b">ew</span></h1>
-    <p>To løpere, samme løype, side om side.</p>
+    <h1>Athlete<span class="a">vi</span><span class="b">ew</span><small class="tld">.no</small></h1>
+    <div class="hright">
+    <nav class="tabs" role="tablist" aria-label="Visning">
+      <button type="button" role="tab" data-view="duoView" aria-selected="true">Duo</button>
+      <button type="button" role="tab" data-view="singleView" aria-selected="false">Singel</button>
+      <button type="button" role="tab" data-view="nameView" aria-selected="false">Navngi videoer</button>
+    </nav>
+    <div class="menu">
+      <button type="button" class="menubtn" id="menuBtn" aria-label="Meny" aria-haspopup="true" aria-expanded="false" aria-controls="menuList">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <ul class="menulist" id="menuList" role="menu" hidden>
+        <li role="none"><button type="button" role="menuitem" data-open="about">Om Athleteview</button></li>
+      </ul>
+    </div>
+    </div>
   </header>
+
+  <dialog class="about" id="about" aria-labelledby="aboutTitle">
+    <button type="button" class="aboutx" aria-label="Lukk">✕</button>
+    <h2 id="aboutTitle">Om Athleteview</h2>
+    <p>Athleteview er en webapplikasjon som er utviklet for å verdiøke og effektivisere videoanalyse av alpinister, og etter hvert andre idretter. Intensjonen er å lage smart og effektiviserende funksjonalitet som fungerer både på mobiltelefon og PC.</p>
+    <p>All analyse og lagring av video- og bildemateriale skjer lokalt på din enhet, som kan være en mobiltelefon eller PC.</p>
+    <p>Fanen Navngi videoer vises kun ved bruk av PC, da denne funksjonen er knyttet til PC-ens mappestruktur.</p>
+    <p>Gi gjerne innspill om feil og forbedringer til utvikler på:<br><a href="mailto:grimkelsrud@gmail.com?subject=Athleteview">grimkelsrud@gmail.com</a></p>
+    <p class="ver" id="aboutVer"></p>
+  </dialog>
+
+  <div class="view" id="duoView">
+  <div class="main">
 
   <div class="stage" id="stage">
     <div class="panel" data-k="A">
@@ -2058,6 +2238,7 @@ ol.how b { color: var(--ink); }
       <span class="hint" hidden>← dra →</span>
       <div class="hud" hidden>
         <button type="button" data-step="-1" aria-label="Ett bilde tilbake for A">‹</button>
+        <button type="button" class="zbtn" data-zoom aria-label="Forstørr video A">⤢ Forstørr</button>
         <button type="button" data-step="1" aria-label="Ett bilde frem for A">›</button>
       </div>
     </div>
@@ -2074,17 +2255,12 @@ ol.how b { color: var(--ink); }
       <span class="hint" hidden>← dra →</span>
       <div class="hud" hidden>
         <button type="button" data-step="-1" aria-label="Ett bilde tilbake for B">‹</button>
+        <button type="button" class="zbtn" data-zoom aria-label="Forstørr video B">⤢ Forstørr</button>
         <button type="button" data-step="1" aria-label="Ett bilde frem for B">›</button>
       </div>
     </div>
   </div>
 
-  <ol class="how" id="how">
-    <li><b>Velg to videoer</b> fra samme løype.</li>
-    <li><b>Dra sidelengs på hver video</b> til begge løperne er like langt, for eksempel ut av start eller i samme port. Pilene flytter ett bilde.</li>
-    <li><b>Trykk play</b> og se hvem som kjører fra.</li>
-    <li><b>Gi analysen et navn</b> og lagre den som én video.</li>
-  </ol>
 
   <div class="clockrow">
     <button class="btn primary play" id="play" type="button" aria-label="Spill av" disabled>▶</button>
@@ -2099,27 +2275,182 @@ ol.how b { color: var(--ink); }
       <button class="chip" type="button" data-rate="0.5" aria-pressed="false">½×</button>
       <button class="chip" type="button" data-rate="0.25" aria-pressed="false">¼×</button>
     </div>
-    <span class="spacer"></span>
-    <button class="btn" id="zero" type="button" disabled>Sett start her</button>
-    <button class="btn" id="tostart" type="button" disabled>Til start</button>
+  </div>
   </div>
 
-  <section class="card">
+  <div class="side">
+  <ol class="how" id="how">
+    <li><b>Velg to videoer</b> fra samme løype. Si løperens navn høyt når du starter opptaket, så fylles navnet inn automatisk.</li>
+    <li><b>Dra sidelengs på hver video</b> til begge løperne er like langt, for eksempel ut av start eller i samme port. Der du stiller dem likt, starter analysevideoen. Trykk <b>⤢ Forstørr</b> for å se én video i stort format og finjustere.</li>
+    <li><b>Trykk play</b> for å se løperne kjøre med hverandre, og hvor differanser skjer.</li>
+    <li><b>Lag analysevideoen</b> og lagre den. Løpernavnene og Athleteview-logoen kommer med i videoen.</li>
+  </ol>
+  <p class="note kbd">På PC: slipp videofiler rett på feltene. Mellomrom spiller av, piltastene flytter ett bilde, dobbeltklikk på en video forstørrer den.</p>
+
+  <section class="card" id="runners">
+    <h2>Løpere</h2>
+    <div class="runners">
+      <div class="runner" data-k="A">
+        <label for="runA">Løper A</label>
+        <input type="text" id="runA" list="roster" placeholder="Navn på løper A" maxlength="60" autocomplete="off">
+        <span class="rs" id="rsA">Velg en video først.</span>
+      </div>
+      <div class="runner" data-k="B">
+        <label for="runB">Løper B</label>
+        <input type="text" id="runB" list="roster" placeholder="Navn på løper B" maxlength="60" autocomplete="off">
+        <span class="rs" id="rsB">Velg en video først.</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" id="saveCard">
     <h2>Lagre analysen</h2>
-    <label for="name">Navn på analysevideoen</label>
-    <input type="text" id="name" placeholder="F.eks. Storslalåm Hafjell, Ola mot Per" maxlength="80" autocomplete="off">
+    <label for="name">Tittel på analysevideoen (valgfritt)</label>
+    <input type="text" id="name" placeholder="F.eks. Storslalåm Hafjell" maxlength="80" autocomplete="off">
     <div class="row">
       <button class="btn primary" id="make" type="button" disabled>Lag analysevideo</button>
       <button class="btn" id="stop" type="button" hidden>Stopp her</button>
     </div>
     <div class="bar" id="bar" hidden><i></i></div>
-    <p class="note" id="makeNote">Videoen spilles av én gang fra startpunktet mens den tas opp, i valgt hastighet. Alt skjer på telefonen din, ingenting lastes opp.</p>
+    <p class="note" id="makeNote">Videoen lages fra startpunktet i valgt hastighet, vanligvis på noen sekunder. La siden være åpen til den er ferdig. Alt skjer på telefonen din, ingenting lastes opp.</p>
     <video id="result" playsinline controls hidden></video>
     <div class="row">
       <button class="btn primary" id="save" type="button" hidden>Lagre video</button>
     </div>
     <p class="msg" id="msg" role="status"></p>
+    <p class="note diag" id="diag" hidden></p>
   </section>
+  </div>
+  </div>
+
+  <div class="busy" id="busy" hidden role="status">
+    <div class="bar"><i></i></div>
+    <span id="busyTxt">Lager video …</span>
+    <button class="btn" id="busyStop" type="button">Stopp her</button>
+  </div>
+
+  <div class="zoom" id="zoom" hidden role="dialog" aria-modal="true" aria-label="Forstørret video">
+    <div class="ztop">
+      <div class="zseg" role="group" aria-label="Video">
+        <button type="button" data-zk="A" aria-pressed="true">A</button>
+        <button type="button" data-zk="B" aria-pressed="false">B</button>
+      </div>
+      <span class="zname" id="zName"></span>
+      <div class="zseg" role="group" aria-label="Zoom">
+        <button type="button" data-zl="1" aria-pressed="true">1×</button>
+        <button type="button" data-zl="2" aria-pressed="false">2×</button>
+        <button type="button" data-zl="3" aria-pressed="false">3×</button>
+      </div>
+      <button class="btn primary" id="zDone" type="button">Ferdig</button>
+    </div>
+    <div class="zview" id="zView"><span class="zhint" id="zHint"></span></div>
+    <div class="zctl">
+      <div class="ztime" id="zTime" aria-live="polite">0,00 s</div>
+      <input type="range" id="zScrub" min="0" max="1" step="0.001" value="0" aria-label="Spol i denne videoen">
+      <div class="jog" id="zJog" role="slider" tabindex="0" aria-label="Finjuster startpunkt, dra sidelengs">← dra her for å finjustere →</div>
+      <div class="zrow">
+        <button class="btn" type="button" data-zs="-15" aria-label="Et halvt sekund tilbake">« ½ s</button>
+        <button class="btn" type="button" data-zs="-1" aria-label="Ett bilde tilbake">‹ bilde</button>
+        <button class="btn" type="button" data-zs="1" aria-label="Ett bilde frem">bilde ›</button>
+        <button class="btn" type="button" data-zs="15" aria-label="Et halvt sekund frem">½ s »</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="view" id="singleView" hidden>
+  <div class="main">
+    <div class="sstage" id="sStage">
+      <video id="sV" playsinline muted preload="auto"></video>
+      <label class="pick" id="sPick">
+        <span class="big">1</span>
+        <span>Velg video fra kamerarullen</span>
+        <small>Én løper, vinkler i svingen</small>
+        <input type="file" id="sFile" accept="video/*">
+      </label>
+      <canvas id="sCanvas" hidden></canvas>
+      <span class="shint" id="sHint" hidden></span>
+    </div>
+
+    <div class="clockrow" id="sClock">
+      <button class="btn primary play" id="sPlay" type="button" aria-label="Spill av" disabled>▶</button>
+      <input type="range" id="sScrub" min="0" max="1" step="0.001" value="0" aria-label="Tidslinje" disabled>
+    </div>
+
+    <div class="controls" id="sCtl">
+      <button class="btn" id="sBack" type="button" aria-label="Ett bilde tilbake" disabled>‹ bilde</button>
+      <button class="btn" id="sFwd" type="button" aria-label="Ett bilde frem" disabled>bilde ›</button>
+      <div class="chips" role="group" aria-label="Zoom" id="sZoomChips">
+        <button class="chip" type="button" data-sz="1" aria-pressed="true">1×</button>
+        <button class="chip" type="button" data-sz="2" aria-pressed="false">2×</button>
+        <button class="chip" type="button" data-sz="3" aria-pressed="false">3×</button>
+      </div>
+      <button class="btn primary" id="sAnalyze" type="button" disabled>Analyser dette bildet</button>
+    </div>
+    <div class="controls" id="sCtl2" hidden>
+      <button class="btn" id="sBackToVideo" type="button">‹ Tilbake til video</button>
+      <button class="btn" id="sSwap" type="button">Bytt ytterbein</button>
+      <button class="btn" id="sRepick" type="button">Feil løper?</button>
+      <button class="btn" id="sZoom" type="button" aria-pressed="false">Hele bildet</button>
+    </div>
+  </div>
+
+  <div class="side">
+    <ol class="how" id="sHow">
+      <li><b>Velg en video</b> av én løper, helst filmet forfra eller bakfra i svingen.</li>
+      <li><b>Stopp på bildet</b> du vil se på, med pil-knappene eller ved å dra i tidslinjen.</li>
+      <li><b>Trykk «Analyser dette bildet».</b> Athleteview finner løperen og leddene og tegner vinklene.</li>
+      <li><b>Sjekk punktene.</b> Sitter et punkt feil, drar du det på plass. Vinklene oppdateres med en gang.</li>
+      <li><b>Lagre bildet</b> med vinklene til bilderullen eller en mappe.</li>
+    </ol>
+
+    <section class="card" id="sResult" hidden>
+      <h2>Vinkler</h2>
+      <div class="angles" id="sAngles"></div>
+      <p class="note" id="sAngNote">Legg, overkropp og skuldre måles mot det vannrette i bildet. Hold telefonen rett når du filmer. «Overkropp mot legg» påvirkes ikke av hvordan telefonen holdes.</p>
+      <label for="sRunner">Løper (valgfritt)</label>
+      <input type="text" id="sRunner" list="roster" placeholder="Navn på løperen" maxlength="60" autocomplete="off">
+      <div class="row">
+        <button class="btn primary" id="sSave" type="button">Lagre bilde</button>
+      </div>
+    </section>
+    <p class="msg" id="sMsg" role="status"></p>
+    <p class="note">Analysen skjer på enheten din, og ingen video eller bilder lastes opp. Første gang lastes en analysemodell ned (ca. 17 MB).</p>
+  </div>
+  </div>
+
+  <div class="view" id="nameView" hidden>
+    <section class="card">
+      <h2>Navngi videoer</h2>
+      <ol class="how">
+        <li><b>Si løperens navn høyt</b> når du starter opptaket, for eksempel «Ola Nordmann».</li>
+        <li><b>Velg alle videoene</b> fra økta. Athleteview lytter etter navnet i starten av hver video.</li>
+        <li><b>Fyll inn navn</b> der det mangler, og lagre videoene med løpernavn.</li>
+      </ol>
+      <div class="row">
+        <button class="btn primary" id="nFolder" type="button" hidden>Velg mappe</button>
+        <label class="btn primary file" id="nFilesBtn">Velg videoer
+          <input type="file" id="nFiles" accept="video/*" multiple>
+        </label>
+        <input type="file" id="nDir" webkitdirectory multiple hidden>
+      </div>
+      <div id="nFolderOpts" hidden>
+        <label class="check"><input type="checkbox" id="nPerRunner"> Lag én undermappe per løper</label>
+        <p class="note">«Velg mappe» går gjennom alle videoene i mappen og lagrer kopier med løpernavn i en ny mappe, «Athleteview navngitt» med dagens dato, inne i den samme mappen. Originalene blir ikke endret.</p>
+      </div>
+      <div class="bar" id="nBar" hidden><i></i></div>
+      <p class="msg" id="nMsg" role="status"></p>
+      <p class="note">Talegjenkjenningen skjer på enheten din, og ingen video eller lyd lastes opp. Første gang lastes en talemodell ned (ca. 80 MB). Etter det er den lagret i nettleseren.</p>
+    </section>
+    <div class="clips" id="clips"></div>
+    <datalist id="roster"></datalist>
+    <section class="card savebar" id="nSave" hidden>
+      <div class="row">
+        <button class="btn primary" id="nSaveAll" type="button">Lagre alle med navn</button>
+        <label class="check"><input type="checkbox" id="nOnlyMissing"> Vis bare videoer uten navn</label>
+      </div>
+      <p class="note" id="nSaveNote"></p>
+    </section>
+  </div>
 </div>
 
 <script>
@@ -2130,13 +2461,14 @@ ol.how b { color: var(--ink); }
   for (const k of ["A", "B"]) {
     const panel = $(`.panel[data-k="${k}"]`);
     P[k] = { k, panel, v: $("video", panel), s: 0, dur: 0, ready: false, name: "",
-      busy: false, want: 0, sent: 0, busyAt: 0 };
+      busy: false, want: 0, sent: 0, busyAt: 0,
+      run: $("#run" + k), rs: $("#rs" + k), box: $(`.runner[data-k="${k}"]`), hearRun: 0 };
   }
   const st = { t: 0, playing: false, rate: 1, recording: false, raf: 0, resultBlob: null, resultName: "", mime: "" };
   const els = {
     play: $("#play"), scrub: $("#scrub"), back: $("#back"), fwd: $("#fwd"),
-    zero: $("#zero"), tostart: $("#tostart"), make: $("#make"), stop: $("#stop"), bar: $("#bar"),
-    result: $("#result"), save: $("#save"), msg: $("#msg"), name: $("#name"), how: $("#how")
+    make: $("#make"), stop: $("#stop"), bar: $("#bar"),
+    result: $("#result"), save: $("#save"), msg: $("#msg"), diag: $("#diag"), name: $("#name"), how: $("#how")
   };
   const both = () => P.A.ready && P.B.ready;
   const loaded = () => [P.A, P.B].filter(p => p.ready);
@@ -2178,22 +2510,55 @@ ol.how b { color: var(--ink); }
     els.scrub.min = r.min; els.scrub.max = Math.max(r.max, r.min + 0.001);
     if (!st.dragScrub) els.scrub.value = st.t;
     const ok = both() && !st.recording;
-    for (const b of [els.play, els.scrub, els.back, els.fwd, els.zero, els.tostart, els.make]) b.disabled = !ok;
+    for (const b of [els.play, els.scrub, els.back, els.fwd, els.make]) b.disabled = !ok;
+    document.body.classList.toggle("exporting", !!st.recording); $("#busy").hidden = !st.recording;
     els.play.textContent = st.playing ? "❚❚" : "▶";
     els.play.setAttribute("aria-label", st.playing ? "Pause" : "Spill av");
   }
 
-  function say(text, err) { els.msg.textContent = text; els.msg.classList.toggle("err", !!err); }
+  function say(text, err) { els.msg.textContent = text; els.msg.classList.toggle("err", !!err); if (st.recording) $("#busyTxt").textContent = text; }
 
   // ---- loading ----
-  function load(p, file) {
+  function load(p, file, runner) {
     if (!file) return;
+    if (Z.p) zClose();
     pause();
     if (p.url) URL.revokeObjectURL(p.url);
     p.url = URL.createObjectURL(file);
     p.ready = false; p.s = 0; p.name = file.name.replace(/\.[^.]+$/, "");
     p.v.src = p.url; p.v.load();
     say("Laster " + file.name + " …");
+    const my = ++p.hearRun;
+    p.run.value = runner || ""; p.edited = false;
+    if (runner) { runnerState(p, "heard", "Navn fra «Navngi videoer»."); tag(p); return; }
+    tag(p);
+    hear(p, file, my);
+  }
+
+  // ---- løpernavn: lytter etter navnet i starten av videoen, ellers skriver brukeren det inn ----
+  const runnerName = p => p.run.value.replace(/\s+/g, " ").trim();
+  function runnerState(p, state, text) { p.box.dataset.state = state; p.rs.textContent = text; }
+  function tag(p) { $(".tag", p.panel).textContent = runnerName(p) ? `${p.k} · ${runnerName(p)}` : p.k; }
+  async function hear(p, file, my) {
+    if (!window.avHearName) { runnerState(p, "missing", "Skriv inn hvem som kjører."); return; }
+    runnerState(p, "listening", "Lytter etter navn i starten av videoen …");
+    let r = null;
+    try { r = await window.avHearName(file, t => { if (my === p.hearRun && !p.edited) runnerState(p, "listening", t); }); }
+    catch (e) { r = { error: true }; }
+    if (my !== p.hearRun) return;
+    if (p.edited && runnerName(p)) { runnerState(p, "heard", "Navn satt av deg."); return; }
+    if (r && r.name) {
+      p.run.value = r.name; tag(p);
+      runnerState(p, r.known ? "heard" : "check", r.known ? `Hørte «${r.text}».` : `Hørte «${r.text}». Sjekk stavingen.`);
+    } else runnerState(p, "missing", r && r.error ? "Kunne ikke lytte etter navnet. Skriv inn hvem som kjører."
+      : "Fant ikke navnet på lyden. Skriv inn hvem som kjører.");
+  }
+  for (const p of [P.A, P.B]) {
+    p.run.addEventListener("input", () => {
+      p.edited = true; tag(p);
+      if (runnerName(p)) runnerState(p, "heard", "Navn satt av deg.");
+      else runnerState(p, "missing", "Skriv inn hvem som kjører.");
+    });
   }
   for (const p of [P.A, P.B]) {
     const input = $("input[type=file]", p.panel);
@@ -2229,13 +2594,22 @@ ol.how b { color: var(--ink); }
       p.s = frame - st.t;
       seekTo(p, frame); ui();
     });
-    const end = () => { drag = null; };
+    const end = () => { if (drag) autoStart(); drag = null; };
     p.panel.addEventListener("pointerup", end);
     p.panel.addEventListener("pointercancel", end);
+    $("[data-zoom]", p.panel).addEventListener("click", () => zOpen(p));
+    p.panel.addEventListener("dblclick", e => { if (!e.target.closest("button,label")) zOpen(p); });
+    p.panel.addEventListener("dragover", e => { e.preventDefault(); p.panel.classList.add("drop"); });
+    p.panel.addEventListener("dragleave", () => p.panel.classList.remove("drop"));
+    p.panel.addEventListener("drop", e => {
+      e.preventDefault(); p.panel.classList.remove("drop");
+      const f = [...(e.dataTransfer && e.dataTransfer.files || [])].find(f => /^video\//.test(f.type) || /\.(mp4|mov|m4v|webm)$/i.test(f.name));
+      if (f) load(p, f); else say("Slipp en videofil her.", true);
+    });
     for (const b of p.panel.querySelectorAll("[data-step]")) b.addEventListener("click", () => {
       if (st.playing) pause();
       const frame = clamp(p.s + st.t + Number(b.dataset.step) * FRAME, 0, p.dur - 0.02);
-      p.s = frame - st.t; seekTo(p, frame); ui();
+      p.s = frame - st.t; seekTo(p, frame); autoStart();
     });
   }
 
@@ -2283,16 +2657,15 @@ ol.how b { color: var(--ink); }
   const stepBoth = d => { if (st.playing) pause(); const r = range(); st.t = clamp(st.t + d * FRAME, r.min, r.max); showAll(); ui(); };
   els.back.addEventListener("click", () => stepBoth(-1));
   els.fwd.addEventListener("click", () => stepBoth(1));
-  els.zero.addEventListener("click", () => {
-    if (st.playing) pause();
+  // Startpunktet settes automatisk: der du sist justerte en av videoene, starter analysevideoen.
+  function autoStart() {
+    if (!both()) return;
     for (const p of [P.A, P.B]) p.s += st.t;
-    st.t = 0; showAll(); ui();
-    say("Startpunktet er satt her.");
-  });
-  els.tostart.addEventListener("click", () => { if (st.playing) pause(); st.t = startT(); showAll(); ui(); });
-  for (const c of document.querySelectorAll(".chip")) c.addEventListener("click", () => {
+    st.t = 0; ui();
+  }
+  for (const c of document.querySelectorAll(".chip[data-rate]")) c.addEventListener("click", () => {
     st.rate = Number(c.dataset.rate);
-    document.querySelectorAll(".chip").forEach(x => x.setAttribute("aria-pressed", String(x === c)));
+    document.querySelectorAll(".chip[data-rate]").forEach(x => x.setAttribute("aria-pressed", String(x === c)));
     for (const p of [P.A, P.B]) p.v.playbackRate = st.rate;
   });
 
@@ -2303,25 +2676,80 @@ ol.how b { color: var(--ink); }
   function makeLayout() {
     const ar = p => (p.v.videoWidth || 16) / (p.v.videoHeight || 9);
     const gap = 8, total = ar(P.A) + ar(P.B);
-    let H = Math.min(1080, (1920 - gap) / total);
+    // Mobil: maks ca. 0,75 megapiksler (f.eks. 920×816 for to stående videoer). Det er nok for deling,
+    // og halverer arbeidet for telefonen. PC beholder full størrelse.
+    const mobile = matchMedia("(pointer: coarse)").matches;
+    let H = Math.min(1080, (1920 - gap) / total, mobile ? Math.sqrt(750000 / total) : 1080);
     const even = x => Math.max(2, Math.floor(x / 2) * 2);
     const wA = even(H * ar(P.A)), wB = even(H * ar(P.B));
     return { W: wA + gap + wB, H: even(H), slots: [{ p: P.A, x: 0, w: wA }, { p: P.B, x: wA + gap, w: wB }] };
   }
-  function draw() {
+  // Fast fargebruk i videoen, uavhengig av lyst/mørkt tema i appen.
+  const VCOL = { A: "#e2364a", B: "#2f6fe4" };
+  function box(x, y, w, h, r, fill) {
+    ctx.fillStyle = fill; ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(x, y, w, h, r); else ctx.rect(x, y, w, h);
+    ctx.fill();
+  }
+  function fit(text, maxW) {   // kort ned med … hvis teksten er for bred
+    if (ctx.measureText(text).width <= maxW) return text;
+    let t = text;
+    while (t.length > 1 && ctx.measureText(t + "…").width > maxW) t = t.slice(0, -1);
+    return t.trimEnd() + "…";
+  }
+  // Athleteview-logo øverst i midten: ATHLETE (hvit) VI (rød) EW (blå) og .no litt mindre.
+  function drawLogo(W, u) {
+    const big = `700 ${6.2 * u}px "Barlow Condensed", "Arial Narrow", sans-serif`;
+    const small = `700 ${4.2 * u}px "Barlow Condensed", "Arial Narrow", sans-serif`;
+    const parts = [["ATHLETE", "#fff", big], ["VI", VCOL.A, big], ["EW", VCOL.B, big], [".no", "#fff", small]];
+    let tw = 0;
+    for (const pt of parts) { ctx.font = pt[2]; pt.w = ctx.measureText(pt[0]).width; tw += pt.w; }
+    tw += 0.3 * u;
+    const padX = 2.4 * u, h = 8 * u, y = 1.6 * u, x0 = W / 2 - tw / 2;
+    box(x0 - padX, y, tw + 2 * padX, h, 1.6 * u, "rgba(0,0,0,.62)");
+    ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+    let x = x0; const base = y + h * 0.74;
+    for (const [i, pt] of parts.entries()) {
+      if (i === 3) x += 0.3 * u;
+      ctx.font = pt[2]; ctx.fillStyle = pt[1]; ctx.fillText(pt[0], x, base); x += pt.w;
+    }
+  }
+  // Logo, løpermerker og tittel tegnes én gang i et eget lag, så hvert bilde bare er tre enkle kopier.
+  let overlay = null;
+  function buildOverlay() {
+    const c = Object.assign(document.createElement("canvas"), { width: layout.W, height: layout.H });
+    const keep = ctx; ctx = c.getContext("2d");
+    try { drawMarks(); } finally { ctx = keep; }
+    overlay = c;
+  }
+  function draw(src) {
     const { W, H, slots } = layout;
     ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, H);
-    const css = getComputedStyle(document.documentElement);
-    const col = { A: css.getPropertyValue("--red").trim() || "#d22a3c", B: css.getPropertyValue("--blue").trim() || "#1d5bd0" };
+    for (const [i, sl] of slots.entries()) ctx.drawImage(src ? src[i] : sl.p.v, sl.x, 0, sl.w, H);
+    if (!overlay) buildOverlay();
+    ctx.drawImage(overlay, 0, 0);
+  }
+  function drawMarks() {
+    const { W, H, slots } = layout;
     const u = H / 100;
-    for (const sl of slots) {
-      ctx.drawImage(sl.p.v, sl.x, 0, sl.w, H);
-      ctx.fillStyle = col[sl.p.k];
-      ctx.fillRect(sl.x + 2 * u, 2 * u, 7 * u, 6 * u);
-      ctx.fillStyle = "#fff"; ctx.font = `700 ${5 * u}px "Barlow Condensed", "Arial Narrow", sans-serif`;
-      ctx.textAlign = "center"; ctx.textBaseline = "middle";
-      ctx.fillText(sl.p.k, sl.x + 5.5 * u, 5.2 * u);
+    for (const [i, sl] of slots.entries()) {
+      // Løpermerke under logoen: bokstav og navn i løperens farge
+      const name = sl.name, y = 11.5 * u, h = 6.5 * u, x = sl.x + 2 * u, maxW = sl.w - 4 * u;
+      ctx.font = `700 ${5 * u}px "Barlow Condensed", "Arial Narrow", sans-serif`;
+      const lw = ctx.measureText(sl.p.k).width;
+      ctx.font = `600 ${4.2 * u}px "Barlow", system-ui, sans-serif`;
+      const label = name ? fit(name, maxW - lw - 6 * u) : "";
+      const w = Math.min(maxW, lw + 3.4 * u + (label ? ctx.measureText(label).width + 2.6 * u : 0));
+      box(x, y, w, h, 1 * u, VCOL[sl.p.k]);
+      ctx.textBaseline = "middle"; ctx.textAlign = "left"; ctx.fillStyle = "#fff";
+      ctx.font = `700 ${5 * u}px "Barlow Condensed", "Arial Narrow", sans-serif`;
+      ctx.fillText(sl.p.k, x + 1.7 * u, y + h * 0.54);
+      if (label) {
+        ctx.font = `600 ${4.2 * u}px "Barlow", system-ui, sans-serif`;
+        ctx.fillText(label, x + lw + 4 * u, y + h * 0.54);
+      }
     }
+    drawLogo(W, u);
     if (st.resultTitle) {
       ctx.font = `600 ${4 * u}px "Barlow", system-ui, sans-serif`;
       const tw = Math.min(ctx.measureText(st.resultTitle).width, W * 0.9);
@@ -2333,16 +2761,20 @@ ol.how b { color: var(--ink); }
   async function pickCodec(W, H) {
     if (!(window.VideoEncoder && window.VideoFrame && window.Mp4Muxer)) return null;
     // H.264 first (plays everywhere, incl. iPhone Photos); VP9 only where the browser has no H.264 encoder.
-    for (const codec of ["avc1.640028", "avc1.4d0028", "avc1.42002a", "vp09.00.40.08"]) {
-      const vp9 = codec.startsWith("vp09");
-      const cfg = { codec, width: W, height: H, bitrate: 12000000, framerate: 30 };
-      if (!vp9) cfg.avc = { format: "avc" };
-      try { if ((await VideoEncoder.isConfigSupported(cfg)).supported) return { cfg, mux: vp9 ? "vp9" : "avc" }; } catch (e) {}
-    }
+    // Bitrate etter bildestørrelse (ca. 3–5 Mbit/s for 1080p), nok for skarp video men langt mindre filer enn før.
+    const bitrate = Math.round(clamp(W * H * 30 * 0.075, 2000000, 5000000));
+    for (const hw of ["prefer-hardware", "no-preference"])
+      for (const codec of ["avc1.640028", "avc1.4d0028", "avc1.42002a", "vp09.00.40.08"]) {
+        const vp9 = codec.startsWith("vp09");
+        const cfg = { codec, width: W, height: H, bitrate, bitrateMode: "variable", framerate: 30, hardwareAcceleration: hw };
+        if (!vp9) cfg.avc = { format: "avc" };
+        try { if ((await VideoEncoder.isConfigSupported(cfg)).supported) return { cfg, mux: vp9 ? "vp9" : "avc" }; } catch (e) {}
+      }
     return null;
   }
-  const progress = f => { els.bar.firstElementChild.style.width = clamp(f * 100, 0, 100) + "%"; };
+  const progress = f => { for (const b of [els.bar, $("#busy .bar")]) b.firstElementChild.style.width = clamp(f * 100, 0, 100) + "%"; };
   function startUI() {
+    st.t0 = performance.now(); $("#busyTxt").textContent = "Lager video …";
     st.recording = true; st.stopReq = false;
     els.result.hidden = true; els.save.hidden = true; els.bar.hidden = false; els.stop.hidden = false;
     progress(0); ui();
@@ -2352,13 +2784,24 @@ ol.how b { color: var(--ink); }
     pause();
     const title = els.name.value.trim();
     st.resultTitle = title;
-    st.resultName = (title || "athleteview-" + new Date().toISOString().slice(0, 10)).replace(/[\\/:*?"<>|]+/g, "-");
-    layout = makeLayout();
+    const runners = [P.A, P.B].map(runnerName), day = new Date().toISOString().slice(0, 10);
+    const who = runners.every(Boolean) ? runners.join(" mot ") : runners.filter(Boolean).join("");
+    st.resultName = ([title, who].filter(Boolean).join(" - ") + " " + day).trim().replace(/^ /, "")
+      .replace(/[\\/:*?"<>|]+/g, "-").replace(/\s+/g, " ");
+    if (!title && !who) st.resultName = "athleteview-" + day;
+    if (window.avAddRoster) window.avAddRoster(runners.filter(Boolean));
+    if (!runners.every(Boolean)) say("Tips: skriv inn navn på begge løperne, så kommer de med i videoen.");
+    try { await Promise.race([Promise.all([document.fonts.load(`700 40px "Barlow Condensed"`), document.fonts.load(`600 40px "Barlow"`)]), new Promise(r => setTimeout(r, 1500))]); } catch (e) {}
+    layout = makeLayout(); overlay = null;
+    layout.slots.forEach((sl, i) => { sl.name = runners[i]; });
     canvas = document.createElement("canvas");
     canvas.width = layout.W; canvas.height = layout.H;
     ctx = canvas.getContext("2d");
     const cfg = await pickCodec(layout.W, layout.H);
-    if (cfg) return encodeFrames(cfg.cfg, cfg.mux);
+    const hwTag = cfg ? `${cfg.mux === "avc" ? "H.264" : "VP9"}${cfg.cfg.hardwareAcceleration === "prefer-hardware" ? " (maskinvare)" : ""}` : "";
+    if (cfg && canCapture()) { st.method = "rask metode, " + hwTag; return encodeByPlayback(cfg.cfg, cfg.mux); }
+    if (cfg) { st.method = "bilde-for-bilde, " + hwTag; return encodeFrames(cfg.cfg, cfg.mux); }
+    st.method = "sanntidsopptak (" + (pickMime() || "ingen") + ")";
     return recordRealtime();
   }
   async function encodeFrames(cfg, mux) {
@@ -2390,6 +2833,276 @@ ol.how b { color: var(--ink); }
     done(new Blob([muxer.target.buffer], { type: "video/mp4" }), "mp4");
   }
 
+  // Rask vei: begge videoene spilles av (hver for seg, raskere enn sanntid) og hvert bilde fanges med tidsstempelet sitt.
+  // Bildene settes sammen etter tidsstempel, så synken er like presis som før, uten å søke bilde for bilde.
+  // Ved sakte film kodes hvert bilde én gang med lengre varighet i stedet for å gjentas.
+  // Hvert bilde tegnes straks over i et lite lerret (samme vei som avspillingen, så rotasjon fra mobilen blir riktig).
+  const canCapture = () => "requestVideoFrameCallback" in HTMLVideoElement.prototype;
+  // WebGL-sammensetting: videobildene kopieres og settes sammen på grafikkbrikken, uten å gå via prosessoren.
+  // Det er mye raskere på iPhone enn vanlig lerret. Brukes når nettleseren støtter det, ellers vanlig lerret.
+  function makeGL(W, H) {
+    const c = Object.assign(document.createElement("canvas"), { width: W, height: H });
+    const gl = c.getContext("webgl", { alpha: false, antialias: false, depth: false, stencil: false, preserveDrawingBuffer: true, premultipliedAlpha: false });
+    if (!gl) return null;
+    const sh = (type, src) => { const o = gl.createShader(type); gl.shaderSource(o, src); gl.compileShader(o); if (!gl.getShaderParameter(o, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(o)); return o; };
+    const prog = gl.createProgram();
+    gl.attachShader(prog, sh(gl.VERTEX_SHADER, "attribute vec2 a;uniform vec4 r;uniform float fy;varying vec2 t;void main(){t=vec2(a.x,fy>0.5?1.0-a.y:a.y);gl_Position=vec4(r.xy+a*r.zw,0.0,1.0);}"));
+    gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, "precision mediump float;uniform sampler2D s;varying vec2 t;void main(){gl_FragColor=texture2D(s,t);}"));
+    gl.linkProgram(prog);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error("WebGL link");
+    gl.useProgram(prog);
+    const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 0, 1, 0, 0, 1, 1, 1]), gl.STATIC_DRAW);
+    const la = gl.getAttribLocation(prog, "a"); gl.enableVertexAttribArray(la); gl.vertexAttribPointer(la, 2, gl.FLOAT, false, 0, 0);
+    const ur = gl.getUniformLocation(prog, "r"), uf = gl.getUniformLocation(prog, "fy");
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+    const tex = () => {
+      const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
+      for (const [k, v] of [[gl.TEXTURE_MIN_FILTER, gl.LINEAR], [gl.TEXTURE_MAG_FILTER, gl.LINEAR], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, v);
+      return t;
+    };
+    // Tegn tekstur t inn i rektangel (x, y, w, h) i et mål som er tw × th piksler (y nedover)
+    const quad = (t, x, y, w, h, tw, th, flip) => {
+      gl.bindTexture(gl.TEXTURE_2D, t);
+      gl.uniform4f(ur, x / tw * 2 - 1, 1 - (y + h) / th * 2, w / tw * 2, h / th * 2);
+      gl.uniform1f(uf, flip ? 1 : 0);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    };
+    const stage = {};   // én opplastingstekstur per video
+    return {
+      canvas: c, kind: "WebGL",
+      slot(w, h) {   // tekstur + rammebuffer i slotstørrelse
+        const t = tex(); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+        const fb = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        return { t, fb, w, h };
+      },
+      snap(video, key, s) {   // kopier videoens nåværende bilde inn i slot s
+        const st0 = stage[key] || (stage[key] = tex());
+        gl.bindTexture(gl.TEXTURE_2D, st0);
+        gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, video);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, s.fb); gl.viewport(0, 0, s.w, s.h); gl.disable(gl.BLEND);
+        quad(st0, 0, 0, s.w, s.h, s.w, s.h, false);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      },
+      overlay(img) {
+        this.ov = tex(); gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+      },
+      compose(parts) {   // parts: [{ s, x, w }]
+        gl.viewport(0, 0, W, H); gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT); gl.disable(gl.BLEND);
+        for (const pt of parts) quad(pt.s.t, pt.x, 0, pt.w, H, W, H, true);
+        if (this.ov) { gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA); quad(this.ov, 0, 0, W, H, W, H, true); }
+        gl.flush();
+      }
+    };
+  }
+
+  const mc = new MessageChannel(), yq = [];
+  mc.port1.onmessage = () => { const r = yq.shift(); if (r) r(); };
+  const yieldNow = () => new Promise(r => { yq.push(r); mc.port2.postMessage(0); });
+  async function encodeByPlayback(cfg, mux) {
+    startUI();
+    const { W, H } = layout;
+    const muxer = new Mp4Muxer.Muxer({ target: new Mp4Muxer.ArrayBufferTarget(), video: { codec: mux, width: W, height: H, frameRate: 30 }, fastStart: "in-memory" });
+    let encErr = null;
+    const enc = new VideoEncoder({ output: (chunk, meta) => muxer.addVideoChunk(chunk, meta), error: e => { encErr = e; } });
+    enc.configure(cfg);
+    const t0 = startT(), tEnd = range().max - 0.04, step = FRAME * st.rate;
+    const N = Math.max(1, Math.floor((tEnd - t0) / step));
+    const dur = Math.round(1e6 / 30);
+    let wake = null;
+    const kick = () => { if (wake) { const w = wake; wake = null; w(); } };
+    // Farten styres etter hvor raskt telefonen faktisk klarer å sette sammen bildene. Går avspillingen fortere enn det,
+    // mister vi bilder og videoen hakker. Starter forsiktig og justeres hvert halve sekund.
+    const S = layout.slots.map(sl => ({ p: sl.p, w: sl.w, pool: [], q: [], cur: null, done: false, paused: false, last: performance.now(), fixes: 0, speed: 1 }));
+    const T = { snap: 0, draw: 0, vf: 0, enc: 0, wait: 0, fix: 0, frames: 0, speeds: [] };   // tidsbruk, vises i Teknisk-linjen
+    const R = { snap: 0, comp: 0, ns: 0, nc: 0 };   // målinger siden forrige justering
+    let G = null;
+    try {
+      G = makeGL(W, H);
+      if (G) { if (!overlay) buildOverlay(); G.overlay(overlay); new VideoFrame(G.canvas, { timestamp: 0 }).close(); }
+    } catch (e) { G = null; }
+    const snap = x => {
+      const t = performance.now();
+      let f;
+      if (G) {
+        const sl = x.pool.pop() || G.slot(x.w, H);
+        G.snap(x.p.v, x.p.k, sl);
+        f = { close: () => x.pool.push(sl), img: sl, redraw: () => G.snap(x.p.v, x.p.k, sl) };
+      } else {
+        const c = x.pool.pop() || Object.assign(document.createElement("canvas"), { width: x.w, height: H });
+        const draw1 = () => c.getContext("2d").drawImage(x.p.v, 0, 0, x.w, H);
+        draw1();
+        f = { close: () => x.pool.push(c), img: c, redraw: draw1 };
+      }
+      const ms = performance.now() - t; T.snap += ms; T.frames++; R.snap += ms; R.ns++;
+      return f;
+    };
+    await Promise.all(S.map(x => seekExact(x.p, x.p.s + t0)));
+    // Prøv begge måtene å sette sammen bildene på denne enheten, og bruk den raskeste
+    async function bench(useGL) {
+      const keep = G; G = useGL ? keep : null;
+      const fs = [], times = [];
+      try {
+        for (let i = 0; i < 5; i++) {
+          const t = performance.now();
+          const pair = S.map(x => snap(x)); fs.push(...pair);
+          if (G) G.compose(S.map((x, j) => ({ s: pair[j].img, x: layout.slots[j].x, w: x.w })));
+          else draw(pair.map(f => f.img));
+          new VideoFrame(G ? G.canvas : canvas, { timestamp: 0 }).close();
+          times.push(performance.now() - t);
+          await yieldNow();
+        }
+      } finally { G = keep; for (const x of S) x.pool = []; }
+      times.sort((a, b) => a - b);
+      return times[2];
+    }
+    const msGL = G ? await bench(true).catch(() => Infinity) : Infinity, ms2D = await bench(false);
+    for (const x of S) x.pool = [];
+    if (msGL >= ms2D) G = null;
+    st.method += (G ? " · WebGL" : " · lerret") + ` (WebGL ${isFinite(msGL) ? Math.round(msGL) + " ms" : "–"}, lerret ${Math.round(ms2D)} ms)`;
+    T.snap = 0; T.frames = 0; R.snap = R.ns = 0;
+    for (const x of S) x.cur = { tau: t0, f: snap(x) };
+    const MAXQ = 8;
+    // Hopper nettleseren over et bilde (travel telefon), hentes det manglende bildet med et kort søk,
+    // og farten for den videoen settes ned.
+    async function repair(x, from, to, dt, held) {
+      const p = x.p, tf = performance.now();
+      x.busy = true; p.v.pause();
+      const miss = Math.min(12, Math.round((to - from) / dt) - 1);
+      for (let i = 1; i <= miss && !x.stopped; i++) {
+        const m = from + i * dt;
+        await seekExact(p, m + 0.001);
+        if (m - p.s > t0) x.q.push({ tau: m - p.s, f: snap(x) });
+      }
+      x.q.push(held);
+      await seekExact(p, to + 0.001);
+      x.busy = false; x.last = performance.now(); T.fix += x.last - tf;
+      if (x.stopped) return;
+      grab(x); kick();
+      if (!x.paused) p.v.play().catch(() => {});
+    }
+    function grab(x) {
+      const p = x.p;
+      p.v.requestVideoFrameCallback((now, meta) => {
+        if (x.done || x.stopped || x.busy) return;
+        x.last = performance.now();
+        const m = meta.mediaTime, tau = m - p.s, prev = x.m;
+        if (prev != null && m <= prev + 1e-4) { grab(x); return; }   // samme bilde igjen
+        x.m = m;
+        if (prev != null) { const d = m - prev; if (d > 1 / 240) x.dt = Math.min(x.dt || d, d); }
+        if (tau >= tEnd) { if (tau > t0) x.q.push({ tau, f: snap(x) }); x.done = true; p.v.pause(); kick(); return; }
+        const need = Math.max(x.dt || 0, step);   // finere enn dette trengs ikke i ferdig video
+        const miss = prev != null && x.dt && m - prev < 1 ? Math.round((m - prev) / need) - 1 : 0;
+        x.seen = (x.seen || 0) + 1; x.drops = (x.drops || 0) + Math.max(0, miss); T.lost = (T.lost || 0) + Math.max(0, miss);
+        // Manglende bilder hentes med et kort søk så lenge det går raskt på denne enheten.
+        // Er søkene trege (f.eks. 4K på iPhone), hentes bare når flere mangler på rad, og bare noen få ganger.
+        const nfix = S.reduce((a, y) => a + y.fixes, 0), cheap = !nfix || T.fix / nfix < 150;
+        if (miss >= (cheap ? 1 : 2) && x.fixes < (cheap ? 40 : 6)) {
+          x.fixes++;
+          const held = { tau, f: snap(x) };
+          repair(x, prev, m, x.dt, held);
+          return;
+        }
+        if (tau > t0) {
+          const tl = x.q[x.q.length - 1], tick = Math.ceil((tau - t0) / step - 1e-6);
+          if (tl && tl.tick === tick) { tl.f.redraw(); tl.tau = tau; }
+          else x.q.push({ tau, tick, f: snap(x) });
+        }
+        if (x.q.length >= MAXQ && !x.paused) { x.paused = true; p.v.pause(); }
+        grab(x);
+        kick();
+      });
+    }
+    async function resume(x) {
+      if (!x.paused || x.done || x.busy) return;
+      x.paused = false; x.last = performance.now();
+      try { await x.p.v.play(); } catch (e) {}
+    }
+    for (const x of S) {
+      x.p.v.playbackRate = x.speed;
+      x.onEnd = () => { x.done = true; kick(); };
+      x.p.v.addEventListener("ended", x.onEnd);
+      grab(x);
+    }
+    try { await Promise.all(S.map(x => x.p.v.play())); }
+    catch (e) { encErr = e; }
+    // Vakthund: står en video stille, prøv å starte den igjen, og gi opp etter en stund
+    let lastPace = performance.now();
+    function pace() {
+      const now = performance.now(), span = now - lastPace;
+      if (span < 500 || R.nc < 4) return;
+      // Arbeid per sekund video: bilder som fanges + bilder som settes sammen
+      const dts = S.map(x => x.dt || 1 / 30), fps = dts.reduce((a, d) => a + 1 / d, 0);
+      const per = Math.min(1 / step, 1 / Math.max(step, Math.min(...dts)) * 1.3);
+      const cost = fps * (R.snap / Math.max(1, R.ns)) + per * (R.comp / R.nc);   // ms per sekund video
+      const drops = S.reduce((a, x) => a + (x.drops || 0), 0), seen = S.reduce((a, x) => a + (x.seen || 0), 0);
+      let sp = clamp(0.75 * 1000 / Math.max(1, cost), 0.25, 2);
+      sp = Math.min(sp, 54 / (1 / Math.min(...dts)));   // nettleseren viser maks ca. 60 bilder i sekundet
+      if (drops > 0.1 * seen) sp = Math.min(sp, S[0].speed * 0.8);   // mister fortsatt bilder: ned litt til
+      sp = Math.round(sp * 20) / 20;
+      for (const x of S) { x.speed = sp; x.p.v.playbackRate = sp; x.seen = x.drops = 0; }
+      T.speeds.push(sp);
+      R.snap = R.comp = R.ns = R.nc = 0; lastPace = now;
+    }
+    const dog = setInterval(() => {
+      for (const x of S) {
+        if (x.done || x.paused || x.busy) continue;
+        const idle = performance.now() - x.last;
+        if (idle > 2500) x.p.v.play().catch(() => {});
+        if (idle > 8000) { x.done = true; kick(); }
+      }
+    }, 1000);
+    let n = 0, sent = 0, changed = true, lastKey = -999;
+    while (n < N && !st.stopReq && !encErr) {
+      const tn = t0 + n * step;
+      for (const x of S) {
+        while (x.q.length && x.q[0].tau <= tn) { const it = x.q.shift(); x.cur.f.close(); x.cur = it; changed = true; }
+        if (x.q.length < 3) resume(x);
+      }
+      if (!S.every(x => x.done || x.q.length)) { const tw = performance.now(); await new Promise(r => { wake = r; setTimeout(r, 300); }); T.wait += performance.now() - tw; continue; }
+      if (changed) {
+        const td = performance.now();
+        if (G) G.compose(S.map((x, i) => ({ s: x.cur.f.img, x: layout.slots[i].x, w: x.w })));
+        else draw(S.map(x => x.cur.f.img));
+        const tv = performance.now();
+        const frame = new VideoFrame(G ? G.canvas : canvas, { timestamp: n * dur, duration: dur });
+        enc.encode(frame, { keyFrame: n - lastKey >= 60 });
+        if (n - lastKey >= 60) lastKey = n;
+        frame.close(); sent++; changed = false;
+        const te = performance.now(); T.draw += tv - td; T.vf += te - tv; R.comp += te - td; R.nc++;
+        while (enc.encodeQueueSize > 3) await new Promise(res => setTimeout(res, 4));
+        T.enc += performance.now() - te;
+        pace();
+        await yieldNow();   // slipp til bildefangsten mellom hvert bilde
+      }
+      n++;
+      progress(n / N);
+      if (n % 10 === 0) {
+        const used = (performance.now() - st.t0) / 1000, left = used / (n / N) - used;
+        say(`Lager video … ${Math.round(n / N * 100)} % · ca. ${Math.max(1, Math.round(left))} s igjen`);
+        await new Promise(r => setTimeout(r, 0));
+      }
+    }
+    clearInterval(dog);
+    const sec = ms => (ms / 1000).toFixed(1);
+    st.method += ` · fart ${S[0].speed}× · hentet ${S.reduce((a, x) => a + x.fixes, 0)}` +
+      ` · fanget ${T.frames} bilder (${sec(T.snap)} s) · sett sammen ${sent} (tegn ${sec(T.draw)} s, til koder ${sec(T.vf)} s) · koder ${sec(T.enc)} s` +
+      ` · venter på video ${sec(T.wait)} s · henting ${sec(T.fix)} s · tapte ${T.lost || 0} · farter ${T.speeds.slice(0, 12).join("/")}`;
+    for (const x of S) {
+      x.stopped = true; x.p.v.pause(); x.p.v.playbackRate = st.rate; x.p.v.removeEventListener("ended", x.onEnd);
+      x.cur.f.close(); for (const it of x.q) it.f.close();
+    }
+    try { await enc.flush(); enc.close(); } catch (e) { encErr = encErr || e; }
+    st.recording = false;
+    if (encErr || !sent) { els.stop.hidden = true; els.bar.hidden = true; say("Kunne ikke lage videoen: " + (encErr ? encErr.message : "ingen bilder"), true); ui(); return; }
+    muxer.finalize();
+    done(new Blob([muxer.target.buffer], { type: "video/mp4" }), "mp4");
+  }
+
   // Real-time fallback (older browsers): plays both videos once while recording the canvas.
   let rec, chunks;
   function pickMime() {
@@ -2405,7 +3118,7 @@ ol.how b { color: var(--ink); }
     await Promise.all([P.A, P.B].map(p => seekExact(p, p.s + st.t)));
     draw();
     chunks = [];
-    try { rec = new MediaRecorder(canvas.captureStream(30), { mimeType: mime, videoBitsPerSecond: 8000000 }); }
+    try { rec = new MediaRecorder(canvas.captureStream(30), { mimeType: mime, videoBitsPerSecond: 4000000 }); }
     catch (e) { say("Kunne ikke starte opptaket: " + e.message, true); return; }
     rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
     rec.onstop = () => { const type = mime.split(";")[0]; done(new Blob(chunks, { type }), type === "video/mp4" ? "mp4" : "webm"); };
@@ -2437,15 +3150,22 @@ ol.how b { color: var(--ink); }
     els.result.src = URL.createObjectURL(blob);
     els.result.hidden = false; els.save.hidden = false;
     const mb = (blob.size / 1048576).toFixed(1);
-    say(`Ferdig: «${st.resultName}.${ext}» (${mb} MB). Trykk Lagre video.` +
+    const secs = st.t0 ? Math.round((performance.now() - st.t0) / 100) / 10 : 0;
+    say(`Ferdig på ${String(secs).replace(".", ",")} s: «${st.resultName}.${ext}» (${mb} MB). Trykk Lagre video.` +
       (ext === "webm" ? " Denne nettleseren lager WebM, som ikke alle telefoner viser i kamerarullen." : ""));
+    const src = [P.A, P.B].map(p => `${p.v.videoWidth}×${p.v.videoHeight}`).join(" + ");
+    els.diag.textContent = `Teknisk info: ${st.method || "?"} · kilde ${src} · ut ${layout.W}×${layout.H} · totalt ${secs} s`;
+    els.diag.hidden = false;
     st.t = startT(); showAll(); ui();
   }
   els.make.addEventListener("click", makeVideo);
   els.stop.addEventListener("click", finishRecording);
+  $("#busyStop").addEventListener("click", finishRecording);
 
   // Saving: the phone's share sheet first (iPhone/Android: choose «Lagre video» to put it in the camera roll),
   // then a plain download on computers.
+  let downloads = null;
+  if (window.claude && window.claude.use) window.claude.use("downloads").then(d => { downloads = d; window.avDownloads = d; }).catch(() => {});
   els.save.addEventListener("click", async () => {
     if (!st.resultBlob) return;
     const filename = st.resultName + "." + st.ext;
@@ -2455,13 +3175,164 @@ ol.how b { color: var(--ink); }
       try { await navigator.share({ files: [file] }); say("Ferdig."); return; }
       catch (e) { if (e.name === "AbortError") { say("Lagring avbrutt."); return; } }
     }
+    if (downloads) {
+      try { await downloads.save({ filename, data: st.resultBlob }); say("Videoen er lastet ned. På iPhone: åpne Filer › Nedlastinger, trykk på videoen, så Del › Lagre video for å legge den i bilderullen."); return; }
+      catch (e) {
+        if (e && e.code === "declined") { say("Lagring avbrutt."); return; }
+        if (e && e.code === "rate_limited") { say("Vent litt og trykk Lagre video igjen.", true); return; }
+      }
+    }
     const a = document.createElement("a");
     a.href = els.result.src; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
     say("Videoen lastes ned som " + filename + ".");
   });
 
+  // ---- forstørret visning: én video i stort format, med zoom og finjustering av startpunktet ----
+  const Z = { el: $("#zoom"), view: $("#zView"), hint: $("#zHint"), time: $("#zTime"), scrub: $("#zScrub"), jog: $("#zJog"),
+    name: $("#zName"), p: null, z: 1, tx: 0, ty: 0 };
+  const frameOf = p => p.s + st.t;
+  function setFrame(p, f) {
+    f = clamp(f, 0, Math.max(0, p.dur - 0.02));
+    p.s = f - st.t; seekTo(p, f); ui(); zUpdate();
+  }
+  const fmt = x => x.toFixed(2).replace(".", ",");
+  function zUpdate() {
+    const p = Z.p; if (!p) return;
+    const f = frameOf(p);
+    Z.time.textContent = fmt(f) + " s";
+    Z.scrub.max = p.dur; if (!Z.dragScrub) Z.scrub.value = f;
+    Z.jog.style.backgroundPositionX = (-f * 360 % 12) + "px";   // stripene flytter seg når du drar
+    Z.jog.setAttribute("aria-valuetext", fmt(f) + " sekunder");
+    Z.name.textContent = runnerName(p) || "Løper " + p.k;
+    for (const b of Z.el.querySelectorAll("[data-zk]")) {
+      b.setAttribute("aria-pressed", String(b.dataset.zk === p.k));
+      b.disabled = !P[b.dataset.zk].ready;
+    }
+  }
+  function zApply() {
+    const W = Z.view.clientWidth, H = Z.view.clientHeight;
+    Z.z = clamp(Z.z, 1, 6);
+    Z.tx = clamp(Z.tx, W - W * Z.z, 0); Z.ty = clamp(Z.ty, H - H * Z.z, 0);
+    if (Z.p) Z.p.v.style.transform = `translate(${Z.tx}px, ${Z.ty}px) scale(${Z.z})`;
+    const zin = Z.z > 1.01;
+    Z.view.classList.toggle("zin", zin);
+    Z.hint.textContent = zin ? "Dra for å flytte bildet · dobbelttrykk for å zoome ut"
+      : "Dra sidelengs for å spole · klyp eller dobbelttrykk for å zoome";
+    for (const b of Z.el.querySelectorAll("[data-zl]")) b.setAttribute("aria-pressed", String(Math.abs(Number(b.dataset.zl) - Z.z) < 0.05));
+  }
+  function zoomAt(cx, cy, nz) {
+    nz = clamp(nz, 1, 6);
+    const px = (cx - Z.tx) / Z.z, py = (cy - Z.ty) / Z.z;
+    Z.z = nz; Z.tx = cx - px * nz; Z.ty = cy - py * nz; zApply();
+  }
+  function zShow(p) {
+    if (Z.p) { Z.p.v.style.transform = ""; Z.p.panel.prepend(Z.p.v); }
+    Z.p = p; Z.z = 1; Z.tx = Z.ty = 0;
+    Z.view.prepend(p.v);
+    zApply(); zUpdate(); seekTo(p, frameOf(p));
+  }
+  function zOpen(p) {
+    if (!p.ready || st.recording) return;
+    if (st.playing) pause();
+    Z.el.hidden = false; document.body.classList.add("zoomed");
+    zShow(p);
+    $("#zDone").focus({ preventScroll: true });
+  }
+  function zClose() {
+    const p = Z.p; if (!p) return;
+    p.v.style.transform = ""; p.panel.prepend(p.v);
+    Z.p = null; Z.el.hidden = true; document.body.classList.remove("zoomed");
+    autoStart(); showAll(); ui();
+    $("[data-zoom]", p.panel).focus({ preventScroll: true });
+  }
+  $("#zDone").addEventListener("click", zClose);
+  for (const b of Z.el.querySelectorAll("[data-zk]")) b.addEventListener("click", () => { if (P[b.dataset.zk].ready) zShow(P[b.dataset.zk]); });
+  for (const b of Z.el.querySelectorAll("[data-zl]")) b.addEventListener("click", () => zoomAt(Z.view.clientWidth / 2, Z.view.clientHeight / 2, Number(b.dataset.zl)));
+  for (const b of Z.el.querySelectorAll("[data-zs]")) b.addEventListener("click", () => { if (Z.p) setFrame(Z.p, frameOf(Z.p) + Number(b.dataset.zs) * FRAME); });
+  Z.scrub.addEventListener("input", () => { if (!Z.p) return; Z.dragScrub = true; setFrame(Z.p, Number(Z.scrub.value)); });
+  Z.scrub.addEventListener("change", () => { Z.dragScrub = false; zUpdate(); });
+  window.addEventListener("resize", () => { if (Z.p) zApply(); });
+
+  // Bevegelser på bildet: én finger spoler (eller flytter bildet når det er zoomet), to fingre zoomer.
+  const pts = new Map(); let g = null, lastTap = null;
+  const rel = e => { const r = Z.view.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+  const two = () => { const [a, b] = [...pts.values()]; return { d: Math.hypot(a.x - b.x, a.y - b.y) || 1, m: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 } }; };
+  function startOne(pt) { g = { mode: Z.z > 1.01 ? "pan" : "scrub", x: pt.x, y: pt.y, tx: Z.tx, ty: Z.ty, f: frameOf(Z.p), moved: false }; }
+  Z.view.addEventListener("pointerdown", e => {
+    if (!Z.p) return;
+    Z.view.setPointerCapture(e.pointerId);
+    pts.set(e.pointerId, rel(e));
+    if (pts.size === 1) startOne(rel(e));
+    else if (pts.size === 2) { const t = two(); g = { mode: "pinch", d0: t.d, m0: t.m, z0: Z.z, tx0: Z.tx, ty0: Z.ty, moved: true }; }
+  });
+  Z.view.addEventListener("pointermove", e => {
+    if (!pts.has(e.pointerId) || !g) return;
+    const pt = rel(e); pts.set(e.pointerId, pt);
+    if (g.mode === "pinch" && pts.size >= 2) {
+      const t = two(), nz = clamp(g.z0 * t.d / g.d0, 1, 6);
+      const px = (g.m0.x - g.tx0) / g.z0, py = (g.m0.y - g.ty0) / g.z0;
+      Z.z = nz; Z.tx = t.m.x - px * nz; Z.ty = t.m.y - py * nz; zApply();
+      return;
+    }
+    const dx = pt.x - g.x, dy = pt.y - g.y;
+    if (Math.abs(dx) > 6 || Math.abs(dy) > 6) g.moved = true;
+    if (g.mode === "pan") { Z.tx = g.tx + dx; Z.ty = g.ty + dy; zApply(); }
+    else if (g.mode === "scrub") setFrame(Z.p, g.f + dx * 2 / Z.view.clientWidth);   // full bredde = 2 sekunder
+  });
+  const zEnd = e => {
+    if (!pts.has(e.pointerId)) return;
+    const pt = pts.get(e.pointerId); pts.delete(e.pointerId);
+    if (pts.size === 1) { startOne([...pts.values()][0]); g.mode = Z.z > 1.01 ? "pan" : "none"; return; }
+    if (pts.size || !g) return;
+    if (!g.moved && e.type === "pointerup") {   // dobbelttrykk: zoom inn der du trykker, eller ut igjen
+      const now = performance.now();
+      if (lastTap && now - lastTap.t < 330 && Math.hypot(pt.x - lastTap.x, pt.y - lastTap.y) < 40) {
+        if (Z.z > 1.01) { Z.z = 1; Z.tx = Z.ty = 0; zApply(); } else zoomAt(pt.x, pt.y, 2.5);
+        lastTap = null;
+      } else lastTap = { t: now, x: pt.x, y: pt.y };
+    }
+    g = null;
+  };
+  Z.view.addEventListener("pointerup", zEnd);
+  Z.view.addEventListener("pointercancel", zEnd);
+  Z.view.addEventListener("wheel", e => {   // PC: rull for å zoome der musepekeren er
+    if (!Z.p) return;
+    e.preventDefault();
+    const pt = rel(e); zoomAt(pt.x, pt.y, Z.z * Math.exp(-e.deltaY * 0.0015));
+  }, { passive: false });
+
+  // Finjusteringsstripe: full bredde = 1 sekund
+  let jog = null;
+  Z.jog.addEventListener("pointerdown", e => { if (!Z.p) return; Z.jog.setPointerCapture(e.pointerId); jog = { x: e.clientX, f: frameOf(Z.p) }; });
+  Z.jog.addEventListener("pointermove", e => { if (jog) setFrame(Z.p, jog.f + (e.clientX - jog.x) / Z.jog.clientWidth); });
+  const jogEnd = () => { jog = null; };
+  Z.jog.addEventListener("keydown", e => {
+    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+    e.preventDefault(); e.stopPropagation();
+    setFrame(Z.p, frameOf(Z.p) + (e.key === "ArrowLeft" ? -1 : 1) * (e.shiftKey ? 15 : 1) * FRAME);
+  });
+  Z.jog.addEventListener("pointerup", jogEnd); Z.jog.addEventListener("pointercancel", jogEnd);
+
+  window.avLoadDuo = (k, file, runner) => load(P[k], file, runner);
   document.addEventListener("keydown", e => {
-    if (e.target.matches("input[type=text]")) return;
+    if (Z.p) {
+      if (e.target.matches("input[type=text]")) return;
+      if (e.key === "Escape") { e.preventDefault(); zClose(); }
+      else if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+        e.preventDefault();
+        setFrame(Z.p, frameOf(Z.p) + (e.key === "ArrowLeft" ? -1 : 1) * (e.shiftKey ? 15 : 1) * FRAME);
+      }
+      else if (e.key === "+" || e.key === "=") zoomAt(Z.view.clientWidth / 2, Z.view.clientHeight / 2, Z.z * 1.5);
+      else if (e.key === "-") zoomAt(Z.view.clientWidth / 2, Z.view.clientHeight / 2, Z.z / 1.5);
+      else if (e.key === "Tab") {   // hold fokus inne i visningen
+        const f = [...Z.el.querySelectorAll("button:not(:disabled), input, [tabindex]")];
+        const i = f.indexOf(document.activeElement);
+        if (e.shiftKey && i <= 0) { e.preventDefault(); f[f.length - 1].focus(); }
+        else if (!e.shiftKey && i === f.length - 1) { e.preventDefault(); f[0].focus(); }
+      }
+      return;
+    }
+    if (e.target.matches("input[type=text]") || $("#duoView").hidden) return;
     if (e.key === " ") { e.preventDefault(); st.playing ? pause() : play(); }
     if (e.key === "ArrowLeft") stepBoth(-1);
     if (e.key === "ArrowRight") stepBoth(1);
@@ -2470,5 +3341,938 @@ ol.how b { color: var(--ink); }
 })();
 </script>
 
+<script>
+// ---- Navngi videoer: lytter etter løperens navn i starten av hvert opptak (talegjenkjenning på enheten) ----
+(() => {
+  const $ = (s, r = document) => r.querySelector(s);
+  const TJS = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/dist/transformers.min.js";
+  const MODEL = "Xenova/whisper-base";
+  const LISTEN_S = 8, SR = 16000;
+  const els = { files: $("#nFiles"), clips: $("#clips"), bar: $("#nBar"), msg: $("#nMsg"), roster: $("#roster"),
+    save: $("#nSave"), saveAll: $("#nSaveAll"), saveNote: $("#nSaveNote"), folder: $("#nFolder"), folderOpts: $("#nFolderOpts"),
+    perRunner: $("#nPerRunner"), dir: $("#nDir"), onlyMissing: $("#nOnlyMissing"), filesBtn: $("#nFilesBtn") };
+  const say = (t, err) => { els.msg.textContent = t; els.msg.classList.toggle("err", !!err); };
+  const progress = f => { els.bar.hidden = f == null; if (f != null) els.bar.firstElementChild.style.width = Math.min(100, f * 100) + "%"; };
+  let clips = [], run = 0, asr = null;
+
+  // Tabs
+  for (const b of document.querySelectorAll(".tabs button")) b.addEventListener("click", () => {
+    for (const x of document.querySelectorAll(".tabs button")) {
+      x.setAttribute("aria-selected", String(x === b));
+      $("#" + x.dataset.view).hidden = x !== b;
+    }
+  });
+  const showDuo = () => { $('.tabs button[data-view="duoView"]').click(); window.scrollTo(0, 0); };
+  // Navngi-fanen er skjult på mobil. Står den åpen når vinduet blir smalt, byttes det til Duo.
+  const phone = matchMedia('(max-width: 767px), (pointer: coarse)');
+  const leaveName = () => { if (phone.matches && !$("#nameView").hidden) showDuo(); };
+  phone.addEventListener ? phone.addEventListener("change", leaveName) : phone.addListener(leaveName);
+
+  // Løperliste: navn som er brukt før, lagret i denne nettleseren
+  const getRoster = () => { try { return JSON.parse(localStorage.getItem("av.roster") || "[]"); } catch (e) { return []; } };
+  function addToRoster(names) {
+    const list = getRoster();
+    for (const n of names) if (n && !list.some(x => x.toLowerCase() === n.toLowerCase())) list.push(n);
+    try { localStorage.setItem("av.roster", JSON.stringify(list.slice(-300))); } catch (e) {}
+    fillRoster();
+  }
+  function fillRoster() {
+    els.roster.replaceChildren(...getRoster().sort((a, b) => a.localeCompare(b, "nb")).map(n => Object.assign(document.createElement("option"), { value: n })));
+  }
+  fillRoster();
+
+  // ---- matching av det som ble sagt mot kjente navn ----
+  const norm = s => s.toLowerCase().replace(/æ/g, "ae").replace(/ø/g, "o").replace(/å/g, "a")
+    .normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
+  function lev(a, b) {
+    const d = Array.from({ length: b.length + 1 }, (_, j) => j);
+    for (let i = 1; i <= a.length; i++) {
+      let prev = d[0]; d[0] = i;
+      for (let j = 1; j <= b.length; j++) { const t = d[j]; d[j] = Math.min(d[j] + 1, d[j - 1] + 1, prev + (a[i - 1] === b[j - 1] ? 0 : 1)); prev = t; }
+    }
+    return d[b.length];
+  }
+  const sim = (a, b) => 1 - lev(a, b) / Math.max(a.length, b.length, 1);
+  function bestIn(words, target) {   // beste likhet mellom target og et utsnitt av ordene med like mange ord
+    const n = target.split(" ").length; let best = 0;
+    for (let i = 0; i + n <= words.length; i++) best = Math.max(best, sim(words.slice(i, i + n).join(" "), target));
+    return best;
+  }
+  function matchRoster(text) {
+    const words = norm(text).split(" ").filter(Boolean), roster = getRoster();
+    if (!words.length || !roster.length) return null;
+    let best = null;
+    for (const name of roster) {
+      const full = norm(name), first = full.split(" ")[0];
+      let score = bestIn(words, full);
+      // Bare fornavn holder når ingen andre i lista har samme fornavn
+      if (first !== full && roster.filter(r => norm(r).split(" ")[0] === first).length === 1) score = Math.max(score, bestIn(words, first) - 0.05);
+      if (!best || score > best.score) best = { name, score };
+    }
+    return best && best.score >= 0.8 ? best.name : null;
+  }
+  const NOISE = /teksting|undertekst|takk for at du (så|ser)|musikk|applaus|abonner|♪/i;
+  const FILLER = new Set("dette er det neste løper løperen nå kjører kjøre klar ferdig go og så ja ok okei start går gå heia".split(" "));
+  function guessName(text) {   // for nye løpere: de første ordene som ikke er fyllord, med stor forbokstav
+    const words = text.replace(/[^\p{L}\p{M}\s'-]+/gu, " ").split(/\s+/).filter(w => w && !FILLER.has(w.toLowerCase()));
+    return words.slice(0, 3).map(w => w[0].toUpperCase() + w.slice(1).toLowerCase()).join(" ");
+  }
+
+  // ---- lyd: de første sekundene som 16 kHz mono ----
+  let ac = null;
+  const audioCtx = () => ac || (ac = new (window.AudioContext || window.webkitAudioContext)());
+  async function toMono16k(buffer) {
+    const len = Math.max(1, Math.ceil(Math.min(buffer.duration, LISTEN_S) * SR));
+    const off = new OfflineAudioContext(1, len, SR);
+    const src = off.createBufferSource(); src.buffer = buffer; src.connect(off.destination); src.start();
+    return (await off.startRendering()).getChannelData(0);
+  }
+  async function decodeStart(file) {
+    if (file.size < 300 * 1048576) {
+      try {
+        const buf = await file.arrayBuffer();
+        const audio = await new Promise((res, rej) => { const p = audioCtx().decodeAudioData(buf, res, rej); if (p && p.catch) p.catch(rej); });
+        return await toMono16k(audio);
+      } catch (e) { /* prøver avspilling under */ }
+    }
+    return recordStart(file);
+  }
+  // Reserve: spill av starten lydløst for brukeren og ta opp lyden
+  function recordStart(file) {
+    return new Promise(resolve => {
+      const ctx = audioCtx(), v = document.createElement("video"), url = URL.createObjectURL(file);
+      v.playsInline = true; v.src = url;
+      const parts = []; let n = 0, ended = false;
+      const src = ctx.createMediaElementSource(v), proc = ctx.createScriptProcessor(4096, 1, 1), mute = ctx.createGain();
+      mute.gain.value = 0; src.connect(proc); proc.connect(mute); mute.connect(ctx.destination);
+      proc.onaudioprocess = e => { if (!v.paused) { const d = e.inputBuffer.getChannelData(0); parts.push(new Float32Array(d)); n += d.length; } };
+      const finish = async () => {
+        if (ended) return; ended = true;
+        v.pause(); proc.disconnect(); src.disconnect(); URL.revokeObjectURL(url);
+        if (!n) return resolve(null);
+        const b = ctx.createBuffer(1, n, ctx.sampleRate); let o = 0;
+        for (const p of parts) { b.copyToChannel(p, 0, o); o += p.length; }
+        resolve(await toMono16k(b));
+      };
+      v.addEventListener("ended", finish); v.addEventListener("error", finish);
+      setTimeout(finish, (LISTEN_S + 4) * 1000);
+      v.addEventListener("timeupdate", () => { if (v.currentTime >= LISTEN_S) finish(); });
+      ctx.resume().then(() => v.play()).catch(finish);
+    });
+  }
+
+  // ---- talemodell ----
+  let asrP = null, note = null;   // note: ekstra statuslinje når Duo lytter
+  function getAsr() {
+    if (asr) return Promise.resolve(asr);
+    if (asrP) return asrP;
+    say("Laster talemodell … (bare første gang)");
+    if (note) note("Laster talemodell … (bare første gang, ca. 80 MB)");
+    asrP = (async () => {
+      const { pipeline, env } = await import(TJS);
+      env.allowLocalModels = false;
+      const files = {};
+      asr = await pipeline("automatic-speech-recognition", MODEL, { dtype: "q8", progress_callback: d => {
+        if (d.status !== "progress" || !d.total) return;
+        files[d.file] = d;
+        const all = Object.values(files), got = all.reduce((s, x) => s + x.loaded, 0), tot = all.reduce((s, x) => s + x.total, 0);
+        progress(got / tot); say(`Laster talemodell … ${Math.round(got / 1048576)} MB`);
+        if (note) note(`Laster talemodell (bare første gang) … ${Math.round(got / 1048576)} MB`);
+      } });
+      progress(null);
+      return asr;
+    })().catch(e => { asrP = null; throw e; });
+    return asrP;
+  }
+  async function listen(audio) {
+    let peak = 0; for (let i = 0; i < audio.length; i += 16) peak = Math.max(peak, Math.abs(audio[i]));
+    if (peak < 0.02) return "";   // stille, ikke noe å høre
+    const out = await (await getAsr())(audio, { language: "norwegian", task: "transcribe" });
+    const text = (out && out.text || "").trim().replace(/[.!?,]+$/, "");
+    return NOISE.test(text) ? "" : text;
+  }
+
+  // Brukes av Duo: lytter etter navnet i én video. Én video om gangen, så to valg samtidig ikke krasjer.
+  let queue = Promise.resolve();
+  window.avHearName = (file, onNote) => {
+    const job = queue.then(async () => {
+      note = onNote || null;
+      try {
+        try { audioCtx().resume(); } catch (e) {}
+        if (onNote) onNote("Lytter etter navn i starten av videoen …");
+        const audio = await decodeStart(file);
+        const text = audio ? await listen(audio) : "";
+        const known = text && matchRoster(text), guess = text && !known && guessName(text);
+        return { text, name: known || guess || "", known: !!known };
+      } finally { note = null; }
+    });
+    queue = job.catch(() => {});
+    return job;
+  };
+  window.avAddRoster = names => addToRoster(names);
+
+  // ---- miniatyrbilde ----
+  function thumbnail(file) {
+    return new Promise(resolve => {
+      const v = document.createElement("video"), url = URL.createObjectURL(file);
+      v.muted = true; v.playsInline = true; v.preload = "auto"; v.src = url;
+      let done = false;
+      const fin = (img, dur) => { if (done) return; done = true; URL.revokeObjectURL(url); v.removeAttribute("src"); v.load(); resolve({ img, dur }); };
+      v.addEventListener("loadedmetadata", () => { v.currentTime = Math.min(Math.max(0.5, v.duration * 0.35), Math.max(0, v.duration - 0.1)); });
+      v.addEventListener("seeked", () => {
+        try {
+          const c = document.createElement("canvas"), w = 240, h = Math.round(w * (v.videoHeight || 9) / (v.videoWidth || 16));
+          c.width = w; c.height = h; c.getContext("2d").drawImage(v, 0, 0, w, h);
+          fin(c.toDataURL("image/jpeg", 0.7), v.duration);
+        } catch (e) { fin("", v.duration); }
+      });
+      v.addEventListener("error", () => fin("", 0));
+      setTimeout(() => fin("", v.duration || 0), 8000);
+    });
+  }
+
+  // ---- filnavn ----
+  const pad = n => String(n).padStart(2, "0");
+  const ext = f => (f.name.match(/\.[^.]+$/) || [".mp4"])[0].toLowerCase();
+  const stamp = f => { const d = new Date(f.lastModified || Date.now()); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}.${pad(d.getMinutes())}`; };
+  const clean = s => s.replace(/[\\/:*?"<>|]+/g, "-").replace(/\s+/g, " ").trim();
+  function newNames() {   // unike navn: «Navn dato tid», med (2), (3) ved like navn. Allerede lagrede navn beholdes.
+    const used = new Set(), todo = [];
+    for (const c of clips) {
+      const name = clean(c.input.value);
+      c.newName = "";
+      if (!name) continue;
+      c.base = `${name} ${stamp(c.file)}`;
+      const keep = c.saved && c.saved.name.slice(0, c.base.length) === c.base && /^( \(\d+\))?$/.test(c.saved.name.slice(c.base.length, -ext(c.file).length || undefined)) && c.saved.name.endsWith(ext(c.file));
+      if (keep && !used.has(c.saved.name.toLowerCase())) { c.newName = c.saved.name; used.add(c.newName.toLowerCase()); }
+      else todo.push(c);
+    }
+    for (const c of todo) {
+      for (let i = 1; ; i++) {
+        const n = c.base + (i > 1 ? ` (${i})` : "") + ext(c.file);
+        if (!used.has(n.toLowerCase())) { c.newName = n; used.add(n.toLowerCase()); break; }
+      }
+    }
+    for (const c of clips) {
+      const saved = c.saved && c.saved.name === c.newName;
+      c.fname.textContent = saved ? `✓ Lagret som ${c.newName}` : c.newName ? `${c.file.name} → ${c.newName}` : c.file.name;
+      c.fname.classList.toggle("saved", saved);
+    }
+    const named = clips.filter(c => c.newName).length, missing = clips.length - named;
+    els.save.hidden = !clips.length;
+    if (folder && folder.out) {
+      const unsaved = clips.filter(c => c.newName && !(c.saved && c.saved.name === c.newName)).length;
+      els.saveAll.textContent = "Lagre resten i mappen";
+      els.saveAll.disabled = !unsaved;
+      els.saveNote.textContent = `${named - unsaved} av ${clips.length} er lagret i «${folder.out.name}».` +
+        (unsaved ? ` ${unsaved} venter på lagring.` : "") + (missing ? ` ${missing} mangler navn.` : "");
+      return;
+    }
+    els.saveAll.textContent = folder ? "Lagre alle i ny mappe" : "Lagre alle med navn";
+    els.saveAll.disabled = !named;
+    els.saveNote.textContent = named === clips.length ? `Alle ${named} videoene har navn.`
+      : `${named} av ${clips.length} har navn. Videoer uten navn hoppes over.`;
+  }
+  const renamed = c => new File([c.file], c.newName, { type: c.file.type || "video/mp4", lastModified: c.file.lastModified });
+
+  // ---- kort for hver video ----
+  function setState(c, state, text) { c.el.dataset.state = state; c.status.textContent = text; }
+  function card(file) {
+    const el = document.createElement("article");
+    el.className = "clip"; el.dataset.state = "wait";
+    el.innerHTML = `<button class="thumb" type="button" aria-label="Spill av videoen"><span class="dur"></span></button>
+      <div class="body">
+        <div class="status">Venter …</div>
+        <input type="text" list="roster" placeholder="Navn på løperen" maxlength="60" autocomplete="off" aria-label="Navn på løperen">
+        <div class="row">
+          <button class="btn" type="button" data-act="save">Lagre</button>
+          <button class="btn" type="button" data-act="A" title="Bruk som A i Duo">Duo A</button>
+          <button class="btn" type="button" data-act="B" title="Bruk som B i Duo">Duo B</button>
+          <button class="btn" type="button" data-act="S" title="Analyser vinkler i Singel">Singel</button>
+        </div>
+        <div class="fname"></div>
+      </div>`;
+    const c = { file, el, thumb: $(".thumb", el), status: $(".status", el), input: $("input", el), fname: $(".fname", el), edited: false };
+    c.input.addEventListener("input", () => {
+      c.edited = true;
+      if (c.input.value.trim()) setState(c, "heard", "Navn satt av deg.");
+      else setState(c, "missing", "Mangler navn. Skriv inn hvem det er.");
+      newNames();
+    });
+    c.thumb.addEventListener("click", () => {   // bytt bildet ut med videoen, så du kan se hvem det er
+      if ($("video", c.thumb)) return;
+      const v = document.createElement("video");
+      v.src = URL.createObjectURL(file); v.controls = true; v.playsInline = true; v.autoplay = true;
+      c.thumb.replaceChildren(v);
+    });
+    for (const b of el.querySelectorAll("[data-act]")) b.addEventListener("click", async () => {
+      const act = b.dataset.act;
+      if (act === "save") {
+        if (!c.newName) { c.input.focus(); setState(c, "missing", "Skriv inn navn før du lagrer."); return; }
+        addToRoster([clean(c.input.value)]);
+        if (folder) return saveToFolder([c]);
+        return saveFiles([renamed(c)]);
+      }
+      const f = c.newName ? renamed(c) : file;
+      if (c.newName) addToRoster([clean(c.input.value)]);
+      if (act === "S") { window.avLoadSingle && window.avLoadSingle(f, c.newName ? clean(c.input.value) : ""); $('.tabs button[data-view="singleView"]').click(); window.scrollTo(0, 0); return; }
+      window.avLoadDuo && window.avLoadDuo(act, f, c.newName ? clean(c.input.value) : ""); showDuo();
+    });
+    c.fname.textContent = file.name;
+    return c;
+  }
+
+  const byTime = (a, b) => (a.lastModified - b.lastModified) || a.name.localeCompare(b.name, "nb", { numeric: true });
+  els.files.addEventListener("change", () => {
+    const files = [...els.files.files].sort(byTime);
+    els.files.value = "";
+    if (!files.length) return;
+    folder = null;
+    processFiles(files);
+  });
+
+  // Går gjennom videoene: miniatyrbilder, så lytting. Gir true når alle er gjennomgått.
+  async function processFiles(files) {
+    try { audioCtx().resume(); } catch (e) {}
+    const my = ++run;
+    els.onlyMissing.checked = false; els.clips.classList.remove("only-missing");
+    for (const c of clips) for (const v of c.el.querySelectorAll("video")) URL.revokeObjectURL(v.src);
+    clips = files.map(card);
+    els.clips.replaceChildren(...clips.map(c => c.el));
+    newNames();
+
+    say(`Lager forhåndsvisning av ${files.length} videoer …`); progress(0);
+    for (const [i, c] of clips.entries()) {
+      const t = await thumbnail(c.file);
+      if (my !== run) return false;
+      if (t.img && !$("video", c.thumb)) c.thumb.insertAdjacentHTML("afterbegin", `<img alt="" src="${t.img}">`);
+      if (t.dur) $(".dur", c.thumb).textContent = `${Math.floor(t.dur / 60)}:${pad(Math.round(t.dur % 60))}`;
+      progress((i + 1) / clips.length);
+    }
+
+    let heard = 0, missing = 0;
+    for (const [i, c] of clips.entries()) {
+      if (my !== run) return false;
+      if (c.edited) continue;
+      setState(c, "listening", "Lytter etter navn …");
+      say(`Lytter etter navn: video ${i + 1} av ${clips.length}`); progress(i / clips.length);
+      let text = "";
+      try {
+        const audio = await decodeStart(c.file);
+        if (audio) text = await listen(audio);
+      } catch (e) {
+        if (!asr) { say("Talemodellen kunne ikke lastes. Sjekk nettforbindelsen, eller skriv inn navnene selv.", true); for (const x of clips) if (!x.edited && !x.input.value) setState(x, "missing", "Mangler navn. Skriv inn hvem det er."); progress(null); return false; }
+      }
+      if (my !== run) return false;
+      if (c.edited) continue;
+      const known = text && matchRoster(text), guess = text && !known && guessName(text);
+      if (known) { c.input.value = known; setState(c, "heard", `Hørte «${text}».`); heard++; }
+      else if (guess) { c.input.value = guess; setState(c, "check", `Hørte «${text}». Ny løper? Sjekk stavingen.`); heard++; }
+      else { setState(c, "missing", "Fant ikke noe navn. Skriv inn hvem det er."); missing++; }
+      newNames();
+    }
+    progress(null);
+    say(missing ? `Ferdig. Fant navn i ${heard} av ${clips.length} videoer. Fyll inn de ${missing} som er merket rødt.`
+      : `Ferdig. Fant navn i alle ${clips.length} videoene. Sjekk de gule, og lagre.`);
+    const firstMissing = clips.find(c => !c.input.value.trim());
+    if (firstMissing) firstMissing.el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    return true;
+  }
+
+  // ---- PC: velg en hel mappe, lagre kopier med løpernavn i en ny mappe inni den ----
+  let folder = null;   // { src, out }
+  const VIDEO = /\.(mp4|mov|m4v|webm|avi|mkv|mts|m2ts|3gp)$/i;
+  if (window.showDirectoryPicker && !/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
+    els.folder.hidden = false; els.folderOpts.hidden = false; els.filesBtn.classList.remove("primary");
+  }
+  const today = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
+  async function outDir() {   // ny mappe første gang det lagres, uten å skrive over en som finnes fra før
+    if (folder.out) return folder.out;
+    const base = `Athleteview navngitt ${today()}`;
+    for (let i = 1; ; i++) {
+      const name = i === 1 ? base : `${base} (${i})`;
+      try { await folder.src.getDirectoryHandle(name); } catch (e) {
+        if (e.name !== "NotFoundError" && e.name !== "TypeMismatchError") throw e;
+        if (e.name === "TypeMismatchError") continue;
+        return (folder.out = await folder.src.getDirectoryHandle(name, { create: true }));
+      }
+    }
+  }
+  async function saveToFolder(list) {
+    list = list.filter(c => c.newName && !(c.saved && c.saved.name === c.newName));
+    if (!list.length) { newNames(); return; }
+    try {
+      const out = await outDir();
+      for (const [i, c] of list.entries()) {
+        say(`Lagrer ${i + 1} av ${list.length}: ${c.newName}`); progress(i / list.length);
+        const runner = clean(c.input.value);
+        const dir = els.perRunner.checked ? await out.getDirectoryHandle(runner, { create: true }) : out;
+        if (c.saved) { try { await c.saved.dir.removeEntry(c.saved.name); } catch (e) {} }   // navnet er endret: fjern den gamle kopien
+        const w = await (await dir.getFileHandle(c.newName, { create: true })).createWritable();
+        await c.file.stream().pipeTo(w);
+        c.saved = { dir, name: c.newName };
+        newNames();
+      }
+      addToRoster(list.map(c => clean(c.input.value)));
+      progress(null);
+      const missing = clips.filter(c => !c.newName).length;
+      say(`Lagret ${list.length} ${list.length === 1 ? "video" : "videoer"} i «${folder.src.name}/${out.name}».` +
+        (missing ? ` ${missing} mangler navn. Fyll dem inn og trykk «Lagre resten i mappen».` : ""));
+    } catch (e) {
+      progress(null);
+      say("Kunne ikke lagre i mappen: " + e.message, true);
+    }
+  }
+  els.folder.addEventListener("click", async () => {
+    let src;
+    try { src = await window.showDirectoryPicker({ id: "av-videos", mode: "readwrite" }); }
+    catch (e) {
+      if (e.name === "AbortError") return;
+      // Nettleseren lar ikke siden skrive til mapper her: les mappen likevel, og lagre som vanlige nedlastinger
+      els.dir.click(); return;
+    }
+    const files = [];
+    for await (const h of src.values()) if (h.kind === "file" && VIDEO.test(h.name)) files.push(await h.getFile());
+    if (!files.length) { say(`Fant ingen videoer i «${src.name}». Undermapper blir ikke gjennomgått.`, true); return; }
+    folder = { src, out: null };
+    say(`Fant ${files.length} videoer i «${src.name}».`);
+    const done = await processFiles(files.sort(byTime));
+    if (done && folder && folder.src === src) await saveToFolder(clips);
+  });
+  els.dir.addEventListener("change", () => {
+    const files = [...els.dir.files].filter(f => VIDEO.test(f.name) && f.webkitRelativePath.split("/").length === 2).sort(byTime);
+    els.dir.value = "";
+    if (!files.length) { say("Fant ingen videoer i mappen. Undermapper blir ikke gjennomgått.", true); return; }
+    folder = null;
+    say(`Fant ${files.length} videoer. Her kan ikke Athleteview lage en ny mappe, så videoene lagres som nedlastinger med løpernavn.`);
+    processFiles(files);
+  });
+  els.onlyMissing.addEventListener("change", () => {
+    for (const c of clips) c.el.classList.toggle("has-name", !!c.newName);   // fast utvalg, så kortet ikke forsvinner mens du skriver
+    els.clips.classList.toggle("only-missing", els.onlyMissing.checked);
+    if (els.onlyMissing.checked) window.scrollTo({ top: els.clips.offsetTop - 12, behavior: "smooth" });
+  });
+
+  // ---- lagring: mappe på PC, delingsmeny på mobil, ellers nedlasting ----
+  async function saveFiles(files) {
+    if (window.avDownloads) {
+      try {
+        for (const [i, f] of files.entries()) { say(`Lagrer ${i + 1} av ${files.length} …`); await window.avDownloads.save({ filename: f.name, data: f }); }
+        say(`${files.length} ${files.length === 1 ? "video" : "videoer"} sendt til enheten med løpernavn.`); return;
+      } catch (e) { if (e && e.code === "declined") { say("Lagring avbrutt."); return; } }
+    }
+    if (window.showDirectoryPicker && !/Mobi|Android/i.test(navigator.userAgent)) {
+      try {
+        const dir = await window.showDirectoryPicker({ mode: "readwrite" });
+        for (const [i, f] of files.entries()) {
+          say(`Lagrer ${i + 1} av ${files.length} …`);
+          const w = await (await dir.getFileHandle(f.name, { create: true })).createWritable();
+          await w.write(f); await w.close();
+        }
+        say(`Lagret ${files.length} ${files.length === 1 ? "video" : "videoer"} i mappen «${dir.name}».`); return;
+      } catch (e) { if (e.name === "AbortError") { say("Lagring avbrutt."); return; } }
+    }
+    if (navigator.canShare && navigator.canShare({ files })) {
+      say("Velg «Lagre video» (iPhone) eller hvor de skal lagres i menyen.");
+      try { await navigator.share({ files }); say("Ferdig."); return; }
+      catch (e) { if (e.name === "AbortError") { say("Lagring avbrutt."); return; } }
+    }
+    for (const f of files) {
+      const a = document.createElement("a"), url = URL.createObjectURL(f);
+      a.href = url; a.download = f.name; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+      await new Promise(r => setTimeout(r, 400));
+    }
+    say(`${files.length} ${files.length === 1 ? "video" : "videoer"} lastes ned med løpernavn.`);
+  }
+  els.saveAll.addEventListener("click", () => {
+    newNames();
+    const ok = clips.filter(c => c.newName);
+    if (!ok.length) return;
+    if (folder) return saveToFolder(ok);
+    addToRoster(ok.map(c => clean(c.input.value)));
+    saveFiles(ok.map(renamed));
+  });
+})();
+</script>
+
+<script>
+// ---- Singel: vinkelanalyse av ett stillbilde. AI plasserer punktene, brukeren kan dra dem på plass. ----
+(() => {
+  const $ = (s, r = document) => r.querySelector(s);
+  const FRAME = 1 / 30;
+  const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+  const els = { stage: $("#sStage"), v: $("#sV"), pick: $("#sPick"), file: $("#sFile"), cv: $("#sCanvas"), hint: $("#sHint"),
+    play: $("#sPlay"), scrub: $("#sScrub"), back: $("#sBack"), fwd: $("#sFwd"), analyze: $("#sAnalyze"),
+    clock: $("#sClock"), ctl: $("#sCtl"), ctl2: $("#sCtl2"), toVideo: $("#sBackToVideo"), swap: $("#sSwap"), repick: $("#sRepick"), zoom: $("#sZoom"),
+    result: $("#sResult"), angles: $("#sAngles"), runner: $("#sRunner"), save: $("#sSave"), msg: $("#sMsg") };
+  const say = (t, err) => { els.msg.textContent = t; els.msg.classList.toggle("err", !!err); };
+  const S = { url: "", ready: false, dur: 0, name: "", frame: null, t: 0, pts: null, outer: "L", box: null, full: false, picking: false, busy: false };
+
+  // Linjefarger: legg grønn, overkropp gul, skuldre blå (samme i appen og i bildet som lagres)
+  const COL = { leg: "#38d15a", body: "#ffd23f", sh: "#3fb8ff" };
+
+  // ---- video ----
+  function load(file, runner) {
+    if (!file) return;
+    showVideo();
+    if (S.url) URL.revokeObjectURL(S.url);
+    zReset();
+    S.url = URL.createObjectURL(file); S.ready = false; S.name = file.name.replace(/\.[^.]+$/, "");
+    els.v.src = S.url; els.v.load();
+    if (runner != null) els.runner.value = runner;
+    say("Laster " + file.name + " …");
+  }
+  els.file.addEventListener("change", () => load(els.file.files[0]));
+  els.v.addEventListener("loadedmetadata", () => {
+    S.dur = els.v.duration; S.ready = isFinite(S.dur) && S.dur > 0;
+    els.pick.hidden = true; els.scrub.max = S.dur; els.scrub.value = 0;
+    els.v.currentTime = Math.min(0.1, S.dur / 2); zApply();
+    say("Stopp på bildet du vil analysere, og trykk «Analyser dette bildet».");
+    ui();
+  });
+  els.v.addEventListener("error", () => say("Videoen kan ikke spilles av i denne nettleseren. Prøv en annen video, eller Safari eller Chrome.", true));
+  els.v.addEventListener("timeupdate", () => { if (!S.drag) els.scrub.value = els.v.currentTime; });
+  els.v.addEventListener("play", ui); els.v.addEventListener("pause", ui);
+  function ui() {
+    const ok = S.ready && !S.busy;
+    for (const b of [els.play, els.scrub, els.back, els.fwd, els.analyze]) b.disabled = !ok;
+    els.play.textContent = els.v.paused ? "▶" : "❚❚";
+    els.play.setAttribute("aria-label", els.v.paused ? "Spill av" : "Pause");
+  }
+  const seek = t => { els.v.pause(); els.v.currentTime = clamp(t, 0, Math.max(0, S.dur - 0.02)); };
+  els.play.addEventListener("click", () => { if (els.v.paused) els.v.play().catch(() => {}); else els.v.pause(); });
+  els.scrub.addEventListener("input", () => { S.drag = true; seek(Number(els.scrub.value)); });
+  els.scrub.addEventListener("change", () => { S.drag = false; });
+  els.back.addEventListener("click", () => seek(els.v.currentTime - FRAME));
+  els.fwd.addEventListener("click", () => seek(els.v.currentTime + FRAME));
+
+  // ---- zoom og flytting i videoen: knapper, klyp med to fingre, rullehjul på PC, dra for å flytte ----
+  const Zs = { z: 1, tx: 0, ty: 0 };
+  function zApply() {
+    const W = els.stage.clientWidth, H = els.stage.clientHeight;
+    Zs.z = clamp(Zs.z, 1, 6);
+    Zs.tx = clamp(Zs.tx, W - W * Zs.z, 0); Zs.ty = clamp(Zs.ty, H - H * Zs.z, 0);
+    els.v.style.transform = Zs.z > 1.001 ? `translate(${Zs.tx}px, ${Zs.ty}px) scale(${Zs.z})` : "";
+    els.stage.classList.toggle("zin", Zs.z > 1.01);
+    for (const b of document.querySelectorAll("[data-sz]")) b.setAttribute("aria-pressed", String(Math.abs(Number(b.dataset.sz) - Zs.z) < 0.05));
+    if (!els.v.hidden && S.ready) { els.hint.hidden = false; els.hint.textContent = Zs.z > 1.01 ? "Dra for å flytte bildet · dobbelttrykk for å zoome ut" : "Klyp, rull eller dobbelttrykk for å zoome inn på løperen"; }
+  }
+  function zoomAt(cx, cy, nz) {
+    nz = clamp(nz, 1, 6);
+    const px = (cx - Zs.tx) / Zs.z, py = (cy - Zs.ty) / Zs.z;
+    Zs.z = nz; Zs.tx = cx - px * nz; Zs.ty = cy - py * nz; zApply();
+  }
+  const zReset = () => { Zs.z = 1; Zs.tx = Zs.ty = 0; zApply(); };
+  for (const b of document.querySelectorAll("[data-sz]")) b.addEventListener("click", () => zoomAt(els.stage.clientWidth / 2, els.stage.clientHeight / 2, Number(b.dataset.sz)));
+  const vpts = new Map(); let vg = null, vTap = null;
+  const vrel = e => { const r = els.stage.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+  els.stage.addEventListener("pointerdown", e => {
+    if (els.v.hidden || !S.ready || e.target.closest("label,button")) return;
+    els.stage.setPointerCapture(e.pointerId); vpts.set(e.pointerId, vrel(e));
+    if (vpts.size === 1) { const p = vrel(e); vg = { mode: "pan", x: p.x, y: p.y, tx: Zs.tx, ty: Zs.ty, moved: false }; }
+    else if (vpts.size === 2) {
+      const [a, b] = [...vpts.values()];
+      vg = { mode: "pinch", d0: Math.hypot(a.x - b.x, a.y - b.y) || 1, m: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, z0: Zs.z, tx0: Zs.tx, ty0: Zs.ty, moved: true };
+    }
+  });
+  els.stage.addEventListener("pointermove", e => {
+    if (!vpts.has(e.pointerId) || !vg) return;
+    const pt = vrel(e); vpts.set(e.pointerId, pt);
+    if (vg.mode === "pinch" && vpts.size >= 2) {
+      const [a, b] = [...vpts.values()], d = Math.hypot(a.x - b.x, a.y - b.y) || 1, m = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+      const nz = clamp(vg.z0 * d / vg.d0, 1, 6), px = (vg.m.x - vg.tx0) / vg.z0, py = (vg.m.y - vg.ty0) / vg.z0;
+      Zs.z = nz; Zs.tx = m.x - px * nz; Zs.ty = m.y - py * nz; zApply(); return;
+    }
+    const dx = pt.x - vg.x, dy = pt.y - vg.y;
+    if (Math.abs(dx) > 6 || Math.abs(dy) > 6) vg.moved = true;
+    if (vg.mode === "pan" && Zs.z > 1.01) { Zs.tx = vg.tx + dx; Zs.ty = vg.ty + dy; zApply(); }
+  });
+  const vEnd = e => {
+    if (!vpts.has(e.pointerId)) return;
+    const pt = vpts.get(e.pointerId); vpts.delete(e.pointerId);
+    if (vpts.size === 1) { const p = [...vpts.values()][0]; vg = { mode: "pan", x: p.x, y: p.y, tx: Zs.tx, ty: Zs.ty, moved: true }; return; }
+    if (vpts.size || !vg) return;
+    if (!vg.moved && e.type === "pointerup") {   // dobbelttrykk: zoom inn der du trykker, eller ut igjen
+      const now = performance.now();
+      if (vTap && now - vTap.t < 330 && Math.hypot(pt.x - vTap.x, pt.y - vTap.y) < 40) { if (Zs.z > 1.01) zReset(); else zoomAt(pt.x, pt.y, 2.5); vTap = null; }
+      else vTap = { t: now, x: pt.x, y: pt.y };
+    }
+    vg = null;
+  };
+  els.stage.addEventListener("pointerup", vEnd); els.stage.addEventListener("pointercancel", vEnd);
+  els.stage.addEventListener("wheel", e => {
+    if (els.v.hidden || !S.ready) return;
+    e.preventDefault(); const p = vrel(e); zoomAt(p.x, p.y, Zs.z * Math.exp(-e.deltaY * 0.0015));
+  }, { passive: false });
+  window.addEventListener("resize", () => { if (!els.v.hidden) zApply(); });
+  // Midten av det du ser (når du har zoomet), i koordinatene til bildet som analyseres
+  function viewCenter(frame) {
+    const v = els.v, cw = els.stage.clientWidth, ch = els.stage.clientHeight;
+    if (Zs.z < 1.05 || !v.videoWidth) return null;
+    const s = Math.min(cw / v.videoWidth, ch / v.videoHeight), ox = (cw - v.videoWidth * s) / 2, oy = (ch - v.videoHeight * s) / 2;
+    const x = ((cw / 2 - Zs.tx) / Zs.z - ox) / s, y = ((ch / 2 - Zs.ty) / Zs.z - oy) / s, k = frame.width / v.videoWidth;
+    return { x: x * k, y: y * k };
+  }
+
+  function showVideo() {
+    S.pts = null; S.picking = false;
+    els.cv.hidden = true; els.hint.hidden = true; els.v.hidden = false;
+    els.clock.hidden = false; els.ctl.hidden = false; els.ctl2.hidden = true; els.result.hidden = true;
+    zApply();
+  }
+  els.toVideo.addEventListener("click", () => { showVideo(); say(""); });
+
+  // ---- analysemodeller (MediaPipe), lastes først når de trengs. Egne kopier ved siden av siden, ellers fra nettet. ----
+  const MP_VER = "0.10.14";
+  const LOCAL = new URL("av/", document.baseURI).href;
+  const REMOTE = { lib: `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VER}/`, models: "https://storage.googleapis.com/mediapipe-models/" };
+  let mpP = null;
+  function models() {
+    if (mpP) return mpP;
+    mpP = (async () => {
+      say("Laster analysemodell … (bare første gang, ca. 17 MB)");
+      // Modellfilen hentes ved siden av siden: som den er, eller som tekst (base64) der serveren ikke leverer modellfiler
+      const asset = async (name, remote) => {
+        for (const url of [LOCAL + "models/" + name, LOCAL + "models/" + name + ".b64.txt"]) {
+          try {
+            const r = await fetch(url);
+            if (!r.ok || /html/.test(r.headers.get("content-type") || "")) continue;
+            if (url.endsWith(".txt")) {
+              const bin = atob((await r.text()).trim()), buf = new Uint8Array(bin.length);
+              for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+              return { modelAssetBuffer: buf };
+            }
+            return { modelAssetBuffer: new Uint8Array(await r.arrayBuffer()) };
+          } catch (e) {}
+        }
+        return { modelAssetPath: remote };
+      };
+      const build = async libUrl => {
+        const lib = await import(libUrl + "vision_bundle.mjs");
+        const fs = await lib.FilesetResolver.forVisionTasks(libUrl + "wasm");
+        const [pose, det] = await Promise.all([
+          asset("pose_landmarker_full.task", REMOTE.models + "pose_landmarker/pose_landmarker_full/float16/latest/pose_landmarker_full.task"),
+          asset("efficientdet_lite0.tflite", REMOTE.models + "object_detector/efficientdet_lite0/float16/latest/efficientdet_lite0.tflite")]);
+        const make = async delegate => ({
+          pose: await lib.PoseLandmarker.createFromOptions(fs, { baseOptions: { ...pose, delegate }, runningMode: "IMAGE", numPoses: 1, minPoseDetectionConfidence: 0.2, minPosePresenceConfidence: 0.2 }),
+          det: await lib.ObjectDetector.createFromOptions(fs, { baseOptions: { ...det, delegate }, runningMode: "IMAGE", categoryAllowlist: ["person"], scoreThreshold: 0.25, maxResults: 6 })
+        });
+        try { return await make("GPU"); } catch (e) { return await make("CPU"); }
+      };
+      try { return await build(LOCAL); } catch (e) { return await build(REMOTE.lib); }
+    })().catch(e => { mpP = null; throw e; });
+    return mpP;
+  }
+
+  // ---- finn løperen og leddene ----
+  const IDX = { ls: 11, rs: 12, lh: 23, rh: 24, lk: 25, rk: 26, la: 27, ra: 28 };
+  function grabFrame() {
+    const v = els.v, k = Math.min(1, 1600 / Math.max(v.videoWidth, v.videoHeight));
+    const c = Object.assign(document.createElement("canvas"), { width: Math.round(v.videoWidth * k), height: Math.round(v.videoHeight * k) });
+    c.getContext("2d").drawImage(v, 0, 0, c.width, c.height);
+    return c;
+  }
+  // Velg person: den som inneholder punktet brukeren trykket på, ellers den største
+  function choose(ds, at, near) {
+    const bb = d => d.boundingBox;
+    if (near && ds.length) {
+      const dist = d => { const b = bb(d); return Math.hypot(b.originX + b.width / 2 - near.x, b.originY + b.height / 2 - near.y) / Math.sqrt(b.width * b.height); };
+      return ds.sort((a, b) => dist(a) - dist(b))[0].boundingBox;
+    }
+    if (at) {
+      const hit = ds.filter(d => { const b = bb(d); return at.x >= b.originX && at.x <= b.originX + b.width && at.y >= b.originY && at.y <= b.originY + b.height; });
+      if (hit.length) return hit.sort((a, b) => bb(a).width * bb(a).height - bb(b).width * bb(b).height)[0].boundingBox;
+      return null;
+    }
+    return ds.length ? ds.sort((a, b) => bb(b).width * bb(b).height - bb(a).width * bb(a).height)[0].boundingBox : null;
+  }
+  async function findPose(frame, at, near) {
+    const m = await models();
+    const W = frame.width, H = frame.height;
+    let b = choose(m.det.detect(frame).detections, at, near);
+    let box;
+    if (b) box = { x: b.originX, y: b.originY, w: b.width, h: b.height };
+    else if (at) { const h = H * 0.35; box = { x: at.x - h * 0.3, y: at.y - h * 0.5, w: h * 0.6, h }; }
+    // Utsnitt rundt løperen (med god margin så skiene kommer med), forstørret før leddene finnes
+    let lm = null, crop = null;
+    if (box) {
+      const mg = 0.35, cx = box.x - box.w * mg, cy = box.y - box.h * mg, cw = box.w * (1 + 2 * mg), ch = box.h * (1 + 2 * mg);
+      const k = 640 / Math.max(cw, ch);
+      const c = Object.assign(document.createElement("canvas"), { width: Math.round(cw * k), height: Math.round(ch * k) });
+      const g = c.getContext("2d"); g.fillStyle = "#000"; g.fillRect(0, 0, c.width, c.height);
+      g.drawImage(frame, cx, cy, cw, ch, 0, 0, c.width, c.height);
+      const r = m.pose.detect(c);
+      if (r.landmarks[0]) lm = r.landmarks[0].map(p => ({ x: cx + p.x * cw, y: cy + p.y * ch, v: p.visibility ?? 1 }));
+      crop = { x: cx, y: cy, w: cw, h: ch };
+    }
+    if (!lm && !at) {   // reserve: hele bildet
+      const r = m.pose.detect(frame);
+      if (r.landmarks[0]) lm = r.landmarks[0].map(p => ({ x: p.x * W, y: p.y * H, v: p.visibility ?? 1 }));
+    }
+    if (!lm) return { box: crop || box, pts: null };
+    const pts = {};
+    for (const [k, i] of Object.entries(IDX)) pts[k] = { ...lm[i] };
+    if (!crop) { const xs = Object.values(pts).map(p => p.x), ys = Object.values(pts).map(p => p.y); crop = { x: Math.min(...xs), y: Math.min(...ys), w: Math.max(...xs) - Math.min(...xs), h: Math.max(...ys) - Math.min(...ys) }; }
+    return { box: crop, pts };
+  }
+  // Standardpunkter midt i utsnittet når leddene ikke ble funnet, så brukeren kan dra dem på plass
+  function defaultPts(box, W, H) {
+    const b = box || { x: W * 0.35, y: H * 0.2, w: W * 0.3, h: H * 0.6 };
+    const at = (fx, fy) => ({ x: b.x + b.w * fx, y: b.y + b.h * fy, v: 0 });
+    return { ls: at(0.62, 0.3), rs: at(0.38, 0.3), lh: at(0.58, 0.55), rh: at(0.42, 0.55), lk: at(0.62, 0.72), rk: at(0.38, 0.72), la: at(0.66, 0.88), ra: at(0.34, 0.88) };
+  }
+  // Ytterbeinet i svingen er som regel det som står lengst ut fra hoften sideveis
+  function guessOuter(p) {
+    const hx = (p.lh.x + p.rh.x) / 2;
+    return Math.abs(p.la.x - hx) >= Math.abs(p.ra.x - hx) ? "L" : "R";
+  }
+
+  els.analyze.addEventListener("click", () => analyze());
+  async function analyze(at) {
+    if (!S.ready || S.busy) return;
+    els.v.pause();
+    S.busy = true; ui();
+    try {
+      if (!at) { S.frame = grabFrame(); S.t = els.v.currentTime; }
+      say(at ? "Finner løperen der du trykket …" : "Finner løperen og leddene …");
+      let r;
+      try { r = await findPose(S.frame, at, at ? null : viewCenter(S.frame)); }
+      catch (e) { say("Kunne ikke laste analysemodellen. Sjekk nettforbindelsen og prøv igjen.", true); return; }
+      const W = S.frame.width, H = S.frame.height;
+      S.found = !!r.pts;
+      S.pts = r.pts || defaultPts(r.box, W, H);
+      S.outer = guessOuter(S.pts);
+      S.box = r.box; S.full = false; S.picking = false;
+      els.v.hidden = true; els.cv.hidden = false;
+      els.clock.hidden = true; els.ctl.hidden = true; els.ctl2.hidden = false; els.result.hidden = false;
+      setZoomBtn();
+      say(S.found ? "Sjekk at punktene sitter riktig. Dra et punkt for å flytte det."
+        : "Fant ikke leddene automatisk. Dra punktene på plass, eller trykk «Feil løper?» og trykk på løperen.", !S.found);
+      draw(); angles();
+    } finally { S.busy = false; ui(); }
+  }
+
+  // ---- geometri ----
+  const mid = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+  // Spiss vinkel mellom linjen a–b og det vannrette, 0–90°
+  function hor(a, b) { let d = Math.abs(Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI); return d > 90 ? 180 - d : d; }
+  // Vinkel mellom to linjer, begge regnet oppover (fra nedre til øvre punkt), 0–180°
+  function between(a1, a2, b1, b2) {
+    const up = (p, q) => { let x = q.x - p.x, y = q.y - p.y; if (y > 0) { x = -x; y = -y; } return Math.atan2(x, -y); };
+    let d = Math.abs(up(a1, a2) - up(b1, b2)) * 180 / Math.PI;
+    return d > 180 ? 360 - d : d;
+  }
+  function lines() {
+    const p = S.pts, o = S.outer === "L" ? { k: p.lk, a: p.la } : { k: p.rk, a: p.ra };
+    const hm = mid(p.lh, p.rh), sm = mid(p.ls, p.rs);
+    return {
+      leg: { a: o.a, b: o.k, deg: hor(o.a, o.k), warn: Math.min(o.a.v, o.k.v) < 0.5 },
+      body: { a: hm, b: sm, deg: hor(hm, sm), warn: Math.min(p.lh.v, p.rh.v, p.ls.v, p.rs.v) < 0.5 },
+      sh: { a: p.ls, b: p.rs, deg: hor(p.ls, p.rs), warn: Math.min(p.ls.v, p.rs.v) < 0.5 },
+      rel: between(o.a, o.k, hm, sm)
+    };
+  }
+  const handles = () => {   // punkter som kan dras: skuldre, hofter, kne og ankel på ytterbeinet
+    const L = S.outer === "L";
+    return ["ls", "rs", "lh", "rh", L ? "lk" : "rk", L ? "la" : "ra"];
+  };
+
+  // ---- visning: utsnitt rundt løperen, eller hele bildet ----
+  function region() {
+    const W = S.frame.width, H = S.frame.height;
+    if (S.full || S.picking || !S.box) return { x: 0, y: 0, w: W, h: H };
+    const cw = els.stage.clientWidth || 1, ch = els.stage.clientHeight || 1, ar = cw / ch;
+    let { x, y, w, h } = S.box;
+    const cx = x + w / 2, cy = y + h / 2;
+    h = Math.max(h, w / ar) * 1.1; w = h * ar;
+    if (w > W) { w = W; h = w / ar; } if (h > H) { h = H; w = h * ar; }
+    return { x: clamp(cx - w / 2, 0, W - w), y: clamp(cy - h / 2, 0, H - h), w, h };
+  }
+  // Tegner bildet med linjer, punkter og vinkler. Brukes både på skjermen og i bildet som lagres.
+  function render(g, R, outW, outH, u, withHandles) {
+    const k = Math.min(outW / R.w, outH / R.h), ox = (outW - R.w * k) / 2, oy = (outH - R.h * k) / 2;
+    const tx = p => ({ x: ox + (p.x - R.x) * k, y: oy + (p.y - R.y) * k });
+    g.fillStyle = "#000"; g.fillRect(0, 0, outW, outH);
+    g.drawImage(S.frame, R.x, R.y, R.w, R.h, ox, oy, R.w * k, R.h * k);
+    if (!S.pts || S.picking) return { tx, k, ox, oy };
+    const L = lines();
+    const seg = (l, col) => {
+      const a = tx(l.a), b = tx(l.b);
+      g.lineCap = "round";
+      g.strokeStyle = "rgba(0,0,0,.55)"; g.lineWidth = 6 * u; g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(b.x, b.y); g.stroke();
+      g.strokeStyle = col; g.lineWidth = 3.2 * u; g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(b.x, b.y); g.stroke();
+    };
+    seg(L.leg, COL.leg); seg(L.body, COL.body); seg(L.sh, COL.sh);
+    const placed = [];
+    const label = (l, col, text) => {
+      const a = tx(l.a), b = tx(l.b), m = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+      g.font = `700 ${15 * u}px "Barlow Condensed", "Arial Narrow", sans-serif`;
+      const tw = g.measureText(text).width, bw = tw + 14 * u, bh = 24 * u;
+      // Prøv plasser rundt midten av linjen (til siden for den), og ta den første som ikke dekker en annen etikett
+      const len = Math.hypot(b.x - a.x, b.y - a.y) || 1, nx = -(b.y - a.y) / len, ny = (b.x - a.x) / len, d = 26 * u;
+      const cands = [[nx, ny], [-nx, -ny], [nx * 1.8, ny * 1.8], [-nx * 1.8, -ny * 1.8], [nx * 2.8, ny * 2.8], [-nx * 2.8, -ny * 2.8]]
+        .map(([fx, fy]) => ({ x: clamp(m.x + fx * d - bw / 2, 4 * u, outW - bw - 4 * u), y: clamp(m.y + fy * d - bh / 2, 4 * u, outH - bh - 4 * u) }));
+      const hit = c => placed.some(q => c.x < q.x + q.w + 3 * u && q.x < c.x + bw + 3 * u && c.y < q.y + q.h + 3 * u && q.y < c.y + bh + 3 * u);
+      const { x, y } = cands.find(c => !hit(c)) || cands[0];
+      placed.push({ x, y, w: bw, h: bh });
+      g.fillStyle = "rgba(255,255,255,.94)"; g.strokeStyle = col; g.lineWidth = 2.2 * u;
+      g.beginPath(); if (g.roundRect) g.roundRect(x, y, bw, bh, 6 * u); else g.rect(x, y, bw, bh); g.fill(); g.stroke();
+      g.fillStyle = "#111"; g.textBaseline = "middle"; g.textAlign = "left"; g.fillText(text, x + 7 * u, y + bh / 2 + 1 * u);
+    };
+    label(L.leg, COL.leg, Math.round(L.leg.deg) + "°");
+    label(L.body, COL.body, Math.round(L.body.deg) + "°");
+    label(L.sh, COL.sh, Math.round(L.sh.deg) + "°");
+    if (withHandles) {
+      for (const key of handles()) {
+        const p = tx(S.pts[key]), active = S.dragKey === key;
+        g.beginPath(); g.arc(p.x, p.y, (active ? 11 : 7.5) * u, 0, Math.PI * 2);
+        g.fillStyle = active ? "rgba(255,255,255,.95)" : "rgba(255,255,255,.85)"; g.fill();
+        g.lineWidth = 2.5 * u; g.strokeStyle = S.pts[key].v < 0.5 ? "#d9a21b" : "#14202b"; g.stroke();
+      }
+    }
+    return { tx, k, ox, oy };
+  }
+  let view = null;
+  function draw() {
+    if (!S.frame) return;
+    const dpr = Math.min(3, window.devicePixelRatio || 1), cw = els.stage.clientWidth, ch = els.stage.clientHeight;
+    els.cv.width = Math.round(cw * dpr); els.cv.height = Math.round(ch * dpr);
+    const g = els.cv.getContext("2d"), R = region();
+    view = { R, ...render(g, R, els.cv.width, els.cv.height, dpr, true), dpr };
+    els.hint.hidden = false;
+    els.hint.textContent = S.picking ? "Trykk på løperen som skal analyseres" : "Dra et punkt for å flytte det";
+  }
+  window.addEventListener("resize", () => { if (!els.cv.hidden) draw(); });
+
+  function angles() {
+    if (!S.pts) return;
+    const L = lines(), f = d => Math.round(d) + "°";
+    const card = (name, deg, col, warn) => `<div class="ang${warn ? " warn" : ""}" style="--c:${col}"><b>${f(deg)}</b><span>${name}</span></div>`;
+    els.angles.innerHTML = card(`Legg, ytterbein (${S.outer === "L" ? "venstre" : "høyre"})`, L.leg.deg, COL.leg, L.leg.warn)
+      + card("Overkropp", L.body.deg, COL.body, L.body.warn)
+      + card("Skuldre", L.sh.deg, COL.sh, L.sh.warn)
+      + card("Overkropp mot legg", L.rel, "#93a3b0", L.leg.warn || L.body.warn);
+  }
+
+  // ---- dra punkter ----
+  const toFrame = e => {
+    const r = els.cv.getBoundingClientRect(), x = (e.clientX - r.left) * view.dpr, y = (e.clientY - r.top) * view.dpr;
+    return { x: view.R.x + (x - view.ox) / view.k, y: view.R.y + (y - view.oy) / view.k, sx: x, sy: y };
+  };
+  els.cv.addEventListener("pointerdown", e => {
+    if (!view || S.busy) return;
+    const f = toFrame(e);
+    if (S.picking) { analyze({ x: f.x, y: f.y }); return; }
+    let best = null, bd = 34 * view.dpr;   // trykkflate rundt hvert punkt
+    for (const key of handles()) {
+      const p = view.tx(S.pts[key]), d = Math.hypot(p.x - f.sx, p.y - f.sy);
+      if (d < bd) { bd = d; best = key; }
+    }
+    if (!best) return;
+    S.dragKey = best; S.dragOff = { x: S.pts[best].x - f.x, y: S.pts[best].y - f.y };
+    els.cv.setPointerCapture(e.pointerId); els.cv.classList.add("grab"); draw();
+  });
+  els.cv.addEventListener("pointermove", e => {
+    if (!S.dragKey) return;
+    const f = toFrame(e), p = S.pts[S.dragKey];
+    p.x = clamp(f.x + S.dragOff.x, 0, S.frame.width); p.y = clamp(f.y + S.dragOff.y, 0, S.frame.height); p.v = 1;   // flyttet av brukeren = sikkert
+    draw(); angles();
+  });
+  const end = () => { if (!S.dragKey) return; S.dragKey = null; els.cv.classList.remove("grab"); draw(); };
+  els.cv.addEventListener("pointerup", end); els.cv.addEventListener("pointercancel", end);
+
+  els.swap.addEventListener("click", () => { S.outer = S.outer === "L" ? "R" : "L"; draw(); angles(); });
+  els.repick.addEventListener("click", () => {
+    S.picking = !S.picking; els.repick.textContent = S.picking ? "Avbryt" : "Feil løper?";
+    draw(); say(S.picking ? "Trykk på løperen som skal analyseres." : "");
+  });
+  const setZoomBtn = () => { els.zoom.textContent = S.full ? "Zoom på løperen" : "Hele bildet"; els.zoom.setAttribute("aria-pressed", String(S.full)); els.repick.textContent = "Feil løper?"; };
+  els.zoom.addEventListener("click", () => { S.full = !S.full; setZoomBtn(); draw(); });
+
+  // ---- lagre bildet med vinkler ----
+  function drawLogo(g, W, u) {
+    const big = `700 ${6.2 * u}px "Barlow Condensed", "Arial Narrow", sans-serif`, small = `700 ${4.2 * u}px "Barlow Condensed", "Arial Narrow", sans-serif`;
+    const parts = [["ATHLETE", "#fff", big], ["VI", "#e2364a", big], ["EW", "#2f6fe4", big], [".no", "#fff", small]];
+    let tw = 0;
+    for (const pt of parts) { g.font = pt[2]; pt.w = g.measureText(pt[0]).width; tw += pt.w; }
+    const padX = 2.4 * u, h = 8 * u, y = 1.6 * u, x0 = W / 2 - tw / 2;
+    g.fillStyle = "rgba(0,0,0,.62)"; g.beginPath(); if (g.roundRect) g.roundRect(x0 - padX, y, tw + 2 * padX, h, 1.6 * u); else g.rect(x0 - padX, y, tw + 2 * padX, h); g.fill();
+    g.textAlign = "left"; g.textBaseline = "alphabetic";
+    let x = x0;
+    for (const pt of parts) { g.font = pt[2]; g.fillStyle = pt[1]; g.fillText(pt[0], x, y + h * 0.74); x += pt.w; }
+  }
+  async function makeImage() {
+    try { await Promise.race([document.fonts.load(`700 40px "Barlow Condensed"`), new Promise(r => setTimeout(r, 1200))]); } catch (e) {}
+    const R = region(), k = clamp(1440 / Math.max(R.w, R.h), 1, 4);
+    const W = Math.round(R.w * k), H = Math.round(R.h * k);
+    const c = Object.assign(document.createElement("canvas"), { width: W, height: H }), g = c.getContext("2d");
+    const u = Math.max(W, H) / 900;
+    render(g, R, W, H, u * 1.6, false);
+    const U = Math.min(W, H) / 100;
+    drawLogo(g, W, U);
+    // Oppsummering nederst: navn, tid i videoen og vinklene
+    const L = lines(), who = els.runner.value.trim();
+    const rows = [[`Legg ${Math.round(L.leg.deg)}°`, COL.leg], [`Overkropp ${Math.round(L.body.deg)}°`, COL.body], [`Skuldre ${Math.round(L.sh.deg)}°`, COL.sh], [`Overkropp mot legg ${Math.round(L.rel)}°`, "#fff"]];
+    g.font = `600 ${3.6 * U}px "Barlow", system-ui, sans-serif`;
+    const lh = 5 * U, head = [who, `${S.t.toFixed(2).replace(".", ",")} s`].filter(Boolean).join(" · ");
+    const bw = Math.max(...rows.map(r => g.measureText(r[0]).width), g.measureText(head).width) + 4 * U, bh = lh * (rows.length + 1) + 2 * U;
+    g.fillStyle = "rgba(0,0,0,.62)"; g.fillRect(0, H - bh, bw, bh);
+    g.textBaseline = "middle"; g.textAlign = "left";
+    g.fillStyle = "#fff"; g.fillText(head, 2 * U, H - bh + U + lh / 2);
+    rows.forEach((r, i) => { g.fillStyle = r[1]; g.fillText(r[0], 2 * U, H - bh + U + lh * (i + 1.5)); });
+    return new Promise(res => c.toBlob(res, "image/jpeg", 0.92));
+  }
+  els.save.addEventListener("click", async () => {
+    if (!S.pts) return;
+    const blob = await makeImage();
+    if (!blob) { say("Kunne ikke lage bildet.", true); return; }
+    const who = els.runner.value.trim(), day = new Date().toISOString().slice(0, 10);
+    if (who && window.avAddRoster) window.avAddRoster([who]);
+    const filename = (["Athleteview vinkler", who, day].filter(Boolean).join(" ") + ".jpg").replace(/[\\/:*?"<>|]+/g, "-");
+    const file = new File([blob], filename, { type: "image/jpeg" });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      say("Velg «Arkiver bilde» i menyen for å legge det i bilderullen.");
+      try { await navigator.share({ files: [file] }); say("Ferdig."); return; }
+      catch (e) { if (e.name === "AbortError") { say("Lagring avbrutt."); return; } }
+    }
+    if (window.avDownloads) {
+      try { await window.avDownloads.save({ filename, data: blob }); say("Bildet er lastet ned som " + filename + "."); return; }
+      catch (e) { if (e && e.code === "declined") { say("Lagring avbrutt."); return; } }
+    }
+    const a = document.createElement("a"), url = URL.createObjectURL(blob);
+    a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    say("Bildet lastes ned som " + filename + ".");
+  });
+
+  // Når fanen åpnes på nytt: tegn analysen i riktig størrelse
+  for (const b of document.querySelectorAll('.tabs button[data-view="singleView"]')) b.addEventListener("click", () => requestAnimationFrame(() => { if (!els.cv.hidden) draw(); }));
+  window.avLoadSingle = (file, runner) => load(file, runner || "");
+  ui();
+})();
+</script>
+
+<script>
+// ---- Meny og «Om Athleteview» ----
+(() => {
+  const AV_VERSION = "1.5 · 27.10.2026";
+  const btn = document.getElementById("menuBtn"), list = document.getElementById("menuList"), about = document.getElementById("about");
+  document.getElementById("aboutVer").textContent = "Versjon " + AV_VERSION;
+  const setOpen = open => { list.hidden = !open; btn.setAttribute("aria-expanded", String(open)); };
+  btn.addEventListener("click", e => { e.stopPropagation(); setOpen(list.hidden); if (!list.hidden) list.querySelector("button").focus(); });
+  document.addEventListener("click", e => { if (!list.hidden && !list.contains(e.target)) setOpen(false); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && !list.hidden) { setOpen(false); btn.focus(); } });
+  list.addEventListener("click", e => {
+    const b = e.target.closest("[data-open]"); if (!b) return;
+    setOpen(false);
+    if (b.dataset.open === "about") { about.showModal ? about.showModal() : about.setAttribute("open", ""); }
+  });
+  const close = () => { about.close ? about.close() : about.removeAttribute("open"); btn.focus(); };
+  about.querySelector(".aboutx").addEventListener("click", close);
+  // Trykk utenfor vinduet lukker det
+  about.addEventListener("click", e => { if (e.target === about) close(); });
+})();
+</script>
 </body>
 </html>
