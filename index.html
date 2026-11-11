@@ -5696,7 +5696,10 @@ const GhostCore = (() => {
   const NOISE = /teksting|undertekst|takk for at du (så|ser)|musikk|applaus|abonner|♪/i;
   const FILLER = new Set("dette er det neste løper løperen nå kjører kjøre klar ferdig go og så ja ok okei start går gå heia".split(" "));
   function guessName(text) {   // for nye løpere: de første ordene som ikke er fyllord, med stor forbokstav
-    const words = text.replace(/[^\p{L}\p{M}\s'-]+/gu, " ").split(/\s+/).filter(w => w && !FILLER.has(w.toLowerCase()));
+    if (/[()\[\]*"«»♪]/.test(text)) return "";   // talemodellen merker lyder og støy med parentes, stjerne eller anførselstegn
+    const all = text.replace(/[^\p{L}\p{M}\s'-]+/gu, " ").split(/\s+/).filter(Boolean);
+    const words = all.filter(w => !FILLER.has(w.toLowerCase()) && !/^-/.test(w));
+    if (!words.length || words.length > 2 || all.length > 4) return "";   // en hel setning er ikke et navn
     return words.slice(0, 3).map(w => w[0].toUpperCase() + w.slice(1).toLowerCase()).join(" ");
   }
 
@@ -5875,12 +5878,17 @@ const GhostCore = (() => {
       env.allowLocalModels = false;
       let lastErr = null;
       // Har den norske modellen hengt eller feilet før i denne nettleseren, brukes reserven direkte.
+      // be nettleseren beholde lagret modell (Safari kan ellers rydde den bort)
+      try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {}); } catch (e) {}
       let nbBad = false; try { nbBad = localStorage.getItem("av.asr.nb") === "bad"; } catch (e) {}
       for (const M of MODELS.filter(x => !(nbBad && /nb-whisper/.test(x.id)))) {
-        const files = {}; let doneAt = 0;
+        const files = {}; let doneAt = 0, cached = false;
+        // Ligger modellen alt lagret på enheten, vises ikke «Laster …» (den leses fra lagret kopi)
+        try { const c = await caches.open("transformers-cache"); cached = !!(await c.match(`https://huggingface.co/${M.id}/resolve/main/onnx/decoder_model_merged_quantized.onnx`)); } catch (e) {}
+        if (cached) { const t = AVL ? "Starting the speech model (stored on this device) …" : "Starter talemodellen (lagret på enheten) …"; say(t); if (note) note(t); doneAt = performance.now(); }
         try {
           const load = pipeline("automatic-speech-recognition", M.id, { dtype: M.dtype, progress_callback: d => {
-            if (d.status !== "progress" || !d.total) return;
+            if (d.status !== "progress" || !d.total || cached) return;
             files[d.file] = d;
             const all = Object.values(files), got = all.reduce((s, x) => s + x.loaded, 0), tot = all.reduce((s, x) => s + x.total, 0);
             progress(got / tot); say((AVL ? `Loading speech model … ${Math.round(got / 1048576)} MB` : `Laster talemodell … ${Math.round(got / 1048576)} MB`));
@@ -6745,7 +6753,7 @@ const GhostCore = (() => {
       if (hn) { hn.hidden = !on("nameView"); if (hn.hidden) hn.pause(); else if (!rm()) heroPlay(hn); } };
     for (const b of document.querySelectorAll(".tabs button[data-view]")) b.addEventListener("click", () => requestAnimationFrame(sync));
     sync(); }
-  const AV_VERSION = "1.9.25 · 11.11.2026";
+  const AV_VERSION = "1.9.26 · 11.11.2026";
   const btn = document.getElementById("menuBtn"), list = document.getElementById("menuList"), about = document.getElementById("about");
   document.getElementById("aboutVer").textContent = (AVL ? "Version " : "Versjon ") + AV_VERSION;
   const setOpen = open => { list.hidden = !open; btn.setAttribute("aria-expanded", String(open)); };
