@@ -3134,6 +3134,12 @@ body.zoomed { overflow: hidden; }
           </ol>
         </li>
       </ol>
+      <div id="nFolderOpts" hidden>
+        <label class="check"><input type="checkbox" id="nPerRunner"> Lag én undermappe per løper</label>
+        <p class="note">«Velg mappe» går gjennom alle videoene i mappen og lagrer kopier med løpernavn i en ny mappe, «Athleteview navngitt» med dagens dato, inne i den samme mappen. Originalene blir ikke endret.</p>
+      </div>
+      <label class="check"><input type="checkbox" id="nZoom"> Lag også en zoomet kopi av løperen</label>
+      <p class="note" id="nZoomNote" hidden>For hver video lagres også «… zoom.mp4», der utsnittet følger løperen og zoomer rolig inn. Det virker best med 4K filmet fra stativ, uten zoom og panorering. Originalen lagres som før, og det er den du bruker i Dobbel med ghost og linjer. Første gang markerer du løypa på et bilde fra videoen. Athleteview ser selv når kameraet er flyttet til et nytt sted, og ber deg da markere løypa på nytt. <button type="button" class="linkbtn" id="nCourseReset">Marker løypa på nytt</button> Den zoomede kopien har ikke lyd.</p>
       <div class="row">
         <button class="btn primary" id="nFolder" type="button" hidden>Velg mappe</button>
         <label class="btn primary file" id="nFilesBtn">Velg videoer
@@ -3141,12 +3147,6 @@ body.zoomed { overflow: hidden; }
         </label>
         <input type="file" id="nDir" webkitdirectory multiple hidden>
       </div>
-      <div id="nFolderOpts" hidden>
-        <label class="check"><input type="checkbox" id="nPerRunner"> Lag én undermappe per løper</label>
-        <p class="note">«Velg mappe» går gjennom alle videoene i mappen og lagrer kopier med løpernavn i en ny mappe, «Athleteview navngitt» med dagens dato, inne i den samme mappen. Originalene blir ikke endret.</p>
-      </div>
-      <label class="check"><input type="checkbox" id="nZoom"> Lag også en zoomet kopi av løperen</label>
-      <p class="note" id="nZoomNote" hidden>For hver video lagres også «… zoom.mp4», der utsnittet følger løperen og zoomer rolig inn. Det virker best med 4K filmet fra stativ, uten zoom og panorering. Originalen lagres som før, og det er den du bruker i Dobbel med ghost og linjer. Første gang markerer du løypa på et bilde fra videoen. Athleteview ser selv når kameraet er flyttet til et nytt sted, og ber deg da markere løypa på nytt. <button type="button" class="linkbtn" id="nCourseReset">Marker løypa på nytt</button> Den zoomede kopien har ikke lyd.</p>
       <div class="bar" id="nBar" hidden><i></i></div>
       <p class="msg" id="nMsg" role="status"></p>
       <p class="note">Talegjenkjenningen skjer på enheten din, og ingen video eller lyd lastes opp. Første gang lastes en norsk talemodell ned (ca. 185 MB). Etter det er den lagret i nettleseren.</p>
@@ -5786,19 +5786,30 @@ const GhostCore = (() => {
       const { pipeline, env } = await import(TJS);
       env.allowLocalModels = false;
       let lastErr = null;
-      for (const M of MODELS) {
-        const files = {};
+      // Har den norske modellen hengt eller feilet før i denne nettleseren, brukes reserven direkte.
+      let nbBad = false; try { nbBad = localStorage.getItem("av.asr.nb") === "bad"; } catch (e) {}
+      for (const M of (nbBad ? MODELS.slice(1) : MODELS)) {
+        const files = {}; let doneAt = 0;
         try {
-          asr = await pipeline("automatic-speech-recognition", M.id, { dtype: M.dtype, progress_callback: d => {
+          const load = pipeline("automatic-speech-recognition", M.id, { dtype: M.dtype, progress_callback: d => {
             if (d.status !== "progress" || !d.total) return;
             files[d.file] = d;
             const all = Object.values(files), got = all.reduce((s, x) => s + x.loaded, 0), tot = all.reduce((s, x) => s + x.total, 0);
             progress(got / tot); say((AVL ? `Loading speech model … ${Math.round(got / 1048576)} MB` : `Laster talemodell … ${Math.round(got / 1048576)} MB`));
             if (note) note((AVL ? `Loading speech model (first time only) … ${Math.round(got / 1048576)} MB` : `Laster talemodell (bare første gang) … ${Math.round(got / 1048576)} MB`));
+            if (got >= tot) { if (!doneAt) { doneAt = performance.now(); const t = AVL ? "Starting the speech model …" : "Starter talemodellen …"; say(t); if (note) note(t); } }
+            else doneAt = 0;
           } });
+          // vakt: er alt lastet ned, men modellen ikke klar etter 2 minutter, brukes reserven
+          let tick = 0;
+          const guard = new Promise((_, rej) => { tick = setInterval(() => { if (doneAt && performance.now() - doneAt > 120000) rej(new Error("talemodellen startet ikke")); }, 2000); });
+          try { asr = await Promise.race([load, guard]); } finally { clearInterval(tick); }
           asr.modelId = M.id;
           break;
-        } catch (e) { lastErr = e; asr = null; console.warn((AVL ? "Speech model failed:" : "Talemodell feilet:"), M.id, e); }
+        } catch (e) {
+          lastErr = e; asr = null; console.warn((AVL ? "Speech model failed:" : "Talemodell feilet:"), M.id, e);
+          if (M === MODELS[0] && !/fetch|network|load failed/i.test(String(e && e.message))) try { localStorage.setItem("av.asr.nb", "bad"); } catch (e2) {}
+        }
       }
       progress(null);
       if (!asr) throw lastErr || new Error("ingen talemodell");
@@ -5806,15 +5817,26 @@ const GhostCore = (() => {
     })().catch(e => { asrP = null; throw e; });
     return asrP;
   }
-  async function listen(audio) {
+  async function listen(audio, again) {
     let peak = 0; for (let i = 0; i < audio.length; i += 16) peak = Math.max(peak, Math.abs(audio[i]));
     if (peak < 0.02) return "";   // stille, ikke noe å høre
     const m = await getAsr();
-    const run = async x => { const out = await m(x, { language: "norwegian", task: "transcribe" });
+    // Et navn er noen få ord: høyst 32 tegn ut, og en vakt hvis modellen ikke svarer.
+    const run = async x => { let tick = 0;
+      const guard = new Promise((_, rej) => { tick = setTimeout(() => rej(new Error("talemodellen svarer ikke")), 90000); });
+      let out;
+      try { out = await Promise.race([m(x, { language: "norwegian", task: "transcribe", max_new_tokens: 32 }), guard]); }
+      catch (e) {
+        if (m.modelId === MODELS[0].id) { try { localStorage.setItem("av.asr.nb", "bad"); } catch (e2) {} asr = null; asrP = null; e.retry = true; }
+        throw e;
+      } finally { clearTimeout(tick); }
       const t = (out && out.text || "").trim().replace(/[.!?,]+$/, ""); return NOISE.test(t) ? "" : t; };
     // først bare biten der navnet sies; hører den ikke noe, prøv hele starten
-    let text = await run(audio);
-    if (!text && audio.full && audio.full !== audio) text = await run(audio.full);
+    let text = "";
+    try {
+      text = await run(audio);
+      if (!text && audio.full && audio.full !== audio) text = await run(audio.full);
+    } catch (e) { if (e.retry && !again) return listen(audio, true); throw e; }   // den norske modellen svarte ikke: prøv reserven
     return text;
   }
 
@@ -6635,7 +6657,7 @@ const GhostCore = (() => {
       if (hn) { hn.hidden = !on("nameView"); if (hn.hidden) hn.pause(); else if (!rm()) heroPlay(hn); } };
     for (const b of document.querySelectorAll(".tabs button[data-view]")) b.addEventListener("click", () => requestAnimationFrame(sync));
     sync(); }
-  const AV_VERSION = "1.9.22 · 11.11.2026";
+  const AV_VERSION = "1.9.23 · 11.11.2026";
   const btn = document.getElementById("menuBtn"), list = document.getElementById("menuList"), about = document.getElementById("about");
   document.getElementById("aboutVer").textContent = (AVL ? "Version " : "Versjon ") + AV_VERSION;
   const setOpen = open => { list.hidden = !open; btn.setAttribute("aria-expanded", String(open)); };
