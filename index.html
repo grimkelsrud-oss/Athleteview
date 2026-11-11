@@ -1983,6 +1983,10 @@ body {
 .hero { display: block; width: min(100%, 920px, 71vh); aspect-ratio: 16 / 9; margin: 0 auto; border-radius: 14px; background: #000; object-fit: cover; pointer-events: none; }
 .hero.heroimg { aspect-ratio: auto; height: auto; width: min(100%, 920px, 78vh); object-fit: contain; }
 .hero[hidden] { display: none; }
+@media (min-width: 1024px) {
+  .hero:not(.heroname):not(.heroimg) { width: min(100% - 380px, 920px, 71vh); margin-left: calc((100% - 380px - min(100% - 380px, 920px, 71vh)) / 2); margin-right: 0; }
+  .hero.heroimg { width: min(100% - 380px, 920px, 78vh); margin-left: calc((100% - 380px - min(100% - 380px, 920px, 78vh)) / 2); margin-right: 0; }
+}
 .hero.heroname { background: #fff; }
 header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 h1 { font-family: var(--display); font-weight: 700; font-size: 1.9rem; letter-spacing: .01em; margin: 0; text-transform: uppercase; }
@@ -3788,6 +3792,7 @@ const GhostCore = (() => {
       p.run.value = r.name; tag(p);
       runnerState(p, r.known ? "heard" : "check", r.known ? (AVL ? `Heard «${r.text}».` : `Hørte «${r.text}».`) : (AVL ? `Heard «${r.text}». Check the spelling.` : `Hørte «${r.text}». Sjekk stavingen.`));
     } else runnerState(p, "missing", r && r.error ? (AVL ? "Could not listen for the name. Enter who is skiing." : "Kunne ikke lytte etter navnet. Skriv inn hvem som kjører.")
+      : r && r.text ? (AVL ? `Heard «${r.text}», but found no name. Enter who is skiing.` : `Hørte «${r.text}», men fant ikke et navn. Skriv inn hvem som kjører.`)
       : (AVL ? "Could not find the name in the audio. Enter who is skiing." : "Fant ikke navnet på lyden. Skriv inn hvem som kjører."));
   }
   for (const p of [P.A, P.B]) {
@@ -5238,7 +5243,10 @@ const GhostCore = (() => {
         const P = opt.roi.map(([x, y]) => [x * W, y * H]);
         const inside = (x, y) => { let o = false; for (let a = 0, b = P.length - 1; a < P.length; b = a++) {
           const [xa, ya] = P[a], [xb, yb] = P[b]; if ((ya > y) !== (yb > y) && x < (xb - xa) * (y - ya) / (yb - ya) + xa) o = !o; } return o; };
-        for (let i = 0; i < dets.length; i++) dets[i] = dets[i].filter(d => inside(d[0] + d[2] / 2, d[1] + d[3] * 0.92));
+        // Mykt: utenfor feltet teller bare litt, så løperen følges videre når hun kommer utenfor det markerte (langt nede i bakken,
+        // eller helt nær kameraet), men en annen person utenfor blir aldri valgt foran løperen inne i feltet.
+        for (let i = 0; i < dets.length; i++) dets[i] = dets[i].map(d => { if (inside(d[0] + d[2] / 2, d[1] + d[3] * 0.92)) { d = d.slice(); d.inRoi = 1; return d; }
+          d = d.slice(); d[4] *= 0.3; return d; });
       }
       // stativ: den som står på samme sted i mer enn halve filmen (tilskuer, trener, portvakt) er ikke løperen
       { const hits = dets.map(ds => ds.map(d => dets.reduce((n, es) => n + (es.some(e => iou(d, e) > 0.6) ? 1 : 0), 0)));
@@ -5249,10 +5257,18 @@ const GhostCore = (() => {
       if (real.filter(Boolean).length < 6) return null;
       // 2) rolig kameraføring: senter og størrelse jevnes ut over hele løpet
       // Kjører flere gjennom bildet etter hverandre, brukes det lengste sammenhengende stykket (hull under ca. 0,5 s tettes)
+      // Kjører flere gjennom bildet etter hverandre, brukes den løperen som er med lengst (hull opptil 1,5 s tettes når hun er på samme sted)
       const segs = []; let cur = null;
-      for (let i = 0; i < N; i++) if (real[i]) { if (cur && i - cur[1] <= 8) cur[1] = i; else segs.push(cur = [i, i]); }
+      const near = (a, b, gap) => Math.hypot(a[0] + a[2] / 2 - b[0] - b[2] / 2, a[1] + a[3] - b[1] - b[3]) < Math.max(a[3], b[3], 12) * (1 + 0.25 * gap);
+      for (let i = 0; i < N; i++) if (real[i]) {
+        if (cur && (i - cur[1] <= 8 || (i - cur[1] <= 22 && near(tr[cur[1]], tr[i], i - cur[1])))) { cur[1] = i; cur.n++; }
+        else { segs.push(cur = [i, i]); cur.n = 1; cur.roi = 0; }
+        if (dets[i].some(d => d.inRoi && iou(d, tr[i]) > 0.5)) cur.roi++;
+      }
       if (!segs.length) return null;
-      const [first, last] = segs.reduce((a, b) => b[1] - b[0] > a[1] - a[0] ? b : a);
+      const segScore = sg => sg.n + 2 * sg.roi;
+      const [first, last] = segs.reduce((a, b) => segScore(b) > segScore(a) ? b : a);
+      window.avZoomSegs = segs.map(sg => [sg[0], sg[1], sg.n, sg.roi]);
       if (last - first < 6) return null;
       const val = (f, i) => tr[i] ? f(tr[i]) : 0, wt = tr.map((b, i) => real[i] && i >= first && i <= last ? 1 : 0);
       const X = GhostCore.whittaker(tr.map((b, i) => val(b => b[0] + b[2] / 2, i)), wt, 40);
@@ -5691,8 +5707,39 @@ const GhostCore = (() => {
   async function toMono16k(buffer) {
     const len = Math.max(1, Math.ceil(Math.min(buffer.duration, LISTEN_S) * SR));
     const off = new OfflineAudioContext(1, len, SR);
-    const src = off.createBufferSource(); src.buffer = buffer; src.connect(off.destination); src.start();
-    return (await off.startRendering()).getChannelData(0);
+    const src = off.createBufferSource(); src.buffer = buffer;
+    // stemmen ligger ca. 150–4000 Hz; vifter, vind og ski gir mest under og over
+    const hp = off.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 150; hp.Q.value = 0.7;
+    const hp2 = off.createBiquadFilter(); hp2.type = "highpass"; hp2.frequency.value = 150; hp2.Q.value = 0.7;
+    const lp = off.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 4200; lp.Q.value = 0.7;
+    src.connect(hp); hp.connect(hp2); hp2.connect(lp); lp.connect(off.destination); src.start();
+    return voicePrep((await off.startRendering()).getChannelData(0));
+  }
+  // Finn biten der noen snakker (mye sterkere enn bakgrunnen), og løft den til et jevnt nivå.
+  // Svak stemme fra en trener som står et stykke unna telefonen blir da tydeligere for talemodellen.
+  function voicePrep(a) {
+    let peak = 0; for (let i = 0; i < a.length; i++) peak = Math.max(peak, Math.abs(a[i]));
+    if (peak < 0.004) { const z = new Float32Array(a.length); z.full = z; return z; }
+    const F = 480, n = Math.floor(a.length / F), e = new Float32Array(n);
+    for (let k = 0; k < n; k++) { let q = 0; for (let i = k * F; i < (k + 1) * F; i++) q += a[i] * a[i]; e[k] = 10 * Math.log10(q / F + 1e-12); }
+    const srt = Array.from(e).sort((x, y) => x - y), floor = srt[Math.floor(n * 0.2)] || -90, top = srt[Math.floor(n * 0.97)] || floor;
+    const thr = floor + Math.max(5, (top - floor) * 0.45);
+    // første taleparti, og det som følger innen 1,2 s (fornavn + etternavn), maks 4 s
+    let s0 = -1, s1 = -1, gap = 0;
+    for (let k = 0; k < n; k++) {
+      if (e[k] > thr) { if (s0 < 0) s0 = k; s1 = k; gap = 0; }
+      else if (s0 >= 0 && ++gap > 40) break;
+      if (s0 >= 0 && k - s0 > 133) break;
+    }
+    // jevnt nivå: talepartiet løftes til ca. −20 dB RMS, uten å klippe
+    const gainFor = (x0, x1) => { let q = 0, pk = 0; for (let i = x0; i < x1; i++) { q += a[i] * a[i]; pk = Math.max(pk, Math.abs(a[i])); }
+      const rms = Math.sqrt(q / Math.max(1, x1 - x0)) || 1e-4; return Math.min(0.1 / rms, 0.95 / (pk || 1e-4), 40); };
+    const full = new Float32Array(a.length), gf = gainFor(0, a.length); for (let i = 0; i < a.length; i++) full[i] = a[i] * gf;
+    if (s0 < 0) { full.full = full; return full; }
+    const x0 = Math.max(0, (s0 - 12) * F), x1 = Math.min(a.length, (s1 + 16) * F), g = gainFor(s0 * F, (s1 + 1) * F);
+    const pad = Math.round(0.3 * SR), out = new Float32Array(x1 - x0 + 2 * pad);
+    for (let i = x0; i < x1; i++) out[pad + i - x0] = Math.max(-1, Math.min(1, a[i] * g));
+    out.full = full; return out;
   }
   async function decodeStart(file) {
     if (file.size < 300 * 1048576) {
@@ -5762,9 +5809,13 @@ const GhostCore = (() => {
   async function listen(audio) {
     let peak = 0; for (let i = 0; i < audio.length; i += 16) peak = Math.max(peak, Math.abs(audio[i]));
     if (peak < 0.02) return "";   // stille, ikke noe å høre
-    const out = await (await getAsr())(audio, { language: "norwegian", task: "transcribe" });
-    const text = (out && out.text || "").trim().replace(/[.!?,]+$/, "");
-    return NOISE.test(text) ? "" : text;
+    const m = await getAsr();
+    const run = async x => { const out = await m(x, { language: "norwegian", task: "transcribe" });
+      const t = (out && out.text || "").trim().replace(/[.!?,]+$/, ""); return NOISE.test(t) ? "" : t; };
+    // først bare biten der navnet sies; hører den ikke noe, prøv hele starten
+    let text = await run(audio);
+    if (!text && audio.full && audio.full !== audio) text = await run(audio.full);
+    return text;
   }
 
   // Brukes av Dobbel: lytter etter navnet i én video. Én video om gangen, så to valg samtidig ikke krasjer.
@@ -6584,7 +6635,7 @@ const GhostCore = (() => {
       if (hn) { hn.hidden = !on("nameView"); if (hn.hidden) hn.pause(); else if (!rm()) heroPlay(hn); } };
     for (const b of document.querySelectorAll(".tabs button[data-view]")) b.addEventListener("click", () => requestAnimationFrame(sync));
     sync(); }
-  const AV_VERSION = "1.9.20 · 11.11.2026";
+  const AV_VERSION = "1.9.22 · 11.11.2026";
   const btn = document.getElementById("menuBtn"), list = document.getElementById("menuList"), about = document.getElementById("about");
   document.getElementById("aboutVer").textContent = (AVL ? "Version " : "Versjon ") + AV_VERSION;
   const setOpen = open => { list.hidden = !open; btn.setAttribute("aria-expanded", String(open)); };
