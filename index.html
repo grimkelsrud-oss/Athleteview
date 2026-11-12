@@ -2143,6 +2143,28 @@ dialog.about .ver { color: var(--muted); font-size: .85rem; margin: 16px 0 0; }
 .check { display: inline-flex; align-items: center; gap: 8px; font-weight: 500; font-size: .92rem; min-height: 32px; cursor: pointer; }
 .check input { width: 18px; height: 18px; accent-color: var(--ink); }
 .clip .fname.saved { color: #2e9e5b; }
+/* Volum: liste med én linje per film */
+.clips { grid-template-columns: 1fr; gap: 6px; }
+.clip { grid-template-columns: 88px 1fr; align-items: center; padding: 6px 10px; gap: 12px; }
+.clip .thumb { width: 88px; aspect-ratio: 16 / 10; }
+.clip .thumb:has(video) { width: min(320px, 70vw); aspect-ratio: 16 / 9; }
+.clip:has(.thumb video) { grid-template-columns: auto 1fr; }
+@media (min-width: 700px) {
+  .clip .body { grid-template-columns: minmax(170px, 280px) 1fr; column-gap: 14px; row-gap: 2px; align-items: center; }
+  .clip .body input[type=text] { grid-column: 1; grid-row: 1 / span 2; }
+  .clip .body .status, .clip .body .fname { grid-column: 2; }
+}
+.fmode { display: grid; gap: 6px; font-size: .95rem; line-height: 1.45; }
+.fmode h3 { margin: 6px 0 0; font-size: 1rem; font-weight: 700; }
+.fmode p { margin: 0; }
+.fmode .tiphead { font-weight: 600; margin-top: 4px; }
+.fmode ol { margin: 0; padding-left: 1.4em; color: var(--muted); display: grid; gap: 3px; }
+.fmode ol li::marker { color: var(--ink); }
+p.intro { margin: 0; font-size: .95rem; line-height: 1.45; }
+.modes { display: grid; gap: 6px; }
+.step { display: grid; gap: 8px; border-top: 1px solid var(--line); padding-top: 10px; }
+.step h3 { margin: 0; font-size: 1rem; font-weight: 700; }
+.step:has(#nStart:not(:disabled)) h3, .step:has(#nSave:not([hidden])) h3 { color: var(--accent, inherit); }
 .savebar { position: sticky; bottom: 8px; box-shadow: 0 4px 18px rgba(0,0,0,.18); }
 
 /* ---- løpernavn i Dobbel ---- */
@@ -2438,16 +2460,16 @@ body.zoomed { overflow: hidden; }
         <ol><li>Bruk mobiltelefon på kamerastativ, med Bluetooth-fjernutløser.</li><li>Sett Autolås på mobilen til «Aldri».</li><li>Velg Video, med oppløsning 4K og bildefrekvens 60.</li><li>Velg en sektor i løypa med fri sikt, gjerne litt fra siden.</li><li>Zoom kameraet så hele sektoren er med.</li><li>For hver løper: trykk start, si fornavnet tydelig, og trykk stopp når løperen forlater sektoren.</li><li>Ikke zoom eller flytt kameraet underveis.</li><li>Overfør filene til en mappe på PC-en med kabel, så beholdes kvaliteten.</li></ol>
       </div></details>
       <details><summary>Hvordan navngir jeg videoene?</summary><div class="faqa">
-        <p>Trykk «Velg mappe» og velg mappen med videoene. Athleteview lytter etter navnet i starten av hvert klipp og foreslår det. Sjekk og rett navnene, og trykk «Lagre alle med navn». «Vis bare videoer uten navn» hjelper deg å finne de som mangler.</p>
+        <p>Volum har fire steg. Velg mappen med videoene (eller enkeltvideoer), velg filmemåte (Tradisjonell eller Avansert), og trykk «Start analyse». Athleteview lytter da etter navnet i starten av hvert klipp og foreslår det. Sjekk og rett navnene, og trykk «Lagre videoer». «Vis bare videoer uten navn» hjelper deg å finne de som mangler.</p>
       </div></details>
       <details><summary>Hvor havner filene?</summary><div class="faqa">
-        <p>Kopiene lagres i en ny mappe, «Athleteview navngitt» med dagens dato, inne i samme mappe. Velger du «Lag én undermappe per løper», får hver løper sin egen undermappe. Originalene blir ikke endret.</p>
+        <p>Når du trykker «Lagre videoer», velger du mappen. Både den navngitte kopien og zoomkopien lagres der. Hver løper får sin egen undermappe, med mindre du fjerner haken for «Lag én undermappe per løper». Originalene blir ikke endret.</p>
       </div></details>
       <details><summary>Hvorfor ser jeg «Velg videoer» og ikke «Velg mappe»?</summary><div class="faqa">
         <p>Mappevalg krever en nettleser som støtter det, som Chrome eller Edge på PC. I andre nettlesere kan du velge videoene én og én eller flere samtidig.</p>
       </div></details>
       <details><summary>Hva er den zoomede kopien?</summary><div class="faqa">
-        <p>Velger du «Lag også en zoomet kopi av løperen», lagres også «… zoom.mp4» for hver video. Utsnittet følger løperen og zoomer rolig inn. Kopien er i HD og har ikke lyd.</p>
+        <p>Velger du filmemåten «Avansert» i steg 2, lagres også «… zoom.mp4» for hver video. Utsnittet følger løperen og zoomer rolig inn. Kopien er i HD og har ikke lyd.</p>
       </div></details>
       <details><summary>Hvorfor bør jeg bruke 4K og stativ?</summary><div class="faqa">
         <p>Zoomen henter detaljer fra originalbildet, så 4K tåler mye mer zoom enn HD. Stativfilming uten zoom og panorering gjør at løperen kan følges rolig.</p>
@@ -2710,16 +2732,16 @@ body.zoomed { overflow: hidden; }
         <ol><li>Use a mobile phone on a tripod, with a Bluetooth remote shutter.</li><li>Set Auto-Lock on the phone to «Never».</li><li>Choose Video, with 4K resolution and 60 frames per second.</li><li>Choose a section of the course with a clear view, ideally a little from the side.</li><li>Zoom the camera so the whole section is covered.</li><li>For each skier: press start, say the first name clearly, and press stop when the skier leaves the section.</li><li>Do not zoom or move the camera while filming.</li><li>Transfer the files to a folder on the PC with a cable, so the quality is kept.</li></ol>
       </div></details>
       <details><summary>How do I name the videos?</summary><div class="faqa">
-        <p>Click «Choose folder» and pick the folder with the videos. Athleteview listens for the name at the start of each clip and suggests it. Check and correct the names, and click «Save all with names». «Show only videos without names» helps you find the ones that are missing.</p>
+        <p>Volume has four steps. Choose the folder with the videos (or single videos), choose the filming method (Traditional or Advanced), and click «Start analysis». Athleteview then listens for the name at the start of each clip and suggests it. Check and correct the names, and click «Save videos». «Show only videos without names» helps you find the ones that are missing.</p>
       </div></details>
       <details><summary>Where do the files end up?</summary><div class="faqa">
-        <p>The copies are saved in a new folder, «Athleteview named» with today's date, inside the same folder. If you choose «Make one subfolder per skier», each skier gets their own subfolder. The originals are not changed.</p>
+        <p>When you click «Save videos», you choose the folder. Both the named copy and the zoomed copy are saved there. Each skier gets their own subfolder, unless you untick «Make one subfolder per skier». The originals are not changed.</p>
       </div></details>
       <details><summary>Why do I see «Choose videos» and not «Choose folder»?</summary><div class="faqa">
         <p>Folder selection needs a browser that supports it, such as Chrome or Edge on PC. In other browsers you can choose the videos one at a time or several at once.</p>
       </div></details>
       <details><summary>What is the zoomed copy?</summary><div class="faqa">
-        <p>If you choose «Also make a zoomed copy of the skier», a «… zoom.mp4» is also saved for each video. The frame follows the skier and zooms in smoothly. The copy is in HD and has no sound.</p>
+        <p>If you choose the «Advanced» filming method in step 2, a «… zoom.mp4» is also saved for each video. The frame follows the skier and zooms in smoothly. The copy is in HD and has no sound.</p>
       </div></details>
       <details><summary>Why should I use 4K and a tripod?</summary><div class="faqa">
         <p>The zoom takes detail from the original image, so 4K handles much more zoom than HD. Tripod filming without zoom and panning lets the skier be followed smoothly.</p>
@@ -3115,51 +3137,62 @@ body.zoomed { overflow: hidden; }
   <div class="view" id="nameView" hidden>
     <section class="card">
       <h2>Volum</h2>
-      <ol class="intro">
-        <li>Tjenesten er lagd for trenere og lag som ønsker å effektivisere filming og bruk av videoer mot løpere.</li>
-        <li>Du kan nå filme mer effektivt og komfortabelt og effektivisere bruken av videofilmer mot løpere.</li>
-        <li>Denne funksjonen fungerer kun på pc, fordi den er knyttet til mappestruktur på pc.</li>
-        <li>Slik filmer du for best resultat:
-          <ol>
-            <li>Bruk mobiltelefon, på kamerastativ, med Bluetooth fjernutløser.</li>
-            <li>Innstilling Autolås: Aldri</li>
-            <li>Velg Video.</li>
-            <li>Velg oppløsning 4K og bildefrekvens 60.</li>
-            <li>Velg en sektor i løypen, der du fra kamerapunktet har fri sikt mot sektoren, og helst litt vinkel mot og fra siden mot løypen.</li>
-            <li>Zoom på kameraet slik at du dekker hele sektoren du skal filme.</li>
-            <li>For hver løper trykker du start på fjernutløseren, sier fornavnet på løperen tydelig i starten av opptaket, og trykk stopp når løperen forlater sektoren.</li>
-            <li>Ikke zoom eller beveg kamera underveis når du filmer løpere. Athleteview zoomer automatisk når denne funksjonen er valgt, og optimaliserer til ferdige videofiler, og lagrer filer med løperens navn.</li>
-            <li>Overfør filene fra filmrullen på mobilen med en kabel til en mappe på din pc (kabel beholder kvaliteten på videofilene).</li>
-            <li>Følg så beskrivelsen nedenfor.</li>
-          </ol>
-        </li>
-      </ol>
-      <div id="nFolderOpts" hidden>
-        <label class="check"><input type="checkbox" id="nPerRunner"> Lag én undermappe per løper</label>
-        <p class="note">«Velg mappe» går gjennom alle videoene i mappen og lagrer kopier med løpernavn i en ny mappe, «Athleteview navngitt» med dagens dato, inne i den samme mappen. Originalene blir ikke endret.</p>
+      <p class="intro">Volum er utviklet for trenere og lag som ønsker å effektivisere filming og bruk av videoer mot løpere. Tjenesten fungerer kun på pc, fordi den er knyttet til mappestruktur på pc.</p>
+      <div class="fmode">
+        <h3>Tradisjonell filming</h3>
+        <p>Film tradisjonelt med håndholdt kamera. Si navnet på løperen tydelig i starten av opptaket. Stå nær kameraet når du sier navnet, eller bruk en trådløs mikrofon. Kjør videofilene gjennom Volum i etterkant, og få løpernavn på videofilene og løpermapper automatisk opprettet. Videofilmer med zooming, panorering og ustødighet vil ikke fungere så bra for å lage ghost og linjeanalyser, under tjenesten Dobbel.</p>
       </div>
-      <label class="check"><input type="checkbox" id="nZoom"> Lag også en zoomet kopi av løperen</label>
-      <p class="note" id="nZoomNote" hidden>For hver video lagres også «… zoom.mp4», der utsnittet følger løperen og zoomer rolig inn. Det virker best med 4K filmet fra stativ, uten zoom og panorering. Originalen lagres som før, og det er den du bruker i Dobbel med ghost og linjer. Første gang markerer du løypa på et bilde fra videoen. Athleteview ser selv når kameraet er flyttet til et nytt sted, og ber deg da markere løypa på nytt. <button type="button" class="linkbtn" id="nCourseReset">Marker løypa på nytt</button> Den zoomede kopien har ikke lyd.</p>
+      <div class="fmode">
+        <h3>Avansert filming</h3>
+        <p>Film en sektor, komfortabelt, og lag mer avanserte analysevideoer. Med presist og likt videomateriale kan videofilene benyttes til å lage ghost videoer med linjer i tjenesten Dobbel, og fremover AI-analyser.</p>
+        <p class="tiphead">Tips om avansert videofilming for å lage ghost videoer med linjer</p>
+        <ol>
+          <li>Bruk en mobiltelefon på kamerastativ med Bluetooth-fjernutløser. Det kan filmes med håndholdt kamera, men små utslag gir upresise analyser på ghost med linjer.</li>
+          <li>Sett Autolås på mobil til Aldri (så mobiltelefonen ikke pauser), velg oppløsning 4K og bildefrekvens 60.</li>
+          <li>Velg en sektor i løypen som du har fri sikt til fra kameraet. Plasser helst kameraet litt på skrå mot løypen, slik at du filmer både forfra og fra siden.</li>
+          <li>Still inn zoomen slik at hele sektoren du skal filme, er med i bildet.</li>
+          <li>For hver løper: Trykk start på fjernutløseren, og si løperens fornavn tydelig i starten av opptaket. Stå nær telefonen når du sier navnet, eller bruk en trådløs mikrofon. Trykk stopp når løperen forlater sektoren.</li>
+          <li>Ikke zoom eller panorer kameraet mens du filmer løperne. Athleteview optimaliserer opptakene til ferdige videofiler som originalfil og eventuelt ferdig zoomet, og lagrer dem med løperens navn.</li>
+          <li>Bruk kabel til å overføre videoene fra filmrullen på mobilen til en mappe på pc-en. Da beholder du 4K-kvaliteten på videofilene.</li>
+        </ol>
+      </div>
+      <div class="step"><h3>1. Velg videoer</h3>
       <div class="row">
-        <button class="btn primary" id="nFolder" type="button" hidden>Velg mappe</button>
-        <label class="btn primary file" id="nFilesBtn">Velg videoer
+        <button class="btn primary" id="nFolder" type="button">Velg mappe</button>
+        <label class="btn primary file" id="nFilesBtn" hidden>Velg videoer
           <input type="file" id="nFiles" accept="video/*" multiple>
         </label>
         <input type="file" id="nDir" webkitdirectory multiple hidden>
       </div>
-      <div class="bar" id="nBar" hidden><i></i></div>
-      <p class="msg" id="nMsg" role="status"></p>
+      <p class="note">Gå til mappen med videoene, og merk alle (Ctrl+A) eller bare de du vil ha med. De vises i lista nederst.</p></div>
+      <div class="step"><h3>2. Velg filmemåte</h3>
+      <div class="modes" role="radiogroup">
+        <label class="check"><input type="radio" name="nMode" id="nModeTrad" value="trad" checked> Tradisjonell: navn på videoene og en mappe per løper.</label>
+        <label class="check"><input type="radio" name="nMode" id="nModeAdv" value="adv"> Avansert (filmet fra stativ): i tillegg en zoomet kopi av løperen.</label>
+      </div>
+      <input type="checkbox" id="nZoom" hidden>
+      <p class="note" id="nZoomNote" hidden>For hver video lagres også «… zoom.mp4», der utsnittet følger løperen og zoomer rolig inn. Det virker best med 4K filmet fra stativ, uten zoom og panorering. Originalen lagres som før, og det er den du bruker i Dobbel med ghost og linjer. Første gang markerer du løypa på et bilde fra videoen. Athleteview ser selv når kameraet er flyttet til et nytt sted, og ber deg da markere løypa på nytt. <button type="button" class="linkbtn" id="nCourseReset">Marker løypa på nytt</button> Den zoomede kopien har ikke lyd.</p>
+      <div id="nFolderOpts" hidden>
+        <label class="check"><input type="checkbox" id="nPerRunner" checked> Lag én undermappe per løper</label>
+      </div></div>
+      <div class="step"><h3>3. Start analyse</h3>
+      <p class="note">Athleteview lytter etter løpernavnet i starten av hver video, og lager zoomkopiene ved avansert filming.</p>
       <p class="note">Talegjenkjenningen skjer på enheten din, og ingen video eller lyd lastes opp. Første gang lastes en talemodell ned (ca. 80 MB). Etter det er den lagret i nettleseren.</p>
-    </section>
-    <div class="clips" id="clips"></div>
-    <datalist id="roster"></datalist>
-    <section class="card savebar" id="nSave" hidden>
+      <div class="row"><button class="btn primary" id="nStart" type="button" disabled>Start analyse</button></div>
+      <div class="bar" id="nBar" hidden><i></i></div>
+      <p class="msg" id="nMsg" role="status"></p></div>
+      <div class="step"><h3>4. Lagre videoer</h3>
+      <p class="note">Sjekk navnene i lista under, og trykk «Lagre videoer». Da velger du mappen. Der lagres en kopi av hver video med løpernavn, og zoomkopien ved avansert filming. Originalene blir ikke endret.</p>
+      <div id="nSave" hidden>
       <div class="row">
-        <button class="btn primary" id="nSaveAll" type="button">Lagre alle med navn</button>
+        <button class="btn primary" id="nSaveAll" type="button">Lagre videoer</button>
         <label class="check"><input type="checkbox" id="nOnlyMissing"> Vis bare videoer uten navn</label>
       </div>
       <p class="note" id="nSaveNote"></p>
+      </div></div>
     </section>
+    <div class="clips" id="clips"></div>
+    <datalist id="roster"></datalist>
   </div>
 </div>
 
@@ -3180,7 +3213,7 @@ body.zoomed { overflow: hidden; }
     });
   }
   if (!AVL) return;
-  const M = {"Dobbel": "Double", "Enkel": "Single", "Volum": "Volume", "Om Athleteview": "About Athleteview", "Tips om filming": "Filming tips", "Ofte stilte spørsmål": "Frequently asked questions", "Athleteview er en tjeneste som er utviklet for å forenkle videoanalyse av alpinister.": "Athleteview is a service developed to make video analysis of alpine skiers simpler.", "All analyse og lagring av video- og bildemateriale skjer lokalt på din enhet, som kan være en mobiltelefon, nettbrett eller PC.": "All analysis and storage of video and images happens locally on your device, which can be a mobile phone, tablet or PC.", "Fanen Volum kan kun brukes fra PC, da denne funksjonen er knyttet til PC-ens mappestruktur.": "The Volume tab can only be used on a PC, because this feature is tied to the PC's folder structure.", "Tjenesten er gratis å bruke i en pilotperiode mot brukerregistrering.": "The service is free to use during a pilot period in return for user registration.", "Gi gjerne innspill om feil og forbedringer til utvikler på:": "Feedback about bugs and improvements is welcome. Contact the developer at:", "Marker løypa": "Mark the course", "Klikk rundt den delen av løypa der løperne kjører, minst tre punkter. Ta med hele sektoren fra topp til bunn, men ikke naboløyper, heis eller publikum. Bare personer inne i feltet kan bli valgt som løper i den zoomede kopien.": "Click around the part of the course where the skiers ski, at least three points. Include the whole section from top to bottom, but not neighbouring courses, lifts or spectators. Only people inside the area can be chosen as the skier in the zoomed copy.", "Ferdig": "Done", "Angre punkt": "Undo point", "Start på nytt": "Start over", "Bruk hele bildet": "Use the whole frame", "Avbryt": "Cancel", "Kun på PC": "PC only", "Vi teller anonymt besøk og bruk av funksjonene med Umami, som ikke bruker informasjonskapsler og ikke lagrer personopplysninger. Videoer og bilder forlater aldri enheten din.": "We count visits and feature use anonymously with Umami, which uses no cookies and stores no personal data. Videos and images never leave your device.", "Funksjonaliteten VOLUM kan kun brukes fra pc, fordi den er knyttet til mappestruktur på pc.": "The VOLUME feature can only be used on a PC, because it is tied to the folder structure on the PC.", "Med noen enkle grep blir analysene, ghost-løperen og linjene mye mer presise.": "A few simple steps make the analyses, the ghost skier and the lines much more precise.", "Videoformater som støttes": "Supported video formats", "MP4 og MOV fra mobil og kamera, også WebM.": "MP4 and MOV from phones and cameras, also WebM.", "HD (1080p) og 4K. 4K gir best resultat, fordi videoen kan zoomes mer inn på løperne (ca. 5× i 4K mot ca. 2,5× i HD).": "HD (1080p) and 4K. 4K gives the best result, because the video can zoom further in on the skiers (about 5× in 4K versus about 2.5× in HD).", "Videoer i HEVC-format (iPhone «Høy effektivitet») kan av og til ikke spilles av på PC. Velg da «Mest kompatibel» på iPhone under Innstillinger › Kamera › Formater.": "Videos in HEVC format (iPhone «High Efficiency») sometimes cannot be played on a PC. Then choose «Most Compatible» on the iPhone under Settings › Camera › Formats.", "Kameraplassering": "Camera position", "Filming med vinkel mot underlaget forfra gir best resultat.": "Filming from the front, at an angle to the slope, gives the best result.", "Stå litt på siden av løypa og gjerne litt høyt, så svingene vises som buer og ikke legger seg oppå hverandre.": "Stand a little to the side of the course and preferably a little high, so the turns appear as arcs and do not stack on top of each other.", "Film begge løperne fra samme sted. Ghost og linjer bruker bakgrunnen (porter, nett og terreng) til å legge løpene oppå hverandre.": "Film both skiers from the same spot. Ghost and lines use the background (gates, nets and terrain) to lay the runs on top of each other.", "Under filmingen": "While filming", "Bruk stativ eller hold kameraet så stille som mulig. Unngå raske panoreringer og zoom underveis.": "Use a tripod or hold the camera as still as possible. Avoid fast panning and zooming while filming.", "Løperen bør fylle minst en tidel av bildehøyden. Er løperen svært liten, blir linjene mindre presise.": "The skier should fill at least a tenth of the frame height. If the skier is very small, the lines are less precise.", "Lås fokus og lys før start (på iPhone: hold fingeren på skjermen til «AE/AF-lås» vises).": "Lock focus and exposure before the start (on iPhone: hold your finger on the screen until «AE/AF Lock» appears).", "Start filmen før løperen kommer inn i bildet, og stopp når løperen har passert.": "Start recording before the skier enters the frame, and stop when the skier has passed.", "Velg video fra kamerarullen": "Choose video from camera roll", "Velg video fra mappe": "Choose video from folder", "Første løper": "First skier", "Andre løper": "Second skier", "Bytt video": "Change video", "← dra →": "← drag →", "⤢ Forstørr": "⤢ Enlarge", "‹ bilde": "‹ frame", "bilde ›": "frame ›", "Velg hastighet": "Choose speed", "Velg to videoer": "Choose two videos", "fra samme løype. Si løperens navn høyt når du starter opptaket, så fylles navnet inn automatisk.": "from the same course. Say the skier's name out loud when you start recording, and the name is filled in automatically.", "Dra sidelengs på hver video": "Drag sideways on each video", "til begge løperne er like langt, for eksempel ut av start eller i samme port. Der du stiller dem likt, starter analysevideoen. Trykk": "until both skiers are at the same point, for example out of the start or at the same gate. The analysis video starts where you line them up. Tap", "for å se én video i stort format og finjustere.": "to see one video in large format and fine-tune.", "Trykk play": "Tap play", "for å se løperne kjøre med hverandre, og hvor differanser skjer.": "to watch the skiers race each other, and where the differences happen.", "Lag analysevideoen": "Make the analysis video", ", side om side eller som ghost, og lagre den. Løpernavnene og Athleteview-logoen kommer med i videoen.": ", side by side or as a ghost, and save it. The skiers' names and the Athleteview logo are included in the video.", "På PC: slipp videofiler rett på feltene. Mellomrom spiller av, piltastene flytter ett bilde, dobbeltklikk på en video forstørrer den.": "On PC: drop video files straight onto the fields. Space plays, the arrow keys move one frame, double-click a video to enlarge it.", "Løpere": "Skiers", "Løper A": "Skier A", "Løper B": "Skier B", "Velg en video først.": "Choose a video first.", "Lagre analysen": "Save the analysis", "Side om side": "Side by side", "Med linjer (vis linjevalget til begge løperne)": "With lines (show both skiers' lines)", "Tittel på analysevideoen (valgfritt)": "Title of the analysis video (optional)", "Lag analysevideo": "Make analysis video", "Stopp her": "Stop here", "Ghost:": "Ghost:", "Løper B legges inn i bildet til A, der B faktisk var i løypa i samme øyeblikk, og bildet zoomer inn på løperne. Begge videoene må være filmet fra samme sted, og startpunktet bør settes i starten. Før analysen trykker du på løper A og løper B i startbildet. Med linjer tegnes sporet etter skiene til A (rød) og B (blå) de siste 3 sekundene. Det tar gjerne 1–2 minutter. Alt skjer på enheten din, ingenting lastes opp.": "Skier B is placed into A's video, where B actually was on the course at the same moment, and the view zooms in on the skiers. Both videos must be filmed from the same spot, and the start point should be set at the start. Before the analysis, you tap skier A and skier B in the start frame. With lines, the tracks of A's (red) and B's (blue) skis are drawn for the last 3 seconds. It usually takes 1–2 minutes. Everything happens on your device, nothing is uploaded.", "Videoen lages fra startpunktet i valgt hastighet, vanligvis på noen sekunder. La siden være åpen til den er ferdig. Alt skjer på telefonen din, ingenting lastes opp.": "The video is made from the start point at the chosen speed, usually in a few seconds. Leave the page open until it is finished. Everything happens on your phone, nothing is uploaded.", "Lagre video": "Save video", "Lager video …": "Making video …", "Trykk på løper A": "Tap skier A", "Det kan være flere løpere i bildet. Trykk på løperen som skal analyseres, så følger ghosten og linjene riktig person. Du kan ikke gå videre før både A og B er bekreftet.": "There may be several skiers in the frame. Tap the skier to be analysed, so the ghost and the lines follow the right person. You cannot continue until both A and B are confirmed.", "‹ Tilbake til A": "‹ Back to A", "Bekreft løper A": "Confirm skier A", "0,00 s": "0.00 s", "← dra her for å finjustere →": "← drag here to fine-tune →", "« ½ s": "« ½ s", "½ s »": "½ s »", "Én løper, vinkler i svingen": "One skier, angles in the turn", "Analyser dette bildet": "Analyse this frame", "‹ Tilbake til video": "‹ Back to video", "Bytt ytterbein": "Switch outside leg", "Feil løper?": "Wrong skier?", "Hele bildet": "Whole frame", "Velg en video": "Choose a video", "av én løper, helst filmet forfra eller bakfra i svingen.": "of one skier, preferably filmed from the front or from behind in the turn.", "Stopp på bildet": "Stop on the frame", "du vil se på, med pil-knappene eller ved å dra i tidslinjen.": "you want to look at, with the arrow buttons or by dragging the timeline.", "Trykk «Analyser dette bildet».": "Tap «Analyse this frame».", "Athleteview finner løperen og leddene og tegner vinklene.": "Athleteview finds the skier and the joints and draws the angles.", "Sjekk punktene.": "Check the points.", "Sitter et punkt feil, drar du det på plass. Vinklene oppdateres med en gang.": "If a point is wrong, drag it into place. The angles update straight away.", "Lagre bildet": "Save the image", "med vinklene til bilderullen eller en mappe.": "with the angles to the camera roll or a folder.", "Vinkler": "Angles", "Legg, overkropp og skuldre måles mot det vannrette i bildet. Hold telefonen rett når du filmer. «Overkropp mot legg» påvirkes ikke av hvordan telefonen holdes.": "Leg, upper body and shoulders are measured against the horizontal in the image. Hold the phone straight when you film. «Upper body vs leg» is not affected by how the phone is held.", "Løper (valgfritt)": "Skier (optional)", "Lagre bilde": "Save image", "Analysen skjer på enheten din, og ingen video eller bilder lastes opp. Første gang lastes en analysemodell ned (ca. 17 MB).": "The analysis happens on your device, and no video or images are uploaded. The first time, an analysis model is downloaded (about 17 MB).", "Tjenesten er lagd for trenere og lag som ønsker å effektivisere filming og bruk av videoer mot løpere.": "The service is made for coaches and teams who want to make filming and the use of videos with athletes more efficient.", "Du kan nå filme mer effektivt og komfortabelt og effektivisere bruken av videofilmer mot løpere.": "You can now film more efficiently and comfortably, and make the use of videos with athletes more efficient.", "Denne funksjonen fungerer kun på pc, fordi den er knyttet til mappestruktur på pc.": "This feature only works on a PC, because it is tied to the folder structure on the PC.", "Slik filmer du for best resultat:": "How to film for the best result:", "Bruk mobiltelefon, på kamerastativ, med Bluetooth fjernutløser.": "Use a mobile phone on a tripod, with a Bluetooth remote shutter.", "Innstilling Autolås: Aldri": "Setting Auto-Lock: Never", "Velg Video.": "Choose Video.", "Velg oppløsning 4K og bildefrekvens 60.": "Choose 4K resolution and 60 frames per second.", "Velg en sektor i løypen, der du fra kamerapunktet har fri sikt mot sektoren, og helst litt vinkel mot og fra siden mot løypen.": "Choose a section of the course where you have a clear view of the section from the camera position, preferably at a slight angle and from the side of the course.", "Zoom på kameraet slik at du dekker hele sektoren du skal filme.": "Zoom the camera so you cover the whole section you are filming.", "For hver løper trykker du start på fjernutløseren, sier fornavnet på løperen tydelig i starten av opptaket, og trykk stopp når løperen forlater sektoren.": "For each skier, press start on the remote shutter, say the skier's first name clearly at the start of the recording, and press stop when the skier leaves the section.", "Ikke zoom eller beveg kamera underveis når du filmer løpere. Athleteview zoomer automatisk når denne funksjonen er valgt, og optimaliserer til ferdige videofiler, og lagrer filer med løperens navn.": "Do not zoom or move the camera while filming skiers. Athleteview zooms automatically when this option is chosen, optimises into finished video files, and saves the files with the skier's name.", "Overfør filene fra filmrullen på mobilen med en kabel til en mappe på din pc (kabel beholder kvaliteten på videofilene).": "Transfer the files from the camera roll on the phone with a cable to a folder on your PC (a cable keeps the quality of the video files).", "Følg så beskrivelsen nedenfor.": "Then follow the steps below.", "Velg mappe": "Choose folder", "Velg videoer": "Choose videos", "Lag én undermappe per løper": "Make one subfolder per skier", "«Velg mappe» går gjennom alle videoene i mappen og lagrer kopier med løpernavn i en ny mappe, «Athleteview navngitt» med dagens dato, inne i den samme mappen. Originalene blir ikke endret.": "«Choose folder» goes through all the videos in the folder and saves copies with the skiers' names in a new folder, «Athleteview named» with today's date, inside the same folder. The originals are not changed.", "Lag også en zoomet kopi av løperen": "Also make a zoomed copy of the skier", "For hver video lagres også «… zoom.mp4», der utsnittet følger løperen og zoomer rolig inn. Det virker best med 4K filmet fra stativ, uten zoom og panorering. Originalen lagres som før, og det er den du bruker i Dobbel med ghost og linjer. Første gang markerer du løypa på et bilde fra videoen. Athleteview ser selv når kameraet er flyttet til et nytt sted, og ber deg da markere løypa på nytt.": "For each video, a «… zoom.mp4» is also saved, where the frame follows the skier and zooms in smoothly. It works best with 4K filmed from a tripod, without zoom and panning. The original is saved as before, and that is the one you use in Double with ghost and lines. The first time, you mark the course on a frame from the video. Athleteview notices by itself when the camera has been moved to a new spot, and then asks you to mark the course again.", "Marker løypa på nytt": "Mark the course again", "Den zoomede kopien har ikke lyd.": "The zoomed copy has no sound.", "Talegjenkjenningen skjer på enheten din, og ingen video eller lyd lastes opp. Første gang lastes en talemodell ned (ca. 80 MB). Etter det er den lagret i nettleseren.": "Speech recognition happens on your device, and no video or sound is uploaded. The first time, a speech model is downloaded (about 80 MB). After that it is stored in the browser.", "Lagre alle med navn": "Save all with names", "Vis bare videoer uten navn": "Show only videos without names", "Visning": "View", "Meny": "Menu", "Eksempel på analysevideo med ghost og linjer": "Example of an analysis video with ghost and lines", "Eksempel på vinkelanalyse i Enkel: legg, overkropp og skuldre": "Example of angle analysis in Single: leg, upper body and shoulders", "Videoer fra mobilen legges i en mappe og navngis på PC-en": "Videos from the phone are put in a folder and named on the PC", "Lukk": "Close", "Ett bilde tilbake for A": "One frame back for A", "Forstørr video A": "Enlarge video A", "Ett bilde frem for A": "One frame forward for A", "Ett bilde tilbake for B": "One frame back for B", "Forstørr video B": "Enlarge video B", "Ett bilde frem for B": "One frame forward for B", "Spill av": "Play", "Felles tidslinje": "Shared timeline", "Ett bilde tilbake for begge": "One frame back for both", "Ett bilde frem for begge": "One frame forward for both", "Navn på løper A": "Name of skier A", "Navn på løper B": "Name of skier B", "Type analysevideo": "Type of analysis video", "F.eks. Storslalåm Hafjell": "E.g. Giant slalom Hafjell", "Forstørret video": "Enlarged video", "Spol i denne videoen": "Scrub this video", "Finjuster startpunkt, dra sidelengs": "Fine-tune the start point, drag sideways", "Et halvt sekund tilbake": "Half a second back", "Ett bilde tilbake": "One frame back", "Ett bilde frem": "One frame forward", "Et halvt sekund frem": "Half a second forward", "Tidslinje": "Timeline", "Navn på løperen": "Name of the skier", "Sammenlign to alpinløpere side om side. Velg to videoer, synk startpunktet og lagre som én video.": "Compare two alpine skiers side by side. Choose two videos, sync the start point and save as one video.", "Trykk på et spørsmål for å se svaret.": "Tap a question to see the answer."};
+  const M = {"Gå til mappen med videoene, og merk alle (Ctrl+A) eller bare de du vil ha med. De vises i lista nederst.": "Go to the folder with the videos, and select all of them (Ctrl+A) or just the ones you want. They are shown in the list at the bottom.", "Volum er utviklet for trenere og lag som ønsker å effektivisere filming og bruk av videoer mot løpere. Tjenesten fungerer kun på pc, fordi den er knyttet til mappestruktur på pc.": "Volume is made for coaches and teams who want to film more efficiently and make better use of videos with their skiers. It only works on a computer, because it uses the folders on your computer.", "Tradisjonell filming": "Traditional filming", "Film tradisjonelt med håndholdt kamera. Si navnet på løperen tydelig i starten av opptaket. Stå nær kameraet når du sier navnet, eller bruk en trådløs mikrofon. Kjør videofilene gjennom Volum i etterkant, og få løpernavn på videofilene og løpermapper automatisk opprettet. Videofilmer med zooming, panorering og ustødighet vil ikke fungere så bra for å lage ghost og linjeanalyser, under tjenesten Dobbel.": "Film the usual way with a handheld camera. Say the skier's name clearly at the start of the recording. Stand close to the camera when you say the name, or use a wireless microphone. Run the video files through Volume afterwards, and get the skiers' names on the files and a folder per skier made automatically. Videos with zooming, panning and shaky footage do not work as well for ghost and line analysis in Double.", "Avansert filming": "Advanced filming", "Film en sektor, komfortabelt, og lag mer avanserte analysevideoer. Med presist og likt videomateriale kan videofilene benyttes til å lage ghost videoer med linjer i tjenesten Dobbel, og fremover AI-analyser.": "Film one section of the course comfortably, and make more advanced analysis videos. With precise and consistent footage, the video files can be used to make ghost videos with lines in Double, and in the future for AI analysis.", "Tips om avansert videofilming for å lage ghost videoer med linjer": "Tips for advanced filming to make ghost videos with lines", "Bruk en mobiltelefon på kamerastativ med Bluetooth-fjernutløser. Det kan filmes med håndholdt kamera, men små utslag gir upresise analyser på ghost med linjer.": "Use a phone on a tripod with a Bluetooth remote shutter. You can film handheld, but small movements make the ghost and line analysis less precise.", "Sett Autolås på mobil til Aldri (så mobiltelefonen ikke pauser), velg oppløsning 4K og bildefrekvens 60.": "Set Auto-Lock on the phone to Never (so the phone does not pause), and choose 4K resolution at 60 frames per second.", "Velg en sektor i løypen som du har fri sikt til fra kameraet. Plasser helst kameraet litt på skrå mot løypen, slik at du filmer både forfra og fra siden.": "Choose a section of the course with a clear view from the camera. Preferably place the camera at a slight angle to the course, so you film both from the front and from the side.", "Still inn zoomen slik at hele sektoren du skal filme, er med i bildet.": "Set the zoom so the whole section you will film is in the picture.", "For hver løper: Trykk start på fjernutløseren, og si løperens fornavn tydelig i starten av opptaket. Stå nær telefonen når du sier navnet, eller bruk en trådløs mikrofon. Trykk stopp når løperen forlater sektoren.": "For each skier: press start on the remote, and say the skier's first name clearly at the start of the recording. Stand close to the phone when you say the name, or use a wireless microphone. Press stop when the skier leaves the section.", "Ikke zoom eller panorer kameraet mens du filmer løperne. Athleteview optimaliserer opptakene til ferdige videofiler som originalfil og eventuelt ferdig zoomet, og lagrer dem med løperens navn.": "Do not zoom or pan the camera while filming the skiers. Athleteview turns the recordings into finished video files, as the original and optionally zoomed, and saves them with the skier's name.", "Bruk kabel til å overføre videoene fra filmrullen på mobilen til en mappe på pc-en. Da beholder du 4K-kvaliteten på videofilene.": "Use a cable to copy the videos from the phone's camera roll to a folder on the computer. That keeps the 4K quality of the video files.", "2. Velg filmemåte": "2. Choose filming method", "Tradisjonell: navn på videoene og en mappe per løper.": "Traditional: names on the videos and a folder per skier.", "Avansert (filmet fra stativ): i tillegg en zoomet kopi av løperen.": "Advanced (filmed from a tripod): also a zoomed copy of the skier.", "Athleteview lytter etter løpernavnet i starten av hver video, og lager zoomkopiene ved avansert filming.": "Athleteview listens for the skier's name at the start of each video, and makes the zoomed copies for advanced filming.", "Sjekk navnene i lista under, og trykk «Lagre videoer». Da velger du mappen. Der lagres en kopi av hver video med løpernavn, og zoomkopien ved avansert filming. Originalene blir ikke endret.": "Check the names in the list below, and click «Save videos». You then choose the folder. A copy of each video with the skier's name is saved there, and the zoomed copy for advanced filming. The originals are not changed.", "1. Velg videoer": "1. Choose videos", "Videoene du velger, vises i lista nederst.": "The videos you choose are shown in the list at the bottom.", "2. Velg hva som skal lages": "2. Choose what to make", "3. Start analyse": "3. Start analysis", "Start analyse": "Start analysis", "Athleteview lytter etter løpernavnet i starten av hver video, og lager zoomkopiene hvis du har valgt det.": "Athleteview listens for the skier's name at the start of each video, and makes the zoomed copies if you chose that.", "4. Lagre videoer": "4. Save videos", "Lagre videoer": "Save videos", "Sjekk navnene i lista under, og trykk «Lagre videoer». Da velger du mappen. Der lagres en kopi av hver video med løpernavn, og zoomkopien hvis du har valgt den. Originalene blir ikke endret.": "Check the names in the list below, and click «Save videos». You then choose the folder. A copy of each video with the skier's name is saved there, and the zoomed copy if you chose it. The originals are not changed.", "Dobbel": "Double", "Enkel": "Single", "Volum": "Volume", "Om Athleteview": "About Athleteview", "Tips om filming": "Filming tips", "Ofte stilte spørsmål": "Frequently asked questions", "Athleteview er en tjeneste som er utviklet for å forenkle videoanalyse av alpinister.": "Athleteview is a service developed to make video analysis of alpine skiers simpler.", "All analyse og lagring av video- og bildemateriale skjer lokalt på din enhet, som kan være en mobiltelefon, nettbrett eller PC.": "All analysis and storage of video and images happens locally on your device, which can be a mobile phone, tablet or PC.", "Fanen Volum kan kun brukes fra PC, da denne funksjonen er knyttet til PC-ens mappestruktur.": "The Volume tab can only be used on a PC, because this feature is tied to the PC's folder structure.", "Tjenesten er gratis å bruke i en pilotperiode mot brukerregistrering.": "The service is free to use during a pilot period in return for user registration.", "Gi gjerne innspill om feil og forbedringer til utvikler på:": "Feedback about bugs and improvements is welcome. Contact the developer at:", "Marker løypa": "Mark the course", "Klikk rundt den delen av løypa der løperne kjører, minst tre punkter. Ta med hele sektoren fra topp til bunn, men ikke naboløyper, heis eller publikum. Bare personer inne i feltet kan bli valgt som løper i den zoomede kopien.": "Click around the part of the course where the skiers ski, at least three points. Include the whole section from top to bottom, but not neighbouring courses, lifts or spectators. Only people inside the area can be chosen as the skier in the zoomed copy.", "Ferdig": "Done", "Angre punkt": "Undo point", "Start på nytt": "Start over", "Bruk hele bildet": "Use the whole frame", "Avbryt": "Cancel", "Kun på PC": "PC only", "Vi teller anonymt besøk og bruk av funksjonene med Umami, som ikke bruker informasjonskapsler og ikke lagrer personopplysninger. Videoer og bilder forlater aldri enheten din.": "We count visits and feature use anonymously with Umami, which uses no cookies and stores no personal data. Videos and images never leave your device.", "Funksjonaliteten VOLUM kan kun brukes fra pc, fordi den er knyttet til mappestruktur på pc.": "The VOLUME feature can only be used on a PC, because it is tied to the folder structure on the PC.", "Med noen enkle grep blir analysene, ghost-løperen og linjene mye mer presise.": "A few simple steps make the analyses, the ghost skier and the lines much more precise.", "Videoformater som støttes": "Supported video formats", "MP4 og MOV fra mobil og kamera, også WebM.": "MP4 and MOV from phones and cameras, also WebM.", "HD (1080p) og 4K. 4K gir best resultat, fordi videoen kan zoomes mer inn på løperne (ca. 5× i 4K mot ca. 2,5× i HD).": "HD (1080p) and 4K. 4K gives the best result, because the video can zoom further in on the skiers (about 5× in 4K versus about 2.5× in HD).", "Videoer i HEVC-format (iPhone «Høy effektivitet») kan av og til ikke spilles av på PC. Velg da «Mest kompatibel» på iPhone under Innstillinger › Kamera › Formater.": "Videos in HEVC format (iPhone «High Efficiency») sometimes cannot be played on a PC. Then choose «Most Compatible» on the iPhone under Settings › Camera › Formats.", "Kameraplassering": "Camera position", "Filming med vinkel mot underlaget forfra gir best resultat.": "Filming from the front, at an angle to the slope, gives the best result.", "Stå litt på siden av løypa og gjerne litt høyt, så svingene vises som buer og ikke legger seg oppå hverandre.": "Stand a little to the side of the course and preferably a little high, so the turns appear as arcs and do not stack on top of each other.", "Film begge løperne fra samme sted. Ghost og linjer bruker bakgrunnen (porter, nett og terreng) til å legge løpene oppå hverandre.": "Film both skiers from the same spot. Ghost and lines use the background (gates, nets and terrain) to lay the runs on top of each other.", "Under filmingen": "While filming", "Bruk stativ eller hold kameraet så stille som mulig. Unngå raske panoreringer og zoom underveis.": "Use a tripod or hold the camera as still as possible. Avoid fast panning and zooming while filming.", "Løperen bør fylle minst en tidel av bildehøyden. Er løperen svært liten, blir linjene mindre presise.": "The skier should fill at least a tenth of the frame height. If the skier is very small, the lines are less precise.", "Lås fokus og lys før start (på iPhone: hold fingeren på skjermen til «AE/AF-lås» vises).": "Lock focus and exposure before the start (on iPhone: hold your finger on the screen until «AE/AF Lock» appears).", "Start filmen før løperen kommer inn i bildet, og stopp når løperen har passert.": "Start recording before the skier enters the frame, and stop when the skier has passed.", "Velg video fra kamerarullen": "Choose video from camera roll", "Velg video fra mappe": "Choose video from folder", "Første løper": "First skier", "Andre løper": "Second skier", "Bytt video": "Change video", "← dra →": "← drag →", "⤢ Forstørr": "⤢ Enlarge", "‹ bilde": "‹ frame", "bilde ›": "frame ›", "Velg hastighet": "Choose speed", "Velg to videoer": "Choose two videos", "fra samme løype. Si løperens navn høyt når du starter opptaket, så fylles navnet inn automatisk.": "from the same course. Say the skier's name out loud when you start recording, and the name is filled in automatically.", "Dra sidelengs på hver video": "Drag sideways on each video", "til begge løperne er like langt, for eksempel ut av start eller i samme port. Der du stiller dem likt, starter analysevideoen. Trykk": "until both skiers are at the same point, for example out of the start or at the same gate. The analysis video starts where you line them up. Tap", "for å se én video i stort format og finjustere.": "to see one video in large format and fine-tune.", "Trykk play": "Tap play", "for å se løperne kjøre med hverandre, og hvor differanser skjer.": "to watch the skiers race each other, and where the differences happen.", "Lag analysevideoen": "Make the analysis video", ", side om side eller som ghost, og lagre den. Løpernavnene og Athleteview-logoen kommer med i videoen.": ", side by side or as a ghost, and save it. The skiers' names and the Athleteview logo are included in the video.", "På PC: slipp videofiler rett på feltene. Mellomrom spiller av, piltastene flytter ett bilde, dobbeltklikk på en video forstørrer den.": "On PC: drop video files straight onto the fields. Space plays, the arrow keys move one frame, double-click a video to enlarge it.", "Løpere": "Skiers", "Løper A": "Skier A", "Løper B": "Skier B", "Velg en video først.": "Choose a video first.", "Lagre analysen": "Save the analysis", "Side om side": "Side by side", "Med linjer (vis linjevalget til begge løperne)": "With lines (show both skiers' lines)", "Tittel på analysevideoen (valgfritt)": "Title of the analysis video (optional)", "Lag analysevideo": "Make analysis video", "Stopp her": "Stop here", "Ghost:": "Ghost:", "Løper B legges inn i bildet til A, der B faktisk var i løypa i samme øyeblikk, og bildet zoomer inn på løperne. Begge videoene må være filmet fra samme sted, og startpunktet bør settes i starten. Før analysen trykker du på løper A og løper B i startbildet. Med linjer tegnes sporet etter skiene til A (rød) og B (blå) de siste 3 sekundene. Det tar gjerne 1–2 minutter. Alt skjer på enheten din, ingenting lastes opp.": "Skier B is placed into A's video, where B actually was on the course at the same moment, and the view zooms in on the skiers. Both videos must be filmed from the same spot, and the start point should be set at the start. Before the analysis, you tap skier A and skier B in the start frame. With lines, the tracks of A's (red) and B's (blue) skis are drawn for the last 3 seconds. It usually takes 1–2 minutes. Everything happens on your device, nothing is uploaded.", "Videoen lages fra startpunktet i valgt hastighet, vanligvis på noen sekunder. La siden være åpen til den er ferdig. Alt skjer på telefonen din, ingenting lastes opp.": "The video is made from the start point at the chosen speed, usually in a few seconds. Leave the page open until it is finished. Everything happens on your phone, nothing is uploaded.", "Lagre video": "Save video", "Lager video …": "Making video …", "Trykk på løper A": "Tap skier A", "Det kan være flere løpere i bildet. Trykk på løperen som skal analyseres, så følger ghosten og linjene riktig person. Du kan ikke gå videre før både A og B er bekreftet.": "There may be several skiers in the frame. Tap the skier to be analysed, so the ghost and the lines follow the right person. You cannot continue until both A and B are confirmed.", "‹ Tilbake til A": "‹ Back to A", "Bekreft løper A": "Confirm skier A", "0,00 s": "0.00 s", "← dra her for å finjustere →": "← drag here to fine-tune →", "« ½ s": "« ½ s", "½ s »": "½ s »", "Én løper, vinkler i svingen": "One skier, angles in the turn", "Analyser dette bildet": "Analyse this frame", "‹ Tilbake til video": "‹ Back to video", "Bytt ytterbein": "Switch outside leg", "Feil løper?": "Wrong skier?", "Hele bildet": "Whole frame", "Velg en video": "Choose a video", "av én løper, helst filmet forfra eller bakfra i svingen.": "of one skier, preferably filmed from the front or from behind in the turn.", "Stopp på bildet": "Stop on the frame", "du vil se på, med pil-knappene eller ved å dra i tidslinjen.": "you want to look at, with the arrow buttons or by dragging the timeline.", "Trykk «Analyser dette bildet».": "Tap «Analyse this frame».", "Athleteview finner løperen og leddene og tegner vinklene.": "Athleteview finds the skier and the joints and draws the angles.", "Sjekk punktene.": "Check the points.", "Sitter et punkt feil, drar du det på plass. Vinklene oppdateres med en gang.": "If a point is wrong, drag it into place. The angles update straight away.", "Lagre bildet": "Save the image", "med vinklene til bilderullen eller en mappe.": "with the angles to the camera roll or a folder.", "Vinkler": "Angles", "Legg, overkropp og skuldre måles mot det vannrette i bildet. Hold telefonen rett når du filmer. «Overkropp mot legg» påvirkes ikke av hvordan telefonen holdes.": "Leg, upper body and shoulders are measured against the horizontal in the image. Hold the phone straight when you film. «Upper body vs leg» is not affected by how the phone is held.", "Løper (valgfritt)": "Skier (optional)", "Lagre bilde": "Save image", "Analysen skjer på enheten din, og ingen video eller bilder lastes opp. Første gang lastes en analysemodell ned (ca. 17 MB).": "The analysis happens on your device, and no video or images are uploaded. The first time, an analysis model is downloaded (about 17 MB).", "Tjenesten er lagd for trenere og lag som ønsker å effektivisere filming og bruk av videoer mot løpere.": "The service is made for coaches and teams who want to make filming and the use of videos with athletes more efficient.", "Du kan nå filme mer effektivt og komfortabelt og effektivisere bruken av videofilmer mot løpere.": "You can now film more efficiently and comfortably, and make the use of videos with athletes more efficient.", "Denne funksjonen fungerer kun på pc, fordi den er knyttet til mappestruktur på pc.": "This feature only works on a PC, because it is tied to the folder structure on the PC.", "Slik filmer du for best resultat:": "How to film for the best result:", "Bruk mobiltelefon, på kamerastativ, med Bluetooth fjernutløser.": "Use a mobile phone on a tripod, with a Bluetooth remote shutter.", "Innstilling Autolås: Aldri": "Setting Auto-Lock: Never", "Velg Video.": "Choose Video.", "Velg oppløsning 4K og bildefrekvens 60.": "Choose 4K resolution and 60 frames per second.", "Velg en sektor i løypen, der du fra kamerapunktet har fri sikt mot sektoren, og helst litt vinkel mot og fra siden mot løypen.": "Choose a section of the course where you have a clear view of the section from the camera position, preferably at a slight angle and from the side of the course.", "Zoom på kameraet slik at du dekker hele sektoren du skal filme.": "Zoom the camera so you cover the whole section you are filming.", "For hver løper trykker du start på fjernutløseren, sier fornavnet på løperen tydelig i starten av opptaket, og trykk stopp når løperen forlater sektoren.": "For each skier, press start on the remote shutter, say the skier's first name clearly at the start of the recording, and press stop when the skier leaves the section.", "Ikke zoom eller beveg kamera underveis når du filmer løpere. Athleteview zoomer automatisk når denne funksjonen er valgt, og optimaliserer til ferdige videofiler, og lagrer filer med løperens navn.": "Do not zoom or move the camera while filming skiers. Athleteview zooms automatically when this option is chosen, optimises into finished video files, and saves the files with the skier's name.", "Overfør filene fra filmrullen på mobilen med en kabel til en mappe på din pc (kabel beholder kvaliteten på videofilene).": "Transfer the files from the camera roll on the phone with a cable to a folder on your PC (a cable keeps the quality of the video files).", "Følg så beskrivelsen nedenfor.": "Then follow the steps below.", "Velg mappe": "Choose folder", "Velg videoer": "Choose videos", "Lag én undermappe per løper": "Make one subfolder per skier", "Når du trykker «Lagre alle med navn», velger du mappen filene skal lagres i. Der lagres en kopi av hver video med løpernavn, og zoomkopien hvis du har valgt den. Originalene blir ikke endret.": "When you click «Save all with names», you choose the folder the files are saved in. A copy of each video with the skier's name is saved there, and the zoomed copy if you chose it. The originals are not changed.", "Lag også en zoomet kopi av løperen": "Also make a zoomed copy of the skier", "For hver video lagres også «… zoom.mp4», der utsnittet følger løperen og zoomer rolig inn. Det virker best med 4K filmet fra stativ, uten zoom og panorering. Originalen lagres som før, og det er den du bruker i Dobbel med ghost og linjer. Første gang markerer du løypa på et bilde fra videoen. Athleteview ser selv når kameraet er flyttet til et nytt sted, og ber deg da markere løypa på nytt.": "For each video, a «… zoom.mp4» is also saved, where the frame follows the skier and zooms in smoothly. It works best with 4K filmed from a tripod, without zoom and panning. The original is saved as before, and that is the one you use in Double with ghost and lines. The first time, you mark the course on a frame from the video. Athleteview notices by itself when the camera has been moved to a new spot, and then asks you to mark the course again.", "Marker løypa på nytt": "Mark the course again", "Den zoomede kopien har ikke lyd.": "The zoomed copy has no sound.", "Talegjenkjenningen skjer på enheten din, og ingen video eller lyd lastes opp. Første gang lastes en talemodell ned (ca. 80 MB). Etter det er den lagret i nettleseren.": "Speech recognition happens on your device, and no video or sound is uploaded. The first time, a speech model is downloaded (about 80 MB). After that it is stored in the browser.", "Lagre alle med navn": "Save all with names", "Vis bare videoer uten navn": "Show only videos without names", "Visning": "View", "Meny": "Menu", "Eksempel på analysevideo med ghost og linjer": "Example of an analysis video with ghost and lines", "Eksempel på vinkelanalyse i Enkel: legg, overkropp og skuldre": "Example of angle analysis in Single: leg, upper body and shoulders", "Videoer fra mobilen legges i en mappe og navngis på PC-en": "Videos from the phone are put in a folder and named on the PC", "Lukk": "Close", "Ett bilde tilbake for A": "One frame back for A", "Forstørr video A": "Enlarge video A", "Ett bilde frem for A": "One frame forward for A", "Ett bilde tilbake for B": "One frame back for B", "Forstørr video B": "Enlarge video B", "Ett bilde frem for B": "One frame forward for B", "Spill av": "Play", "Felles tidslinje": "Shared timeline", "Ett bilde tilbake for begge": "One frame back for both", "Ett bilde frem for begge": "One frame forward for both", "Navn på løper A": "Name of skier A", "Navn på løper B": "Name of skier B", "Type analysevideo": "Type of analysis video", "F.eks. Storslalåm Hafjell": "E.g. Giant slalom Hafjell", "Forstørret video": "Enlarged video", "Spol i denne videoen": "Scrub this video", "Finjuster startpunkt, dra sidelengs": "Fine-tune the start point, drag sideways", "Et halvt sekund tilbake": "Half a second back", "Ett bilde tilbake": "One frame back", "Ett bilde frem": "One frame forward", "Et halvt sekund frem": "Half a second forward", "Tidslinje": "Timeline", "Navn på løperen": "Name of the skier", "Sammenlign to alpinløpere side om side. Velg to videoer, synk startpunktet og lagre som én video.": "Compare two alpine skiers side by side. Choose two videos, sync the start point and save as one video.", "Trykk på et spørsmål for å se svaret.": "Tap a question to see the answer."};
   const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, { acceptNode: n => {
     const p = n.parentElement; if (!p || p.closest("script,style,.l-no,.l-en")) return NodeFilter.FILTER_REJECT;
     return /\S/.test(n.nodeValue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT; } });
@@ -5198,6 +5231,77 @@ const GhostCore = (() => {
   // ---- Navngi videoer: zoomet kopi av løperen (4K på stativ) ----
   // Løperen finnes i hele filmen (personfinner på hele bildet og i fire forstørrede ruter), følges med samme sporing som ghost,
   // og et rolig, mykt utsnitt rundt løperen lagres som en ny video. Originalen endres ikke og er den som skal brukes i Dobbel.
+  // ---- hvem er løperen? (Volum, zoomet kopi) ----
+  // 1) Løperen finnes bare blant personer med føttene inne i løypefeltet brukeren markerte: den som er lengst der.
+  //    Folk i naboløyper, oppe i bakken eller på siden teller ikke.
+  // 2) Sporet føres videre utenfor feltet bare så lenge bevegelsen henger sammen (posisjon, fart og størrelse passer),
+  //    ellers stopper det. Slik følges løperen helt inn mot kameraet uten å hoppe over til andre.
+  function pickRunner(dets0, W, H, roi) {
+    const iou = (a, b) => { const x0 = Math.max(a[0], b[0]), y0 = Math.max(a[1], b[1]), x1 = Math.min(a[0] + a[2], b[0] + b[2]), y1 = Math.min(a[1] + a[3], b[1] + b[3]);
+      const I = Math.max(0, x1 - x0) * Math.max(0, y1 - y0); return I / (a[2] * a[3] + b[2] * b[3] - I || 1); };
+    const N = dets0.length;
+    let dets = dets0.map(ds => ds.map(d => d.slice()));
+    // stativ: den som står på samme sted i mer enn halve filmen (tilskuer, trener, portvakt) er ikke løperen
+    { const hits = dets.map(ds => ds.map(d => dets.reduce((n, es) => n + (es.some(e => iou(d, e) > 0.6) ? 1 : 0), 0)));
+      dets = dets.map((ds, i) => ds.filter((d, j) => hits[i][j] < 0.5 * N)); }
+    let inn = dets;
+    if (roi && roi.length >= 3) {
+      const P = roi.map(([x, y]) => [x * W, y * H]);
+      const inside = (x, y) => { let o = false; for (let a = 0, b = P.length - 1; a < P.length; b = a++) {
+        const [xa, ya] = P[a], [xb, yb] = P[b]; if ((ya > y) !== (yb > y) && x < (xb - xa) * (y - ya) / (yb - ya) + xa) o = !o; } return o; };
+      inn = dets.map(ds => ds.filter(d => inside(d[0] + d[2] / 2, d[1] + d[3] * 0.92)));
+    }
+    const I = GhostCore.I3(), t0 = GhostCore.track(inn, W, H, null, inn.map(() => I));
+    const r0 = t0.map((b, i) => !!b && inn[i].some(d => iou(d, b) > 0.5));
+    const segs = []; let cur = null;
+    // samme person: foten har ikke flyttet seg for langt, og størrelsen har ikke hoppet (da er det en annen person)
+    const near = (a, b, gap) => Math.hypot(a[0] + a[2] / 2 - b[0] - b[2] / 2, a[1] + a[3] - b[1] - b[3]) < Math.max(a[3], b[3], 12) * (0.6 + 0.15 * gap)
+      && Math.abs(Math.log(Math.max(a[3], 1) / Math.max(b[3], 1))) < 0.35 + 0.04 * gap;
+    for (let i = 0; i < N; i++) if (r0[i]) {
+      if (cur && i - cur[1] <= 22 && near(t0[cur[1]], t0[i], i - cur[1])) { cur[1] = i; cur.n++; }
+      else { segs.push(cur = [i, i]); cur.n = 0; cur.sz = 0; cur.n = 1; }
+      cur.sz += t0[i][3];
+    }
+    if (!segs.length) return null;
+    // Løperen er den som kommer nærmest kameraet inne i feltet (størst, lengst): sum av høyden i alle bildene.
+    // En ny løper som så vidt har startet langt oppe, eller folk i bakgrunnen, blir små og teller lite.
+    const best = segs.reduce((a, b) => b.sz > a.sz ? b : a);
+    if (best.n < 6) return null;
+    const tr = new Array(N).fill(null), real = new Array(N).fill(false);
+    for (let i = best[0]; i <= best[1]; i++) { tr[i] = t0[i]; real[i] = r0[i]; }
+    // videre utenfor feltet: nærmeste person der løperen ventes, og bare hvis størrelsen passer
+    const foot = b => [b[0] + b[2] / 2, b[1] + b[3]];
+    const extend = (from, dir) => {
+      const hist = []; for (let i = from; hist.length < 6 && i >= best[0] && i <= best[1]; i -= dir) if (real[i]) hist.push(i);
+      if (hist.length < 2) return from;
+      const ib = hist[0], ia = hist[hist.length - 1], A = tr[ia], B = tr[ib];
+      let [x, y] = foot(B), h = B[3], il = ib;
+      let vx = (x - foot(A)[0]) / (ib - ia), vy = (y - foot(A)[1]) / (ib - ia), vh = Math.log(B[3] / A[3]) / (ib - ia);   // per bilde, framover i tid
+      let end = from;
+      for (let j = from + dir; j >= 0 && j < N; j += dir) {
+        const dt = j - il, gap = Math.abs(dt);
+        if (gap > 9) break;
+        const px = x + vx * dt, py = y + vy * dt, ph = h * Math.exp(vh * dt);
+        let bd = null, bs = 1e9;
+        for (const d of dets[j]) {
+          const [fx, fy] = foot(d), dist = Math.hypot(fx - px, fy - py) / Math.max(ph, 8), rs = Math.abs(Math.log(d[3] / ph));
+          if (dist < 0.6 + 0.25 * gap && rs < 0.3 + 0.06 * gap && dist + rs < bs) { bs = dist + rs; bd = d; }
+        }
+        if (!bd) continue;
+        const [fx, fy] = foot(bd);
+        vx = 0.6 * vx + 0.4 * (fx - x) / dt; vy = 0.6 * vy + 0.4 * (fy - y) / dt; vh = 0.6 * vh + 0.4 * Math.log(bd[3] / h) / dt;
+        x = fx; y = fy; h = bd[3]; il = j; tr[j] = bd; real[j] = true; end = j;
+      }
+      return end;
+    };
+    const first = extend(best[0], -1), last = extend(best[1], 1);
+    // korte hull: lineært mellom kjente bokser
+    for (let i = first; i <= last; i++) if (!tr[i]) {
+      let a = i - 1; while (a >= first && !tr[a]) a--; let b = i + 1; while (b <= last && !tr[b]) b++;
+      if (a >= first && b <= last) { const f = (i - a) / (b - a); tr[i] = tr[a].map((v, q) => v + (tr[b][q] - v) * f); }
+    }
+    return { tr, real, first, last, segs: segs.map(sg => [sg[0], sg[1], sg.n, Math.round(sg.sz)]).concat([["valgt", best[0], best[1], "utvidet", first, last]]) };
+  }
   async function zoomCopy(file, note, prog, opt = {}) {
     const cfgOk = window.VideoEncoder && window.VideoFrame && window.Mp4Muxer;
     if (!cfgOk) throw new Error((AVL ? "the browser cannot make video" : "nettleseren kan ikke lage video"));
@@ -5238,38 +5342,10 @@ const GhostCore = (() => {
         prog(0.6 * (i + 1) / N);
         if (i % 4 === 0) await new Promise(r => setTimeout(r, 0));
       }
-      // Løypemarkering: bare personer med føttene inne i feltet brukeren har markert regnes med (naboløyper og publikum faller bort)
-      if (opt.roi && opt.roi.length >= 3) {
-        const P = opt.roi.map(([x, y]) => [x * W, y * H]);
-        const inside = (x, y) => { let o = false; for (let a = 0, b = P.length - 1; a < P.length; b = a++) {
-          const [xa, ya] = P[a], [xb, yb] = P[b]; if ((ya > y) !== (yb > y) && x < (xb - xa) * (y - ya) / (yb - ya) + xa) o = !o; } return o; };
-        // Mykt: utenfor feltet teller bare litt, så løperen følges videre når hun kommer utenfor det markerte (langt nede i bakken,
-        // eller helt nær kameraet), men en annen person utenfor blir aldri valgt foran løperen inne i feltet.
-        for (let i = 0; i < dets.length; i++) dets[i] = dets[i].map(d => { if (inside(d[0] + d[2] / 2, d[1] + d[3] * 0.92)) { d = d.slice(); d.inRoi = 1; return d; }
-          d = d.slice(); d[4] *= 0.3; return d; });
-      }
-      // stativ: den som står på samme sted i mer enn halve filmen (tilskuer, trener, portvakt) er ikke løperen
-      { const hits = dets.map(ds => ds.map(d => dets.reduce((n, es) => n + (es.some(e => iou(d, e) > 0.6) ? 1 : 0), 0)));
-        for (let i = 0; i < dets.length; i++) dets[i] = dets[i].filter((d, j) => hits[i][j] < 0.5 * dets.length); }
-      // stativ: kameraet står stille, så den som står i ro (tilskuer, trener) er ikke løperen
-      const I = GhostCore.I3(), tr = GhostCore.track(dets, W, H, null, dets.map(() => I));
-      const real = tr.map((b, i) => !!b && dets[i].some(d => iou(d, b) > 0.5));
-      if (real.filter(Boolean).length < 6) return null;
-      // 2) rolig kameraføring: senter og størrelse jevnes ut over hele løpet
-      // Kjører flere gjennom bildet etter hverandre, brukes det lengste sammenhengende stykket (hull under ca. 0,5 s tettes)
-      // Kjører flere gjennom bildet etter hverandre, brukes den løperen som er med lengst (hull opptil 1,5 s tettes når hun er på samme sted)
-      const segs = []; let cur = null;
-      const near = (a, b, gap) => Math.hypot(a[0] + a[2] / 2 - b[0] - b[2] / 2, a[1] + a[3] - b[1] - b[3]) < Math.max(a[3], b[3], 12) * (1 + 0.25 * gap);
-      for (let i = 0; i < N; i++) if (real[i]) {
-        if (cur && (i - cur[1] <= 8 || (i - cur[1] <= 22 && near(tr[cur[1]], tr[i], i - cur[1])))) { cur[1] = i; cur.n++; }
-        else { segs.push(cur = [i, i]); cur.n = 1; cur.roi = 0; }
-        if (dets[i].some(d => d.inRoi && iou(d, tr[i]) > 0.5)) cur.roi++;
-      }
-      if (!segs.length) return null;
-      const segScore = sg => sg.n + 2 * sg.roi;
-      const [first, last] = segs.reduce((a, b) => segScore(b) > segScore(a) ? b : a);
-      window.avZoomSegs = segs.map(sg => [sg[0], sg[1], sg.n, sg.roi]);
-      if (last - first < 6) return null;
+      const pk = pickRunner(dets, W, H, opt.roi);
+      if (!pk) return null;
+      const { tr, real, first, last } = pk;
+      window.avZoomSegs = pk.segs;
       const val = (f, i) => tr[i] ? f(tr[i]) : 0, wt = tr.map((b, i) => real[i] && i >= first && i <= last ? 1 : 0);
       const X = GhostCore.whittaker(tr.map((b, i) => val(b => b[0] + b[2] / 2, i)), wt, 40);
       const Y = GhostCore.whittaker(tr.map((b, i) => val(b => b[1] + b[3] / 2, i)), wt, 40);
@@ -5510,13 +5586,17 @@ const GhostCore = (() => {
     { id: "Xenova/whisper-base", dtype: "q8", mb: 80 }];
   const LISTEN_S = 8, SR = 16000;
   const els = { files: $("#nFiles"), clips: $("#clips"), bar: $("#nBar"), msg: $("#nMsg"), roster: $("#roster"),
-    save: $("#nSave"), saveAll: $("#nSaveAll"), saveNote: $("#nSaveNote"), folder: $("#nFolder"), folderOpts: $("#nFolderOpts"),
+    start: $("#nStart"), save: $("#nSave"), saveAll: $("#nSaveAll"), saveNote: $("#nSaveNote"), folder: $("#nFolder"), folderOpts: $("#nFolderOpts"),
     perRunner: $("#nPerRunner"), dir: $("#nDir"), zoom: $("#nZoom"), zoomNote: $("#nZoomNote"), onlyMissing: $("#nOnlyMissing"), filesBtn: $("#nFilesBtn") };
   const say = (t, err) => { els.msg.textContent = t; els.msg.classList.toggle("err", !!err); };
   const progress = f => { els.bar.hidden = f == null; if (f != null) els.bar.firstElementChild.style.width = Math.min(100, f * 100) + "%"; };
   let clips = [], run = 0, asr = null;
   els.zoom.addEventListener("change", () => { els.zoomNote.hidden = !els.zoom.checked; });
-  document.getElementById("nCourseReset").addEventListener("click", () => { resetCourses(); say((AVL ? "You will be asked to mark the course the next time you save." : "Du blir bedt om å markere løypa neste gang du lagrer.")); });
+  for (const r of document.querySelectorAll('input[name="nMode"]')) r.addEventListener("change", () => {
+    els.zoom.checked = document.getElementById("nModeAdv").checked; els.zoomNote.hidden = !els.zoom.checked;
+  });
+  els.zoom.checked = document.getElementById("nModeAdv").checked; els.zoomNote.hidden = !els.zoom.checked;
+  document.getElementById("nCourseReset").addEventListener("click", () => { resetCourses(); for (const c of clips) c.zoomBlob = null; say((AVL ? "You will be asked to mark the course the next time you start the analysis." : "Du blir bedt om å markere løypa neste gang du starter analysen.")); });
   const zoomName = n => n.replace(/\.[^.]+$/, "") + " zoom.mp4";
   // ---- Løypemarkering for zoomet kopi (1.9.18) ----
   // Kameraet står på stativ. Brukeren markerer løypa én gang per kameraplassering; Athleteview ser selv når kameraet er flyttet
@@ -5619,7 +5699,7 @@ const GhostCore = (() => {
   const resetCourses = () => { course.groups = []; for (const c of clips) { c.course = undefined; c.courseGroup = null; } };
   async function makeZoom(c, i, n) {   // zoomet kopi av én video, eller null hvis løperen ikke ble funnet
     if (!window.avZoomCopy) return null;
-    const lab = (AVL ? `Making zoomed copy ${i + 1} of ${n}: ${zoomName(c.newName)}` : `Lager zoomet kopi ${i + 1} av ${n}: ${zoomName(c.newName)}`);
+    const lab = (AVL ? `Making zoomed copy ${i + 1} of ${n}: ${c.newName ? zoomName(c.newName) : c.file.name}` : `Lager zoomet kopi ${i + 1} av ${n}: ${c.newName ? zoomName(c.newName) : c.file.name}`);
     say(lab + " …");
     try {
       const blob = await window.avZoomCopy(c.file, say, f => { progress((i + f) / n); els.msg.textContent = `${lab} · ${Math.round(f * 100)} %`; }, { roi: c.course || null });
@@ -6012,8 +6092,8 @@ const GhostCore = (() => {
         (unsaved ? (AVL ? ` ${unsaved} waiting to be saved.` : ` ${unsaved} venter på lagring.`) : "") + (missing ? (AVL ? ` ${missing} are missing a name.` : ` ${missing} mangler navn.`) : "");
       return;
     }
-    els.saveAll.textContent = folder ? (AVL ? "Save all in a new folder" : "Lagre alle i ny mappe") : (AVL ? "Save all with names" : "Lagre alle med navn");
-    els.saveAll.disabled = !named;
+    els.saveAll.textContent = (AVL ? "Save videos" : "Lagre videoer");
+    els.saveAll.disabled = !clips.length;
     els.saveNote.textContent = named === clips.length ? (AVL ? `All ${named} videos have names.` : `Alle ${named} videoene har navn.`)
       : (AVL ? `${named} of ${clips.length} have names. Videos without names are skipped.` : `${named} av ${clips.length} har navn. Videoer uten navn hoppes over.`);
   }
@@ -6028,23 +6108,11 @@ const GhostCore = (() => {
       <div class="body">
         <div class="status">Waiting …</div>
         <input type="text" list="roster" placeholder="Name of the skier" maxlength="60" autocomplete="off" aria-label="Name of the skier">
-        <div class="row">
-          <button class="btn" type="button" data-act="save">Save</button>
-          <button class="btn" type="button" data-act="A" title="Use as A in Double">Double A</button>
-          <button class="btn" type="button" data-act="B" title="Use as B in Double">Double B</button>
-          <button class="btn" type="button" data-act="S" title="Analyse angles in Single">Single</button>
-        </div>
         <div class="fname"></div>
       </div>` : `<button class="thumb" type="button" aria-label="Spill av videoen"><span class="dur"></span></button>
       <div class="body">
         <div class="status">Venter …</div>
         <input type="text" list="roster" placeholder="Navn på løperen" maxlength="60" autocomplete="off" aria-label="Navn på løperen">
-        <div class="row">
-          <button class="btn" type="button" data-act="save">Lagre</button>
-          <button class="btn" type="button" data-act="A" title="Bruk som A i Dobbel">Dobbel A</button>
-          <button class="btn" type="button" data-act="B" title="Bruk som B i Dobbel">Dobbel B</button>
-          <button class="btn" type="button" data-act="S" title="Analyser vinkler i Enkel">Enkel</button>
-        </div>
         <div class="fname"></div>
       </div>`);
     const c = { file, el, thumb: $(".thumb", el), status: $(".status", el), input: $("input", el), fname: $(".fname", el), edited: false };
@@ -6092,7 +6160,7 @@ const GhostCore = (() => {
     const my = ++run;
     els.onlyMissing.checked = false; els.clips.classList.remove("only-missing");
     for (const c of clips) for (const v of c.el.querySelectorAll("video")) URL.revokeObjectURL(v.src);
-    clips = files.map(card);
+    clips = files.map(card); els.start.disabled = true;
     els.clips.replaceChildren(...clips.map(c => c.el));
     newNames();
 
@@ -6104,11 +6172,23 @@ const GhostCore = (() => {
       if (t.dur) $(".dur", c.thumb).textContent = `${Math.floor(t.dur / 60)}:${pad(Math.round(t.dur % 60))}`;
       progress((i + 1) / clips.length);
     }
+    progress(null);
+    els.start.disabled = false;
+    say(AVL ? `${clips.length} ${clips.length === 1 ? "video is" : "videos are"} in the list below. Choose options in step 2, and click «Start analysis».`
+      : `${clips.length} ${clips.length === 1 ? "video" : "videoer"} står i lista under. Velg i steg 2, og trykk «Start analyse».`);
+    return true;
+  }
 
+  async function analyse() {
+    if (!clips.length) return false;
+    try { audioCtx().resume(); } catch (e) {}
+    const my = ++run;
+    els.start.disabled = true;
     let heard = 0, missing = 0;
     for (const [i, c] of clips.entries()) {
       if (my !== run) return false;
-      if (c.edited) continue;
+      if (c.edited || c.listened) { if (c.input.value.trim()) heard++; else missing++; continue; }
+      c.listened = true;
       setState(c, "listening", (AVL ? "Listening for names …" : "Lytter etter navn …"));
       say((AVL ? `Listening for names: video ${i + 1} of ${clips.length}` : `Lytter etter navn: video ${i + 1} av ${clips.length}`)); progress(i / clips.length);
       let text = "";
@@ -6128,17 +6208,36 @@ const GhostCore = (() => {
     }
     progress(null);
     say(missing ? (AVL ? `Done. Found names in ${heard} of ${clips.length} videos. Fill in the ${missing} marked red.` : `Ferdig. Fant navn i ${heard} av ${clips.length} videoer. Fyll inn de ${missing} som er merket rødt.`)
-      : (AVL ? `Done. Found names in all ${clips.length} videos. Check the yellow ones, and save.` : `Ferdig. Fant navn i alle ${clips.length} videoene. Sjekk de gule, og lagre.`));
+      : (AVL ? `Done. Found names in all ${clips.length} videos. Check the yellow ones.` : `Ferdig. Fant navn i alle ${clips.length} videoene. Sjekk de gule.`));
+    const nameMsg = els.msg.textContent;
+    if (els.zoom.checked && window.avZoomCopy) {
+      if (!(await ensureCourses(clips))) { say(nameMsg + (AVL ? " Course marking was cancelled, so no zoomed copies were made." : " Markeringen av løypa ble avbrutt, så ingen zoomkopier ble laget.")); return true; }
+      for (const [i, c] of clips.entries()) {
+        if (my !== run) return false;
+        if (c.zoomBlob) continue;
+        c.zoomMiss = false; c.zoomErr = null;
+        const z = await makeZoom(c, i, clips.length);
+        if (my !== run) return false;
+        c.zoomBlob = z;
+        c.zoomTxt = z ? (AVL ? " Zoomed copy ready." : " Zoomkopi klar.") : (AVL ? " No skier found, so no zoomed copy." : " Fant ingen løper, så ingen zoomkopi.");
+        c.status.textContent = c.status.textContent.replace(/ (Zoomkopi klar|Zoomed copy ready|Fant ingen løper, så ingen zoomkopi|No skier found, so no zoomed copy)\.$/, "") + c.zoomTxt;
+      }
+      progress(null);
+      const zn = clips.filter(c => c.zoomBlob).length;
+      say(nameMsg + (AVL ? ` ${zn} of ${clips.length} zoomed copies are ready.` : ` ${zn} av ${clips.length} zoomkopier er klare.`));
+    }
     const firstMissing = clips.find(c => !c.input.value.trim());
     if (firstMissing) firstMissing.el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    else els.saveAll.scrollIntoView({ block: "nearest", behavior: "smooth" });
     return true;
   }
+  els.start.addEventListener("click", async () => { await analyse(); els.start.disabled = !clips.length; });
 
   // ---- PC: velg en hel mappe, lagre kopier med løpernavn i en ny mappe inni den ----
   let folder = null;   // { src, out }
   const VIDEO = /\.(mp4|mov|m4v|webm|avi|mkv|mts|m2ts|3gp)$/i;
   if (window.showDirectoryPicker && !/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
-    els.folder.hidden = false; els.folderOpts.hidden = false; els.filesBtn.classList.remove("primary");
+    els.folderOpts.hidden = false;
   }
   const today = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
   async function outDir() {   // ny mappe første gang det lagres, uten å skrive over en som finnes fra før
@@ -6156,7 +6255,7 @@ const GhostCore = (() => {
   async function saveToFolder(list) {
     list = list.filter(c => c.newName && !(c.saved && c.saved.name === c.newName));
     if (!list.length) { newNames(); return; }
-    if (els.zoom.checked && !(await ensureCourses(list))) { say((AVL ? "Saving cancelled. Nothing has been saved." : "Lagring avbrutt. Ingenting er lagret.")); return; }
+    if (els.zoom.checked && list.some(c => !c.zoomBlob) && !(await ensureCourses(list))) { say((AVL ? "Saving cancelled. Nothing has been saved." : "Lagring avbrutt. Ingenting er lagret.")); return; }
     try {
       const out = await outDir();
       for (const [i, c] of list.entries()) {
@@ -6169,7 +6268,7 @@ const GhostCore = (() => {
         c.saved = { dir, name: c.newName };
         if (els.zoom.checked) {
           if (c.savedZoom) { try { await c.savedZoom.dir.removeEntry(c.savedZoom.name); } catch (e) {} c.savedZoom = null; }
-          const z = await makeZoom(c, i, list.length);
+          const z = c.zoomBlob ? new File([c.zoomBlob], zoomName(c.newName), { type: "video/mp4", lastModified: c.file.lastModified }) : await makeZoom(c, i, list.length);
           if (z) { const wz = await (await dir.getFileHandle(z.name, { create: true })).createWritable(); await wz.write(z); await wz.close(); c.savedZoom = { dir, name: z.name }; }
         }
         newNames();
@@ -6178,7 +6277,7 @@ const GhostCore = (() => {
       progress(null);
       const missing = clips.filter(c => !c.newName).length;
       const zn = list.filter(c => c.savedZoom).length, zm = list.filter(c => c.zoomMiss || c.zoomErr).length;
-      say((AVL ? `Saved ${list.length} ${list.length === 1 ? "video" : "videos"} in «${folder.src.name}/${out.name}».` : `Lagret ${list.length} ${list.length === 1 ? "video" : "videoer"} i «${folder.src.name}/${out.name}».`) +
+      say((AVL ? `Saved ${list.length} ${list.length === 1 ? "video" : "videos"} in «${folder.src === out ? out.name : folder.src.name + "/" + out.name}».` : `Lagret ${list.length} ${list.length === 1 ? "video" : "videoer"} i «${folder.src === out ? out.name : folder.src.name + "/" + out.name}».`) +
         (els.zoom.checked ? (AVL ? ` ${zn} zoomed copies.` : ` ${zn} zoomede kopier.`) + (zm ? (AVL ? ` For ${zm}, no skier was found, so they have no zoomed copy.` : ` For ${zm} ble ingen løper funnet, så de har ingen zoomet kopi.`) : "") : "") +
         (missing ? (AVL ? ` ${missing} are missing a name. Fill them in and click «Save the rest in the folder».` : ` ${missing} mangler navn. Fyll dem inn og trykk «Lagre resten i mappen».`) : ""));
     } catch (e) {
@@ -6186,7 +6285,8 @@ const GhostCore = (() => {
       say((AVL ? "Could not save in the folder: " : "Kunne ikke lagre i mappen: ") + e.message, true);
     }
   }
-  els.folder.addEventListener("click", async () => {
+  els.folder.addEventListener("click", () => els.files.click());
+  const pickWholeFolder = async () => {   // ikke i bruk fra 1.9.32
     let src;
     try { src = await window.showDirectoryPicker({ id: "av-videos", mode: "readwrite" }); }
     catch (e) {
@@ -6199,9 +6299,8 @@ const GhostCore = (() => {
     if (!files.length) { say((AVL ? `Found no videos in «${src.name}». Subfolders are not searched.` : `Fant ingen videoer i «${src.name}». Undermapper blir ikke gjennomgått.`), true); return; }
     folder = { src, out: null };
     say((AVL ? `Found ${files.length} videos in «${src.name}».` : `Fant ${files.length} videoer i «${src.name}».`));
-    const done = await processFiles(files.sort(byTime));
-    if (done && folder && folder.src === src) await saveToFolder(clips);
-  });
+    await processFiles(files.sort(byTime));
+  };
   els.dir.addEventListener("change", () => {
     const files = [...els.dir.files].filter(f => VIDEO.test(f.name) && f.webkitRelativePath.split("/").length === 2).sort(byTime);
     els.dir.value = "";
@@ -6248,17 +6347,31 @@ const GhostCore = (() => {
     }
     say((AVL ? `${files.length} ${files.length === 1 ? "video" : "videos"} are downloaded with the skiers' names.` : `${files.length} ${files.length === 1 ? "video" : "videoer"} lastes ned med løpernavn.`));
   }
-  els.saveAll.addEventListener("click", () => {
+  els.saveAll.addEventListener("click", async () => {
     newNames();
     const ok = clips.filter(c => c.newName);
-    if (!ok.length) return;
+    if (!ok.length) {
+      say(AVL ? "None of the videos have a name yet. Type the skier's name in the list below, then click «Save videos» again." : "Ingen av videoene har navn ennå. Skriv inn løperens navn i lista under, og trykk «Lagre videoer» igjen.", true);
+      const f = clips.find(c => !c.input.value.trim()); if (f) { f.el.scrollIntoView({ block: "center", behavior: "smooth" }); f.input.focus({ preventScroll: true }); }
+      return;
+    }
+    // PC: spør hvor filene skal lagres med en gang (mens trykket ditt gjelder), så både original og zoomkopi havner i den mappen
+    if (window.showDirectoryPicker && !/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
+      try { const dir = await window.showDirectoryPicker(Object.assign({ id: "av-save", mode: "readwrite" }, folder ? { startIn: folder.src } : {})); folder = { src: dir, out: dir }; }
+      catch (e) {
+        if (e.name === "AbortError") { say(AVL ? "Saving cancelled. Nothing has been saved." : "Lagring avbrutt. Ingenting er lagret."); return; }
+        folder = null;
+        say(AVL ? "This browser page does not allow choosing a folder (for example the test link). The videos are downloaded instead." : "Her tillater ikke nettleseren å velge mappe (for eksempel på testlenken). Videoene lastes ned i stedet.");
+        await new Promise(r => setTimeout(r, 1500));
+      }
+    }
     if (folder) return saveToFolder(ok);
     addToRoster(ok.map(c => clean(c.input.value)));
     if (!els.zoom.checked) { saveFiles(ok.map(renamed)); return; }
     (async () => {
-      if (!(await ensureCourses(ok))) { say((AVL ? "Saving cancelled. Nothing has been saved." : "Lagring avbrutt. Ingenting er lagret.")); return; }
+      if (ok.some(c => !c.zoomBlob) && !(await ensureCourses(ok))) { say((AVL ? "Saving cancelled. Nothing has been saved." : "Lagring avbrutt. Ingenting er lagret.")); return; }
       const files = [];
-      for (const [i, c] of ok.entries()) { files.push(renamed(c)); const z = await makeZoom(c, i, ok.length); if (z) files.push(z); }
+      for (const [i, c] of ok.entries()) { files.push(renamed(c)); const z = c.zoomBlob ? new File([c.zoomBlob], zoomName(c.newName), { type: "video/mp4", lastModified: c.file.lastModified }) : await makeZoom(c, i, ok.length); if (z) files.push(z); }
       progress(null); saveFiles(files);
     })();
   });
@@ -6753,7 +6866,7 @@ const GhostCore = (() => {
       if (hn) { hn.hidden = !on("nameView"); if (hn.hidden) hn.pause(); else if (!rm()) heroPlay(hn); } };
     for (const b of document.querySelectorAll(".tabs button[data-view]")) b.addEventListener("click", () => requestAnimationFrame(sync));
     sync(); }
-  const AV_VERSION = "1.9.26 · 11.11.2026";
+  const AV_VERSION = "1.9.32 · 12.11.2026";
   const btn = document.getElementById("menuBtn"), list = document.getElementById("menuList"), about = document.getElementById("about");
   document.getElementById("aboutVer").textContent = (AVL ? "Version " : "Versjon ") + AV_VERSION;
   const setOpen = open => { list.hidden = !open; btn.setAttribute("aria-expanded", String(open)); };
