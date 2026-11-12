@@ -2164,7 +2164,10 @@ p.intro { margin: 0; font-size: .95rem; line-height: 1.45; }
 .modes { display: grid; gap: 6px; }
 .step { display: grid; gap: 8px; border-top: 1px solid var(--line); padding-top: 10px; }
 .step h3 { margin: 0; font-size: 1rem; font-weight: 700; }
-.step:has(#nStart:not(:disabled)) h3, .step:has(#nSave:not([hidden])) h3 { color: var(--accent, inherit); }
+.step:has(#nStart.go) h3 { color: var(--blue); }
+#nStart.go { animation: avgo 1.4s ease-in-out infinite; }
+@keyframes avgo { 0%, 100% { box-shadow: 0 0 0 0 rgba(29, 91, 208, .55); } 50% { box-shadow: 0 0 0 8px rgba(29, 91, 208, 0); } }
+@media (prefers-reduced-motion: reduce) { #nStart.go { animation: none; outline: 3px solid var(--blue); outline-offset: 2px; } }
 .savebar { position: sticky; bottom: 8px; box-shadow: 0 4px 18px rgba(0,0,0,.18); }
 
 /* ---- løpernavn i Dobbel ---- */
@@ -6106,12 +6109,12 @@ const GhostCore = (() => {
     el.className = "clip"; el.dataset.state = "wait";
     el.innerHTML = (AVL ? `<button class="thumb" type="button" aria-label="Play the video"><span class="dur"></span></button>
       <div class="body">
-        <div class="status">Waiting …</div>
+        <div class="status">Ready. Click «Start analysis» above.</div>
         <input type="text" list="roster" placeholder="Name of the skier" maxlength="60" autocomplete="off" aria-label="Name of the skier">
         <div class="fname"></div>
       </div>` : `<button class="thumb" type="button" aria-label="Spill av videoen"><span class="dur"></span></button>
       <div class="body">
-        <div class="status">Venter …</div>
+        <div class="status">Klar. Trykk «Start analyse» over.</div>
         <input type="text" list="roster" placeholder="Navn på løperen" maxlength="60" autocomplete="off" aria-label="Navn på løperen">
         <div class="fname"></div>
       </div>`);
@@ -6174,8 +6177,10 @@ const GhostCore = (() => {
     }
     progress(null);
     els.start.disabled = false;
-    say(AVL ? `${clips.length} ${clips.length === 1 ? "video is" : "videos are"} in the list below. Choose options in step 2, and click «Start analysis».`
-      : `${clips.length} ${clips.length === 1 ? "video" : "videoer"} står i lista under. Velg i steg 2, og trykk «Start analyse».`);
+    say(AVL ? `${clips.length} ${clips.length === 1 ? "video is" : "videos are"} chosen. Choose the filming method in step 2, and click «Start analysis» to find the skiers' names.`
+      : `${clips.length} ${clips.length === 1 ? "video" : "videoer"} er valgt. Velg filmemåte i steg 2, og trykk «Start analyse» for å finne løpernavnene.`);
+    els.start.classList.add("go");
+    els.start.closest(".step").scrollIntoView({ block: "center", behavior: "smooth" });
     return true;
   }
 
@@ -6231,7 +6236,7 @@ const GhostCore = (() => {
     else els.saveAll.scrollIntoView({ block: "nearest", behavior: "smooth" });
     return true;
   }
-  els.start.addEventListener("click", async () => { await analyse(); els.start.disabled = !clips.length; });
+  els.start.addEventListener("click", async () => { els.start.classList.remove("go"); await analyse(); els.start.disabled = !clips.length; });
 
   // ---- PC: velg en hel mappe, lagre kopier med løpernavn i en ny mappe inni den ----
   let folder = null;   // { src, out }
@@ -6351,7 +6356,7 @@ const GhostCore = (() => {
     newNames();
     const ok = clips.filter(c => c.newName);
     if (!ok.length) {
-      say(AVL ? "None of the videos have a name yet. Type the skier's name in the list below, then click «Save videos» again." : "Ingen av videoene har navn ennå. Skriv inn løperens navn i lista under, og trykk «Lagre videoer» igjen.", true);
+      say(AVL ? (clips.some(c => c.listened) ? "None of the videos have a name yet. Type the skier's name in the list below, then click «Save videos» again." : "None of the videos have a name yet. Click «Start analysis» in step 3, or type the skier's name in the list below.") : (clips.some(c => c.listened) ? "Ingen av videoene har navn ennå. Skriv inn løperens navn i lista under, og trykk «Lagre videoer» igjen." : "Ingen av videoene har navn ennå. Trykk «Start analyse» i steg 3, eller skriv inn løperens navn i lista under."), true);
       const f = clips.find(c => !c.input.value.trim()); if (f) { f.el.scrollIntoView({ block: "center", behavior: "smooth" }); f.input.focus({ preventScroll: true }); }
       return;
     }
@@ -6866,7 +6871,7 @@ const GhostCore = (() => {
       if (hn) { hn.hidden = !on("nameView"); if (hn.hidden) hn.pause(); else if (!rm()) heroPlay(hn); } };
     for (const b of document.querySelectorAll(".tabs button[data-view]")) b.addEventListener("click", () => requestAnimationFrame(sync));
     sync(); }
-  const AV_VERSION = "1.9.32 · 12.11.2026";
+  const AV_VERSION = "1.9.33 · 12.11.2026";
   const btn = document.getElementById("menuBtn"), list = document.getElementById("menuList"), about = document.getElementById("about");
   document.getElementById("aboutVer").textContent = (AVL ? "Version " : "Versjon ") + AV_VERSION;
   const setOpen = open => { list.hidden = !open; btn.setAttribute("aria-expanded", String(open)); };
