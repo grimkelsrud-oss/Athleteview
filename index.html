@@ -2273,12 +2273,28 @@ body.zoomed { overflow: hidden; }
   #singleView { grid-template-columns: minmax(0, 1fr) 360px; column-gap: 20px; align-items: start; }
   #singleView .sstage { height: min(74vh, 860px); }
 }
+
+/* Fast topp (topp-patch.py) */
+header.sticktop {
+  position: sticky; top: 0; z-index: 40;
+  background: var(--bg);
+  margin-top: -12px;
+  padding-top: max(12px, env(safe-area-inset-top, 0px)); padding-bottom: 10px;
+}
+/* bakgrunn og skillelinje over hele skjermbredden (skygge med klipp gir ikke sidescroll) */
+header.sticktop::before, header.sticktop::after { content: ""; position: absolute; left: 0; right: 0; pointer-events: none; z-index: -1; clip-path: inset(0 -100vmax); }
+header.sticktop::before { top: 0; bottom: 0; background: var(--bg); box-shadow: 0 0 0 100vmax var(--bg); }
+header.sticktop::after { bottom: -1px; height: 1px; background: var(--line); box-shadow: 0 0 0 100vmax var(--line); }
+html { scroll-padding-top: calc(var(--hdrH, 64px) + 8px); }
+@media (min-width: 1024px) {
+  .side { top: calc(var(--hdrH, 64px) + 14px); }
+}
 </style>
 </head>
 <body>
 
 <div class="wrap">
-  <header>
+  <header class="sticktop">
     <h1>Athlete<span class="a">vi</span><span class="b">ew</span><small class="tld">.no</small></h1>
     <div class="hright">
     <nav class="tabs" role="tablist" aria-label="Visning">
@@ -2308,7 +2324,7 @@ body.zoomed { overflow: hidden; }
     </div>
   </header>
 
-  <video class="hero" src="av/hjem.mp4" poster="av/hjem.jpg" autoplay muted loop playsinline preload="auto" aria-label="Eksempel på analysevideo med ghost og linjer"></video>
+  <video class="hero" src="av/hjem.mp4?v=1935" poster="av/hjem.jpg?v=1935" autoplay muted loop playsinline preload="auto" aria-label="Eksempel på analysevideo med ghost og linjer"></video>
   <img class="hero heroimg" src="av/singel.jpg" alt="Eksempel på vinkelanalyse i Enkel: legg, overkropp og skuldre" width="1440" height="736" hidden>
   <video class="hero heroname" src="av/navngi.mp4" poster="av/navngi.jpg" muted loop playsinline preload="auto" aria-label="Videoer fra mobilen legges i en mappe og navngis på PC-en" hidden></video>
 
@@ -2408,6 +2424,12 @@ body.zoomed { overflow: hidden; }
       <details><summary>Hvorfor må jeg trykke på løperne før ghost?</summary><div class="faqa">
         <p>Det kan være flere personer i bildet, som andre løpere, trenere og publikum. Når du trykker på løper A og løper B i startbildet, følger ghosten og linjene riktig person. Du går videre først når begge er bekreftet.</p>
       </div></details>
+      <details><summary>Hvorfor ber appen meg trykke på løperen underveis?</summary><div class="faqa">
+        <p>Mister appen løperen i et lengre parti, for eksempel ved rask panorering, uskarphet eller folk tett på, viser den et bilde fra det partiet. Trykk på løperen og «Bekreft og fortsett», så sporer appen videre derfra. Er løperen ikke i bildet, trykker du «Hopp over».</p>
+      </div></details>
+      <details><summary>Hvorfor forsvinner ghosten i noen partier?</summary><div class="faqa">
+        <p>Der appen ikke er sikker på hvor løperen er, skjules ghosten og linjene i stedet for å henge seg på feil person. B vises da i et lite innfelt bilde, og bildet zoomer ut til hele A-bildet. Når filmen er ferdig, får du beskjed om hvilke partier det gjelder. Roligere filming, gjerne fra stativ, gir færre slike partier.</p>
+      </div></details>
       <details><summary>Hva er «Med linjer»?</summary><div class="faqa">
         <p>Med linjer tegnes sporet etter skiene til A (rød) og B (blå) de siste 3 sekundene. Da ser du hvem som tar høyest eller rettest linje gjennom portene. Linjene blir mest presise når løperen er stor nok i bildet og filmet litt fra siden.</p>
       </div></details>
@@ -2490,7 +2512,7 @@ body.zoomed { overflow: hidden; }
     <section class="faqsec">
       <h3>Tips om filming</h3>
       <details><summary>Hvor bør jeg stå?</summary><div class="faqa">
-        <p>Filming forfra med vinkel mot underlaget gir best resultat. Stå litt på siden av løypa og gjerne litt høyt, så svingene vises som buer og ikke legger seg oppå hverandre.</p>
+        <p>Film forfra eller på skrå fra siden. Da vises svingene som buer og legger seg ikke oppå hverandre.</p>
       </div></details>
       <details><summary>Må begge løperne filmes fra samme sted?</summary><div class="faqa">
         <p>For ghost og linjer, ja. Bakgrunnen (porter, nett og terreng) brukes til å legge løpene oppå hverandre. For side om side er det ikke nødvendig, men det gjør sammenligningen lettere.</p>
@@ -2680,6 +2702,12 @@ body.zoomed { overflow: hidden; }
       <details><summary>Why do I have to tap the skiers before ghost?</summary><div class="faqa">
         <p>There may be several people in the frame, such as other skiers, coaches and spectators. When you tap skier A and skier B in the start frame, the ghost and the lines follow the right person. You can only continue once both are confirmed.</p>
       </div></details>
+      <details><summary>Why does the app ask me to tap the skier during the analysis?</summary><div class="faqa">
+        <p>If the app loses the skier for a longer part, for example during fast panning, blur or with people close by, it shows a frame from that part. Tap the skier and «Confirm and continue», and the app tracks from there. If the skier is not in the frame, press «Skip».</p>
+      </div></details>
+      <details><summary>Why does the ghost disappear in some parts?</summary><div class="faqa">
+        <p>Where the app is not sure where the skier is, the ghost and the lines are hidden instead of following the wrong person. B is then shown in a small picture, and the view zooms out to the whole A frame. When the video is finished, you are told which parts this applies to. Steadier filming, ideally from a tripod, gives fewer such parts.</p>
+      </div></details>
       <details><summary>What is «With lines»?</summary><div class="faqa">
         <p>With lines, the tracks of A's (red) and B's (blue) skis are drawn for the last 3 seconds. You can then see who takes the highest or most direct line through the gates. The lines are most precise when the skier is large enough in the frame and filmed a little from the side.</p>
       </div></details>
@@ -2762,7 +2790,7 @@ body.zoomed { overflow: hidden; }
     <section class="faqsec">
       <h3>Filming tips</h3>
       <details><summary>Where should I stand?</summary><div class="faqa">
-        <p>Filming from the front, at an angle to the slope, gives the best result. Stand a little to the side of the course and preferably a little high, so the turns appear as arcs and do not stack on top of each other.</p>
+        <p>Film from the front or at an angle from the side. Then the turns appear as arcs and do not stack on top of each other.</p>
       </div></details>
       <details><summary>Must both skiers be filmed from the same spot?</summary><div class="faqa">
         <p>For ghost and lines, yes. The background (gates, nets and terrain) is used to lay the runs on top of each other. For side by side it is not necessary, but it makes the comparison easier.</p>
@@ -2897,22 +2925,22 @@ body.zoomed { overflow: hidden; }
   <dialog class="about" id="tips" aria-labelledby="tipsTitle">
     <button type="button" class="aboutx" aria-label="Lukk">✕</button>
     <h2 id="tipsTitle">Tips om filming</h2>
-    <p>Med noen enkle grep blir analysene, ghost-løperen og linjene mye mer presise.</p>
+    <p>Med noen enkle grep blir analysene, ghost-løperen og linjene mer presise og visuelt bedre.</p>
     <h3>Videoformater som støttes</h3>
     <ul>
       <li>MP4 og MOV fra mobil og kamera, også WebM.</li>
       <li>HD (1080p) og 4K. 4K gir best resultat, fordi videoen kan zoomes mer inn på løperne (ca. 5× i 4K mot ca. 2,5× i HD).</li>
-      <li>Videoer i HEVC-format (iPhone «Høy effektivitet») kan av og til ikke spilles av på PC. Velg da «Mest kompatibel» på iPhone under Innstillinger › Kamera › Formater.</li>
+      <li>Videoer i HEVC-format (iPhone «Høy effektivitet») kan av og til ikke spilles av på PC. Bare hvis det skjer, velger du «Mest kompatibel» på iPhone under Innstillinger › Kamera › Formater. Da får du ikke lenger 4K med 60 bilder per sekund på mange iPhone-modeller.</li>
     </ul>
     <h3>Kameraplassering</h3>
     <ul>
-      <li>Filming med vinkel mot underlaget forfra gir best resultat.</li>
-      <li>Stå litt på siden av løypa og gjerne litt høyt, så svingene vises som buer og ikke legger seg oppå hverandre.</li>
+      <li>Film forfra eller på skrå fra siden. Da vises svingene som buer og legger seg ikke oppå hverandre.</li>
       <li>Film begge løperne fra samme sted. Ghost og linjer bruker bakgrunnen (porter, nett og terreng) til å legge løpene oppå hverandre.</li>
     </ul>
     <h3>Under filmingen</h3>
     <ul>
-      <li>Bruk stativ eller hold kameraet så stille som mulig. Unngå raske panoreringer og zoom underveis.</li>
+      <li>Bruk stativ eller hold kameraet manuelt så stille som mulig. Unngå raske panoreringer og zoom underveis.</li>
+      <li>Filmer du i HD eller 4K uten å zoome underveis, zoomer og optimaliserer tjenesten automatisk når den lager analysevideoen.</li>
       <li>Løperen bør fylle minst en tidel av bildehøyden. Er løperen svært liten, blir linjene mindre presise.</li>
       <li>Lås fokus og lys før start (på iPhone: hold fingeren på skjermen til «AE/AF-lås» vises).</li>
       <li>Start filmen før løperen kommer inn i bildet, og stopp når løperen har passert.</li>
@@ -2978,10 +3006,11 @@ body.zoomed { overflow: hidden; }
 
   <div class="side">
   <ol class="how" id="how">
-    <li><b>Velg to videoer</b> fra samme løype. Si løperens navn høyt når du starter opptaket, så fylles navnet inn automatisk.</li>
+    <li><b>Velg to videoer</b> fra samme løype. Si løperens navn høyt i starten av opptaket, så fylles navnet inn automatisk. Film helst fra samme sted. Jo likere videoene er filmet, desto mer presis og penere blir analysevideoen.</li>
     <li><b>Dra sidelengs på hver video</b> til begge løperne er like langt, for eksempel ut av start eller i samme port. Der du stiller dem likt, starter analysevideoen. Trykk <b>⤢ Forstørr</b> for å se én video i stort format og finjustere.</li>
-    <li><b>Trykk play</b> for å se løperne kjøre med hverandre, og hvor differanser skjer.</li>
-    <li><b>Lag analysevideoen</b>, side om side eller som ghost, og lagre den. Løpernavnene og Athleteview-logoen kommer med i videoen.</li>
+    <li><b>Lag analysevideoen</b>: side om side, som ghost eller ghost med linjer. Løpernavnene og Athleteview-logoen kommer med i videoen. Videoen lages fra startpunktet i valgt hastighet. Side om side er klar på noen sekunder, ghost tar gjerne 1–3 minutter, avhengig av videofilene. La siden være åpen til den er ferdig. Alt skjer på enheten din (mobil, nettbrett eller PC), ingenting lastes opp.</li>
+    <li><b>Se analysevideoen</b>, og lagre den.</li>
+    <li>Les <a href="#" class="tipslink" onclick="var d=document.getElementById('tips');if(d){d.showModal?d.showModal():d.setAttribute('open','');}return false;">Tips om filming</a> for å få best mulig resultat.</li>
   </ol>
   <p class="note kbd">På PC: slipp videofiler rett på feltene. Mellomrom spiller av, piltastene flytter ett bilde, dobbeltklikk på en video forstørrer den.</p>
 
@@ -3016,7 +3045,7 @@ body.zoomed { overflow: hidden; }
     </div>
     <div class="bar" id="bar" hidden><i></i></div>
     <p class="note" id="kindNote" hidden><b>Ghost:</b> Løper B legges inn i bildet til A, der B faktisk var i løypa i samme øyeblikk, og bildet zoomer inn på løperne. Begge videoene må være filmet fra samme sted, og startpunktet bør settes i starten. Før analysen trykker du på løper A og løper B i startbildet. Med linjer tegnes sporet etter skiene til A (rød) og B (blå) de siste 3 sekundene. Det tar gjerne 1–2 minutter. Alt skjer på enheten din, ingenting lastes opp.</p>
-    <p class="note" id="makeNote">Videoen lages fra startpunktet i valgt hastighet, vanligvis på noen sekunder. La siden være åpen til den er ferdig. Alt skjer på telefonen din, ingenting lastes opp.</p>
+    <p class="note" id="makeNote" hidden></p>
     <video id="result" playsinline controls hidden></video>
     <div class="row">
       <button class="btn primary" id="save" type="button" hidden>Lagre video</button>
@@ -3216,7 +3245,7 @@ body.zoomed { overflow: hidden; }
     });
   }
   if (!AVL) return;
-  const M = {"Gå til mappen med videoene, og merk alle (Ctrl+A) eller bare de du vil ha med. De vises i lista nederst.": "Go to the folder with the videos, and select all of them (Ctrl+A) or just the ones you want. They are shown in the list at the bottom.", "Volum er utviklet for trenere og lag som ønsker å effektivisere filming og bruk av videoer mot løpere. Tjenesten fungerer kun på pc, fordi den er knyttet til mappestruktur på pc.": "Volume is made for coaches and teams who want to film more efficiently and make better use of videos with their skiers. It only works on a computer, because it uses the folders on your computer.", "Tradisjonell filming": "Traditional filming", "Film tradisjonelt med håndholdt kamera. Si navnet på løperen tydelig i starten av opptaket. Stå nær kameraet når du sier navnet, eller bruk en trådløs mikrofon. Kjør videofilene gjennom Volum i etterkant, og få løpernavn på videofilene og løpermapper automatisk opprettet. Videofilmer med zooming, panorering og ustødighet vil ikke fungere så bra for å lage ghost og linjeanalyser, under tjenesten Dobbel.": "Film the usual way with a handheld camera. Say the skier's name clearly at the start of the recording. Stand close to the camera when you say the name, or use a wireless microphone. Run the video files through Volume afterwards, and get the skiers' names on the files and a folder per skier made automatically. Videos with zooming, panning and shaky footage do not work as well for ghost and line analysis in Double.", "Avansert filming": "Advanced filming", "Film en sektor, komfortabelt, og lag mer avanserte analysevideoer. Med presist og likt videomateriale kan videofilene benyttes til å lage ghost videoer med linjer i tjenesten Dobbel, og fremover AI-analyser.": "Film one section of the course comfortably, and make more advanced analysis videos. With precise and consistent footage, the video files can be used to make ghost videos with lines in Double, and in the future for AI analysis.", "Tips om avansert videofilming for å lage ghost videoer med linjer": "Tips for advanced filming to make ghost videos with lines", "Bruk en mobiltelefon på kamerastativ med Bluetooth-fjernutløser. Det kan filmes med håndholdt kamera, men små utslag gir upresise analyser på ghost med linjer.": "Use a phone on a tripod with a Bluetooth remote shutter. You can film handheld, but small movements make the ghost and line analysis less precise.", "Sett Autolås på mobil til Aldri (så mobiltelefonen ikke pauser), velg oppløsning 4K og bildefrekvens 60.": "Set Auto-Lock on the phone to Never (so the phone does not pause), and choose 4K resolution at 60 frames per second.", "Velg en sektor i løypen som du har fri sikt til fra kameraet. Plasser helst kameraet litt på skrå mot løypen, slik at du filmer både forfra og fra siden.": "Choose a section of the course with a clear view from the camera. Preferably place the camera at a slight angle to the course, so you film both from the front and from the side.", "Still inn zoomen slik at hele sektoren du skal filme, er med i bildet.": "Set the zoom so the whole section you will film is in the picture.", "For hver løper: Trykk start på fjernutløseren, og si løperens fornavn tydelig i starten av opptaket. Stå nær telefonen når du sier navnet, eller bruk en trådløs mikrofon. Trykk stopp når løperen forlater sektoren.": "For each skier: press start on the remote, and say the skier's first name clearly at the start of the recording. Stand close to the phone when you say the name, or use a wireless microphone. Press stop when the skier leaves the section.", "Ikke zoom eller panorer kameraet mens du filmer løperne. Athleteview optimaliserer opptakene til ferdige videofiler som originalfil og eventuelt ferdig zoomet, og lagrer dem med løperens navn.": "Do not zoom or pan the camera while filming the skiers. Athleteview turns the recordings into finished video files, as the original and optionally zoomed, and saves them with the skier's name.", "Bruk kabel til å overføre videoene fra filmrullen på mobilen til en mappe på pc-en. Da beholder du 4K-kvaliteten på videofilene.": "Use a cable to copy the videos from the phone's camera roll to a folder on the computer. That keeps the 4K quality of the video files.", "2. Velg filmemåte": "2. Choose filming method", "Tradisjonell: navn på videoene og en mappe per løper.": "Traditional: names on the videos and a folder per skier.", "Avansert (filmet fra stativ): i tillegg en zoomet kopi av løperen.": "Advanced (filmed from a tripod): also a zoomed copy of the skier.", "Athleteview lytter etter løpernavnet i starten av hver video, og lager zoomkopiene ved avansert filming.": "Athleteview listens for the skier's name at the start of each video, and makes the zoomed copies for advanced filming.", "Sjekk navnene i lista under, og trykk «Lagre videoer». Da velger du mappen. Der lagres en kopi av hver video med løpernavn, og zoomkopien ved avansert filming. Originalene blir ikke endret.": "Check the names in the list below, and click «Save videos». You then choose the folder. A copy of each video with the skier's name is saved there, and the zoomed copy for advanced filming. The originals are not changed.", "1. Velg videoer": "1. Choose videos", "Videoene du velger, vises i lista nederst.": "The videos you choose are shown in the list at the bottom.", "2. Velg hva som skal lages": "2. Choose what to make", "3. Start analyse": "3. Start analysis", "Start analyse": "Start analysis", "Athleteview lytter etter løpernavnet i starten av hver video, og lager zoomkopiene hvis du har valgt det.": "Athleteview listens for the skier's name at the start of each video, and makes the zoomed copies if you chose that.", "4. Lagre videoer": "4. Save videos", "Lagre videoer": "Save videos", "Sjekk navnene i lista under, og trykk «Lagre videoer». Da velger du mappen. Der lagres en kopi av hver video med løpernavn, og zoomkopien hvis du har valgt den. Originalene blir ikke endret.": "Check the names in the list below, and click «Save videos». You then choose the folder. A copy of each video with the skier's name is saved there, and the zoomed copy if you chose it. The originals are not changed.", "Dobbel": "Double", "Enkel": "Single", "Volum": "Volume", "Om Athleteview": "About Athleteview", "Tips om filming": "Filming tips", "Ofte stilte spørsmål": "Frequently asked questions", "Athleteview er en tjeneste som er utviklet for å forenkle videoanalyse av alpinister.": "Athleteview is a service developed to make video analysis of alpine skiers simpler.", "All analyse og lagring av video- og bildemateriale skjer lokalt på din enhet, som kan være en mobiltelefon, nettbrett eller PC.": "All analysis and storage of video and images happens locally on your device, which can be a mobile phone, tablet or PC.", "Fanen Volum kan kun brukes fra PC, da denne funksjonen er knyttet til PC-ens mappestruktur.": "The Volume tab can only be used on a PC, because this feature is tied to the PC's folder structure.", "Tjenesten er gratis å bruke i en pilotperiode mot brukerregistrering.": "The service is free to use during a pilot period in return for user registration.", "Gi gjerne innspill om feil og forbedringer til utvikler på:": "Feedback about bugs and improvements is welcome. Contact the developer at:", "Marker løypa": "Mark the course", "Klikk rundt den delen av løypa der løperne kjører, minst tre punkter. Ta med hele sektoren fra topp til bunn, men ikke naboløyper, heis eller publikum. Bare personer inne i feltet kan bli valgt som løper i den zoomede kopien.": "Click around the part of the course where the skiers ski, at least three points. Include the whole section from top to bottom, but not neighbouring courses, lifts or spectators. Only people inside the area can be chosen as the skier in the zoomed copy.", "Ferdig": "Done", "Angre punkt": "Undo point", "Start på nytt": "Start over", "Bruk hele bildet": "Use the whole frame", "Avbryt": "Cancel", "Kun på PC": "PC only", "Vi teller anonymt besøk og bruk av funksjonene med Umami, som ikke bruker informasjonskapsler og ikke lagrer personopplysninger. Videoer og bilder forlater aldri enheten din.": "We count visits and feature use anonymously with Umami, which uses no cookies and stores no personal data. Videos and images never leave your device.", "Funksjonaliteten VOLUM kan kun brukes fra pc, fordi den er knyttet til mappestruktur på pc.": "The VOLUME feature can only be used on a PC, because it is tied to the folder structure on the PC.", "Med noen enkle grep blir analysene, ghost-løperen og linjene mye mer presise.": "A few simple steps make the analyses, the ghost skier and the lines much more precise.", "Videoformater som støttes": "Supported video formats", "MP4 og MOV fra mobil og kamera, også WebM.": "MP4 and MOV from phones and cameras, also WebM.", "HD (1080p) og 4K. 4K gir best resultat, fordi videoen kan zoomes mer inn på løperne (ca. 5× i 4K mot ca. 2,5× i HD).": "HD (1080p) and 4K. 4K gives the best result, because the video can zoom further in on the skiers (about 5× in 4K versus about 2.5× in HD).", "Videoer i HEVC-format (iPhone «Høy effektivitet») kan av og til ikke spilles av på PC. Velg da «Mest kompatibel» på iPhone under Innstillinger › Kamera › Formater.": "Videos in HEVC format (iPhone «High Efficiency») sometimes cannot be played on a PC. Then choose «Most Compatible» on the iPhone under Settings › Camera › Formats.", "Kameraplassering": "Camera position", "Filming med vinkel mot underlaget forfra gir best resultat.": "Filming from the front, at an angle to the slope, gives the best result.", "Stå litt på siden av løypa og gjerne litt høyt, så svingene vises som buer og ikke legger seg oppå hverandre.": "Stand a little to the side of the course and preferably a little high, so the turns appear as arcs and do not stack on top of each other.", "Film begge løperne fra samme sted. Ghost og linjer bruker bakgrunnen (porter, nett og terreng) til å legge løpene oppå hverandre.": "Film both skiers from the same spot. Ghost and lines use the background (gates, nets and terrain) to lay the runs on top of each other.", "Under filmingen": "While filming", "Bruk stativ eller hold kameraet så stille som mulig. Unngå raske panoreringer og zoom underveis.": "Use a tripod or hold the camera as still as possible. Avoid fast panning and zooming while filming.", "Løperen bør fylle minst en tidel av bildehøyden. Er løperen svært liten, blir linjene mindre presise.": "The skier should fill at least a tenth of the frame height. If the skier is very small, the lines are less precise.", "Lås fokus og lys før start (på iPhone: hold fingeren på skjermen til «AE/AF-lås» vises).": "Lock focus and exposure before the start (on iPhone: hold your finger on the screen until «AE/AF Lock» appears).", "Start filmen før løperen kommer inn i bildet, og stopp når løperen har passert.": "Start recording before the skier enters the frame, and stop when the skier has passed.", "Velg video fra kamerarullen": "Choose video from camera roll", "Velg video fra mappe": "Choose video from folder", "Første løper": "First skier", "Andre løper": "Second skier", "Bytt video": "Change video", "← dra →": "← drag →", "⤢ Forstørr": "⤢ Enlarge", "‹ bilde": "‹ frame", "bilde ›": "frame ›", "Velg hastighet": "Choose speed", "Velg to videoer": "Choose two videos", "fra samme løype. Si løperens navn høyt når du starter opptaket, så fylles navnet inn automatisk.": "from the same course. Say the skier's name out loud when you start recording, and the name is filled in automatically.", "Dra sidelengs på hver video": "Drag sideways on each video", "til begge løperne er like langt, for eksempel ut av start eller i samme port. Der du stiller dem likt, starter analysevideoen. Trykk": "until both skiers are at the same point, for example out of the start or at the same gate. The analysis video starts where you line them up. Tap", "for å se én video i stort format og finjustere.": "to see one video in large format and fine-tune.", "Trykk play": "Tap play", "for å se løperne kjøre med hverandre, og hvor differanser skjer.": "to watch the skiers race each other, and where the differences happen.", "Lag analysevideoen": "Make the analysis video", ", side om side eller som ghost, og lagre den. Løpernavnene og Athleteview-logoen kommer med i videoen.": ", side by side or as a ghost, and save it. The skiers' names and the Athleteview logo are included in the video.", "På PC: slipp videofiler rett på feltene. Mellomrom spiller av, piltastene flytter ett bilde, dobbeltklikk på en video forstørrer den.": "On PC: drop video files straight onto the fields. Space plays, the arrow keys move one frame, double-click a video to enlarge it.", "Løpere": "Skiers", "Løper A": "Skier A", "Løper B": "Skier B", "Velg en video først.": "Choose a video first.", "Lagre analysen": "Save the analysis", "Side om side": "Side by side", "Med linjer (vis linjevalget til begge løperne)": "With lines (show both skiers' lines)", "Tittel på analysevideoen (valgfritt)": "Title of the analysis video (optional)", "Lag analysevideo": "Make analysis video", "Stopp her": "Stop here", "Ghost:": "Ghost:", "Løper B legges inn i bildet til A, der B faktisk var i løypa i samme øyeblikk, og bildet zoomer inn på løperne. Begge videoene må være filmet fra samme sted, og startpunktet bør settes i starten. Før analysen trykker du på løper A og løper B i startbildet. Med linjer tegnes sporet etter skiene til A (rød) og B (blå) de siste 3 sekundene. Det tar gjerne 1–2 minutter. Alt skjer på enheten din, ingenting lastes opp.": "Skier B is placed into A's video, where B actually was on the course at the same moment, and the view zooms in on the skiers. Both videos must be filmed from the same spot, and the start point should be set at the start. Before the analysis, you tap skier A and skier B in the start frame. With lines, the tracks of A's (red) and B's (blue) skis are drawn for the last 3 seconds. It usually takes 1–2 minutes. Everything happens on your device, nothing is uploaded.", "Videoen lages fra startpunktet i valgt hastighet, vanligvis på noen sekunder. La siden være åpen til den er ferdig. Alt skjer på telefonen din, ingenting lastes opp.": "The video is made from the start point at the chosen speed, usually in a few seconds. Leave the page open until it is finished. Everything happens on your phone, nothing is uploaded.", "Lagre video": "Save video", "Lager video …": "Making video …", "Trykk på løper A": "Tap skier A", "Det kan være flere løpere i bildet. Trykk på løperen som skal analyseres, så følger ghosten og linjene riktig person. Du kan ikke gå videre før både A og B er bekreftet.": "There may be several skiers in the frame. Tap the skier to be analysed, so the ghost and the lines follow the right person. You cannot continue until both A and B are confirmed.", "‹ Tilbake til A": "‹ Back to A", "Bekreft løper A": "Confirm skier A", "0,00 s": "0.00 s", "← dra her for å finjustere →": "← drag here to fine-tune →", "« ½ s": "« ½ s", "½ s »": "½ s »", "Én løper, vinkler i svingen": "One skier, angles in the turn", "Analyser dette bildet": "Analyse this frame", "‹ Tilbake til video": "‹ Back to video", "Bytt ytterbein": "Switch outside leg", "Feil løper?": "Wrong skier?", "Hele bildet": "Whole frame", "Velg en video": "Choose a video", "av én løper, helst filmet forfra eller bakfra i svingen.": "of one skier, preferably filmed from the front or from behind in the turn.", "Stopp på bildet": "Stop on the frame", "du vil se på, med pil-knappene eller ved å dra i tidslinjen.": "you want to look at, with the arrow buttons or by dragging the timeline.", "Trykk «Analyser dette bildet».": "Tap «Analyse this frame».", "Athleteview finner løperen og leddene og tegner vinklene.": "Athleteview finds the skier and the joints and draws the angles.", "Sjekk punktene.": "Check the points.", "Sitter et punkt feil, drar du det på plass. Vinklene oppdateres med en gang.": "If a point is wrong, drag it into place. The angles update straight away.", "Lagre bildet": "Save the image", "med vinklene til bilderullen eller en mappe.": "with the angles to the camera roll or a folder.", "Vinkler": "Angles", "Legg, overkropp og skuldre måles mot det vannrette i bildet. Hold telefonen rett når du filmer. «Overkropp mot legg» påvirkes ikke av hvordan telefonen holdes.": "Leg, upper body and shoulders are measured against the horizontal in the image. Hold the phone straight when you film. «Upper body vs leg» is not affected by how the phone is held.", "Løper (valgfritt)": "Skier (optional)", "Lagre bilde": "Save image", "Analysen skjer på enheten din, og ingen video eller bilder lastes opp. Første gang lastes en analysemodell ned (ca. 17 MB).": "The analysis happens on your device, and no video or images are uploaded. The first time, an analysis model is downloaded (about 17 MB).", "Tjenesten er lagd for trenere og lag som ønsker å effektivisere filming og bruk av videoer mot løpere.": "The service is made for coaches and teams who want to make filming and the use of videos with athletes more efficient.", "Du kan nå filme mer effektivt og komfortabelt og effektivisere bruken av videofilmer mot løpere.": "You can now film more efficiently and comfortably, and make the use of videos with athletes more efficient.", "Denne funksjonen fungerer kun på pc, fordi den er knyttet til mappestruktur på pc.": "This feature only works on a PC, because it is tied to the folder structure on the PC.", "Slik filmer du for best resultat:": "How to film for the best result:", "Bruk mobiltelefon, på kamerastativ, med Bluetooth fjernutløser.": "Use a mobile phone on a tripod, with a Bluetooth remote shutter.", "Innstilling Autolås: Aldri": "Setting Auto-Lock: Never", "Velg Video.": "Choose Video.", "Velg oppløsning 4K og bildefrekvens 60.": "Choose 4K resolution and 60 frames per second.", "Velg en sektor i løypen, der du fra kamerapunktet har fri sikt mot sektoren, og helst litt vinkel mot og fra siden mot løypen.": "Choose a section of the course where you have a clear view of the section from the camera position, preferably at a slight angle and from the side of the course.", "Zoom på kameraet slik at du dekker hele sektoren du skal filme.": "Zoom the camera so you cover the whole section you are filming.", "For hver løper trykker du start på fjernutløseren, sier fornavnet på løperen tydelig i starten av opptaket, og trykk stopp når løperen forlater sektoren.": "For each skier, press start on the remote shutter, say the skier's first name clearly at the start of the recording, and press stop when the skier leaves the section.", "Ikke zoom eller beveg kamera underveis når du filmer løpere. Athleteview zoomer automatisk når denne funksjonen er valgt, og optimaliserer til ferdige videofiler, og lagrer filer med løperens navn.": "Do not zoom or move the camera while filming skiers. Athleteview zooms automatically when this option is chosen, optimises into finished video files, and saves the files with the skier's name.", "Overfør filene fra filmrullen på mobilen med en kabel til en mappe på din pc (kabel beholder kvaliteten på videofilene).": "Transfer the files from the camera roll on the phone with a cable to a folder on your PC (a cable keeps the quality of the video files).", "Følg så beskrivelsen nedenfor.": "Then follow the steps below.", "Velg mappe": "Choose folder", "Velg videoer": "Choose videos", "Lag én undermappe per løper": "Make one subfolder per skier", "Når du trykker «Lagre alle med navn», velger du mappen filene skal lagres i. Der lagres en kopi av hver video med løpernavn, og zoomkopien hvis du har valgt den. Originalene blir ikke endret.": "When you click «Save all with names», you choose the folder the files are saved in. A copy of each video with the skier's name is saved there, and the zoomed copy if you chose it. The originals are not changed.", "Lag også en zoomet kopi av løperen": "Also make a zoomed copy of the skier", "For hver video lagres også «… zoom.mp4», der utsnittet følger løperen og zoomer rolig inn. Det virker best med 4K filmet fra stativ, uten zoom og panorering. Originalen lagres som før, og det er den du bruker i Dobbel med ghost og linjer. Første gang markerer du løypa på et bilde fra videoen. Athleteview ser selv når kameraet er flyttet til et nytt sted, og ber deg da markere løypa på nytt.": "For each video, a «… zoom.mp4» is also saved, where the frame follows the skier and zooms in smoothly. It works best with 4K filmed from a tripod, without zoom and panning. The original is saved as before, and that is the one you use in Double with ghost and lines. The first time, you mark the course on a frame from the video. Athleteview notices by itself when the camera has been moved to a new spot, and then asks you to mark the course again.", "Marker løypa på nytt": "Mark the course again", "Den zoomede kopien har ikke lyd.": "The zoomed copy has no sound.", "Talegjenkjenningen skjer på enheten din, og ingen video eller lyd lastes opp. Første gang lastes en talemodell ned (ca. 80 MB). Etter det er den lagret i nettleseren.": "Speech recognition happens on your device, and no video or sound is uploaded. The first time, a speech model is downloaded (about 80 MB). After that it is stored in the browser.", "Lagre alle med navn": "Save all with names", "Vis bare videoer uten navn": "Show only videos without names", "Visning": "View", "Meny": "Menu", "Eksempel på analysevideo med ghost og linjer": "Example of an analysis video with ghost and lines", "Eksempel på vinkelanalyse i Enkel: legg, overkropp og skuldre": "Example of angle analysis in Single: leg, upper body and shoulders", "Videoer fra mobilen legges i en mappe og navngis på PC-en": "Videos from the phone are put in a folder and named on the PC", "Lukk": "Close", "Ett bilde tilbake for A": "One frame back for A", "Forstørr video A": "Enlarge video A", "Ett bilde frem for A": "One frame forward for A", "Ett bilde tilbake for B": "One frame back for B", "Forstørr video B": "Enlarge video B", "Ett bilde frem for B": "One frame forward for B", "Spill av": "Play", "Felles tidslinje": "Shared timeline", "Ett bilde tilbake for begge": "One frame back for both", "Ett bilde frem for begge": "One frame forward for both", "Navn på løper A": "Name of skier A", "Navn på løper B": "Name of skier B", "Type analysevideo": "Type of analysis video", "F.eks. Storslalåm Hafjell": "E.g. Giant slalom Hafjell", "Forstørret video": "Enlarged video", "Spol i denne videoen": "Scrub this video", "Finjuster startpunkt, dra sidelengs": "Fine-tune the start point, drag sideways", "Et halvt sekund tilbake": "Half a second back", "Ett bilde tilbake": "One frame back", "Ett bilde frem": "One frame forward", "Et halvt sekund frem": "Half a second forward", "Tidslinje": "Timeline", "Navn på løperen": "Name of the skier", "Sammenlign to alpinløpere side om side. Velg to videoer, synk startpunktet og lagre som én video.": "Compare two alpine skiers side by side. Choose two videos, sync the start point and save as one video.", "Trykk på et spørsmål for å se svaret.": "Tap a question to see the answer."};
+  const M = {"Gå til mappen med videoene, og merk alle (Ctrl+A) eller bare de du vil ha med. De vises i lista nederst.": "Go to the folder with the videos, and select all of them (Ctrl+A) or just the ones you want. They are shown in the list at the bottom.", "Volum er utviklet for trenere og lag som ønsker å effektivisere filming og bruk av videoer mot løpere. Tjenesten fungerer kun på pc, fordi den er knyttet til mappestruktur på pc.": "Volume is made for coaches and teams who want to film more efficiently and make better use of videos with their skiers. It only works on a computer, because it uses the folders on your computer.", "Tradisjonell filming": "Traditional filming", "Film tradisjonelt med håndholdt kamera. Si navnet på løperen tydelig i starten av opptaket. Stå nær kameraet når du sier navnet, eller bruk en trådløs mikrofon. Kjør videofilene gjennom Volum i etterkant, og få løpernavn på videofilene og løpermapper automatisk opprettet. Videofilmer med zooming, panorering og ustødighet vil ikke fungere så bra for å lage ghost og linjeanalyser, under tjenesten Dobbel.": "Film the usual way with a handheld camera. Say the skier's name clearly at the start of the recording. Stand close to the camera when you say the name, or use a wireless microphone. Run the video files through Volume afterwards, and get the skiers' names on the files and a folder per skier made automatically. Videos with zooming, panning and shaky footage do not work as well for ghost and line analysis in Double.", "Avansert filming": "Advanced filming", "Film en sektor, komfortabelt, og lag mer avanserte analysevideoer. Med presist og likt videomateriale kan videofilene benyttes til å lage ghost videoer med linjer i tjenesten Dobbel, og fremover AI-analyser.": "Film one section of the course comfortably, and make more advanced analysis videos. With precise and consistent footage, the video files can be used to make ghost videos with lines in Double, and in the future for AI analysis.", "Tips om avansert videofilming for å lage ghost videoer med linjer": "Tips for advanced filming to make ghost videos with lines", "Bruk en mobiltelefon på kamerastativ med Bluetooth-fjernutløser. Det kan filmes med håndholdt kamera, men små utslag gir upresise analyser på ghost med linjer.": "Use a phone on a tripod with a Bluetooth remote shutter. You can film handheld, but small movements make the ghost and line analysis less precise.", "Sett Autolås på mobil til Aldri (så mobiltelefonen ikke pauser), velg oppløsning 4K og bildefrekvens 60.": "Set Auto-Lock on the phone to Never (so the phone does not pause), and choose 4K resolution at 60 frames per second.", "Velg en sektor i løypen som du har fri sikt til fra kameraet. Plasser helst kameraet litt på skrå mot løypen, slik at du filmer både forfra og fra siden.": "Choose a section of the course with a clear view from the camera. Preferably place the camera at a slight angle to the course, so you film both from the front and from the side.", "Still inn zoomen slik at hele sektoren du skal filme, er med i bildet.": "Set the zoom so the whole section you will film is in the picture.", "For hver løper: Trykk start på fjernutløseren, og si løperens fornavn tydelig i starten av opptaket. Stå nær telefonen når du sier navnet, eller bruk en trådløs mikrofon. Trykk stopp når løperen forlater sektoren.": "For each skier: press start on the remote, and say the skier's first name clearly at the start of the recording. Stand close to the phone when you say the name, or use a wireless microphone. Press stop when the skier leaves the section.", "Ikke zoom eller panorer kameraet mens du filmer løperne. Athleteview optimaliserer opptakene til ferdige videofiler som originalfil og eventuelt ferdig zoomet, og lagrer dem med løperens navn.": "Do not zoom or pan the camera while filming the skiers. Athleteview turns the recordings into finished video files, as the original and optionally zoomed, and saves them with the skier's name.", "Bruk kabel til å overføre videoene fra filmrullen på mobilen til en mappe på pc-en. Da beholder du 4K-kvaliteten på videofilene.": "Use a cable to copy the videos from the phone's camera roll to a folder on the computer. That keeps the 4K quality of the video files.", "2. Velg filmemåte": "2. Choose filming method", "Tradisjonell: navn på videoene og en mappe per løper.": "Traditional: names on the videos and a folder per skier.", "Avansert (filmet fra stativ): i tillegg en zoomet kopi av løperen.": "Advanced (filmed from a tripod): also a zoomed copy of the skier.", "Athleteview lytter etter løpernavnet i starten av hver video, og lager zoomkopiene ved avansert filming.": "Athleteview listens for the skier's name at the start of each video, and makes the zoomed copies for advanced filming.", "Sjekk navnene i lista under, og trykk «Lagre videoer». Da velger du mappen. Der lagres en kopi av hver video med løpernavn, og zoomkopien ved avansert filming. Originalene blir ikke endret.": "Check the names in the list below, and click «Save videos». You then choose the folder. A copy of each video with the skier's name is saved there, and the zoomed copy for advanced filming. The originals are not changed.", "1. Velg videoer": "1. Choose videos", "Videoene du velger, vises i lista nederst.": "The videos you choose are shown in the list at the bottom.", "2. Velg hva som skal lages": "2. Choose what to make", "3. Start analyse": "3. Start analysis", "Start analyse": "Start analysis", "Athleteview lytter etter løpernavnet i starten av hver video, og lager zoomkopiene hvis du har valgt det.": "Athleteview listens for the skier's name at the start of each video, and makes the zoomed copies if you chose that.", "4. Lagre videoer": "4. Save videos", "Lagre videoer": "Save videos", "Sjekk navnene i lista under, og trykk «Lagre videoer». Da velger du mappen. Der lagres en kopi av hver video med løpernavn, og zoomkopien hvis du har valgt den. Originalene blir ikke endret.": "Check the names in the list below, and click «Save videos». You then choose the folder. A copy of each video with the skier's name is saved there, and the zoomed copy if you chose it. The originals are not changed.", "Dobbel": "Double", "Enkel": "Single", "Volum": "Volume", "Om Athleteview": "About Athleteview", "Tips om filming": "Filming tips", "Ofte stilte spørsmål": "Frequently asked questions", "Athleteview er en tjeneste som er utviklet for å forenkle videoanalyse av alpinister.": "Athleteview is a service developed to make video analysis of alpine skiers simpler.", "All analyse og lagring av video- og bildemateriale skjer lokalt på din enhet, som kan være en mobiltelefon, nettbrett eller PC.": "All analysis and storage of video and images happens locally on your device, which can be a mobile phone, tablet or PC.", "Fanen Volum kan kun brukes fra PC, da denne funksjonen er knyttet til PC-ens mappestruktur.": "The Volume tab can only be used on a PC, because this feature is tied to the PC's folder structure.", "Tjenesten er gratis å bruke i en pilotperiode mot brukerregistrering.": "The service is free to use during a pilot period in return for user registration.", "Gi gjerne innspill om feil og forbedringer til utvikler på:": "Feedback about bugs and improvements is welcome. Contact the developer at:", "Marker løypa": "Mark the course", "Klikk rundt den delen av løypa der løperne kjører, minst tre punkter. Ta med hele sektoren fra topp til bunn, men ikke naboløyper, heis eller publikum. Bare personer inne i feltet kan bli valgt som løper i den zoomede kopien.": "Click around the part of the course where the skiers ski, at least three points. Include the whole section from top to bottom, but not neighbouring courses, lifts or spectators. Only people inside the area can be chosen as the skier in the zoomed copy.", "Ferdig": "Done", "Angre punkt": "Undo point", "Start på nytt": "Start over", "Bruk hele bildet": "Use the whole frame", "Avbryt": "Cancel", "Kun på PC": "PC only", "Vi teller anonymt besøk og bruk av funksjonene med Umami, som ikke bruker informasjonskapsler og ikke lagrer personopplysninger. Videoer og bilder forlater aldri enheten din.": "We count visits and feature use anonymously with Umami, which uses no cookies and stores no personal data. Videos and images never leave your device.", "Funksjonaliteten VOLUM kan kun brukes fra pc, fordi den er knyttet til mappestruktur på pc.": "The VOLUME feature can only be used on a PC, because it is tied to the folder structure on the PC.", "Med noen enkle grep blir analysene, ghost-løperen og linjene mye mer presise.": "A few simple steps make the analyses, the ghost skier and the lines much more precise.", "Videoformater som støttes": "Supported video formats", "MP4 og MOV fra mobil og kamera, også WebM.": "MP4 and MOV from phones and cameras, also WebM.", "HD (1080p) og 4K. 4K gir best resultat, fordi videoen kan zoomes mer inn på løperne (ca. 5× i 4K mot ca. 2,5× i HD).": "HD (1080p) and 4K. 4K gives the best result, because the video can zoom further in on the skiers (about 5× in 4K versus about 2.5× in HD).", "Videoer i HEVC-format (iPhone «Høy effektivitet») kan av og til ikke spilles av på PC. Velg da «Mest kompatibel» på iPhone under Innstillinger › Kamera › Formater.": "Videos in HEVC format (iPhone «High Efficiency») sometimes cannot be played on a PC. Then choose «Most Compatible» on the iPhone under Settings › Camera › Formats.", "Kameraplassering": "Camera position", "Filming med vinkel mot underlaget forfra gir best resultat.": "Filming from the front, at an angle to the slope, gives the best result.", "Stå litt på siden av løypa og gjerne litt høyt, så svingene vises som buer og ikke legger seg oppå hverandre.": "Stand a little to the side of the course and preferably a little high, so the turns appear as arcs and do not stack on top of each other.", "Film begge løperne fra samme sted. Ghost og linjer bruker bakgrunnen (porter, nett og terreng) til å legge løpene oppå hverandre.": "Film both skiers from the same spot. Ghost and lines use the background (gates, nets and terrain) to lay the runs on top of each other.", "Under filmingen": "While filming", "Bruk stativ eller hold kameraet så stille som mulig. Unngå raske panoreringer og zoom underveis.": "Use a tripod or hold the camera as still as possible. Avoid fast panning and zooming while filming.", "Løperen bør fylle minst en tidel av bildehøyden. Er løperen svært liten, blir linjene mindre presise.": "The skier should fill at least a tenth of the frame height. If the skier is very small, the lines are less precise.", "Lås fokus og lys før start (på iPhone: hold fingeren på skjermen til «AE/AF-lås» vises).": "Lock focus and exposure before the start (on iPhone: hold your finger on the screen until «AE/AF Lock» appears).", "Start filmen før løperen kommer inn i bildet, og stopp når løperen har passert.": "Start recording before the skier enters the frame, and stop when the skier has passed.", "Velg video fra kamerarullen": "Choose video from camera roll", "Velg video fra mappe": "Choose video from folder", "Første løper": "First skier", "Andre løper": "Second skier", "Bytt video": "Change video", "← dra →": "← drag →", "⤢ Forstørr": "⤢ Enlarge", "‹ bilde": "‹ frame", "bilde ›": "frame ›", "Velg hastighet": "Choose speed", "Velg to videoer": "Choose two videos", "fra samme løype. Si løperens navn høyt når du starter opptaket, så fylles navnet inn automatisk.": "from the same course. Say the skier's name out loud when you start recording, and the name is filled in automatically.", "Dra sidelengs på hver video": "Drag sideways on each video", "til begge løperne er like langt, for eksempel ut av start eller i samme port. Der du stiller dem likt, starter analysevideoen. Trykk": "until both skiers are at the same point, for example out of the start or at the same gate. The analysis video starts where you line them up. Tap", "for å se én video i stort format og finjustere.": "to see one video in large format and fine-tune.", "Trykk play": "Tap play", "for å se løperne kjøre med hverandre, og hvor differanser skjer.": "to watch the skiers race each other, and where the differences happen.", "Lag analysevideoen": "Make the analysis video", ", side om side eller som ghost, og lagre den. Løpernavnene og Athleteview-logoen kommer med i videoen.": ", side by side or as a ghost, and save it. The skiers' names and the Athleteview logo are included in the video.", "På PC: slipp videofiler rett på feltene. Mellomrom spiller av, piltastene flytter ett bilde, dobbeltklikk på en video forstørrer den.": "On PC: drop video files straight onto the fields. Space plays, the arrow keys move one frame, double-click a video to enlarge it.", "Løpere": "Skiers", "Løper A": "Skier A", "Løper B": "Skier B", "Velg en video først.": "Choose a video first.", "Lagre analysen": "Save the analysis", "Side om side": "Side by side", "Med linjer (vis linjevalget til begge løperne)": "With lines (show both skiers' lines)", "Tittel på analysevideoen (valgfritt)": "Title of the analysis video (optional)", "Lag analysevideo": "Make analysis video", "Stopp her": "Stop here", "Ghost:": "Ghost:", "Løper B legges inn i bildet til A, der B faktisk var i løypa i samme øyeblikk, og bildet zoomer inn på løperne. Begge videoene må være filmet fra samme sted, og startpunktet bør settes i starten. Før analysen trykker du på løper A og løper B i startbildet. Med linjer tegnes sporet etter skiene til A (rød) og B (blå) de siste 3 sekundene. Det tar gjerne 1–2 minutter. Alt skjer på enheten din, ingenting lastes opp.": "Skier B is placed into A's video, where B actually was on the course at the same moment, and the view zooms in on the skiers. Both videos must be filmed from the same spot, and the start point should be set at the start. Before the analysis, you tap skier A and skier B in the start frame. With lines, the tracks of A's (red) and B's (blue) skis are drawn for the last 3 seconds. It usually takes 1–2 minutes. Everything happens on your device, nothing is uploaded.", "Videoen lages fra startpunktet i valgt hastighet, vanligvis på noen sekunder. La siden være åpen til den er ferdig. Alt skjer på telefonen din, ingenting lastes opp.": "The video is made from the start point at the chosen speed, usually in a few seconds. Leave the page open until it is finished. Everything happens on your phone, nothing is uploaded.", "Lagre video": "Save video", "Lager video …": "Making video …", "Trykk på løper A": "Tap skier A", "Det kan være flere løpere i bildet. Trykk på løperen som skal analyseres, så følger ghosten og linjene riktig person. Du kan ikke gå videre før både A og B er bekreftet.": "There may be several skiers in the frame. Tap the skier to be analysed, so the ghost and the lines follow the right person. You cannot continue until both A and B are confirmed.", "‹ Tilbake til A": "‹ Back to A", "Bekreft løper A": "Confirm skier A", "0,00 s": "0.00 s", "← dra her for å finjustere →": "← drag here to fine-tune →", "« ½ s": "« ½ s", "½ s »": "½ s »", "Én løper, vinkler i svingen": "One skier, angles in the turn", "Analyser dette bildet": "Analyse this frame", "‹ Tilbake til video": "‹ Back to video", "Bytt ytterbein": "Switch outside leg", "Feil løper?": "Wrong skier?", "Hele bildet": "Whole frame", "Velg en video": "Choose a video", "av én løper, helst filmet forfra eller bakfra i svingen.": "of one skier, preferably filmed from the front or from behind in the turn.", "Stopp på bildet": "Stop on the frame", "du vil se på, med pil-knappene eller ved å dra i tidslinjen.": "you want to look at, with the arrow buttons or by dragging the timeline.", "Trykk «Analyser dette bildet».": "Tap «Analyse this frame».", "Athleteview finner løperen og leddene og tegner vinklene.": "Athleteview finds the skier and the joints and draws the angles.", "Sjekk punktene.": "Check the points.", "Sitter et punkt feil, drar du det på plass. Vinklene oppdateres med en gang.": "If a point is wrong, drag it into place. The angles update straight away.", "Lagre bildet": "Save the image", "med vinklene til bilderullen eller en mappe.": "with the angles to the camera roll or a folder.", "Vinkler": "Angles", "Legg, overkropp og skuldre måles mot det vannrette i bildet. Hold telefonen rett når du filmer. «Overkropp mot legg» påvirkes ikke av hvordan telefonen holdes.": "Leg, upper body and shoulders are measured against the horizontal in the image. Hold the phone straight when you film. «Upper body vs leg» is not affected by how the phone is held.", "Løper (valgfritt)": "Skier (optional)", "Lagre bilde": "Save image", "Analysen skjer på enheten din, og ingen video eller bilder lastes opp. Første gang lastes en analysemodell ned (ca. 17 MB).": "The analysis happens on your device, and no video or images are uploaded. The first time, an analysis model is downloaded (about 17 MB).", "Tjenesten er lagd for trenere og lag som ønsker å effektivisere filming og bruk av videoer mot løpere.": "The service is made for coaches and teams who want to make filming and the use of videos with athletes more efficient.", "Du kan nå filme mer effektivt og komfortabelt og effektivisere bruken av videofilmer mot løpere.": "You can now film more efficiently and comfortably, and make the use of videos with athletes more efficient.", "Denne funksjonen fungerer kun på pc, fordi den er knyttet til mappestruktur på pc.": "This feature only works on a PC, because it is tied to the folder structure on the PC.", "Slik filmer du for best resultat:": "How to film for the best result:", "Bruk mobiltelefon, på kamerastativ, med Bluetooth fjernutløser.": "Use a mobile phone on a tripod, with a Bluetooth remote shutter.", "Innstilling Autolås: Aldri": "Setting Auto-Lock: Never", "Velg Video.": "Choose Video.", "Velg oppløsning 4K og bildefrekvens 60.": "Choose 4K resolution and 60 frames per second.", "Velg en sektor i løypen, der du fra kamerapunktet har fri sikt mot sektoren, og helst litt vinkel mot og fra siden mot løypen.": "Choose a section of the course where you have a clear view of the section from the camera position, preferably at a slight angle and from the side of the course.", "Zoom på kameraet slik at du dekker hele sektoren du skal filme.": "Zoom the camera so you cover the whole section you are filming.", "For hver løper trykker du start på fjernutløseren, sier fornavnet på løperen tydelig i starten av opptaket, og trykk stopp når løperen forlater sektoren.": "For each skier, press start on the remote shutter, say the skier's first name clearly at the start of the recording, and press stop when the skier leaves the section.", "Ikke zoom eller beveg kamera underveis når du filmer løpere. Athleteview zoomer automatisk når denne funksjonen er valgt, og optimaliserer til ferdige videofiler, og lagrer filer med løperens navn.": "Do not zoom or move the camera while filming skiers. Athleteview zooms automatically when this option is chosen, optimises into finished video files, and saves the files with the skier's name.", "Overfør filene fra filmrullen på mobilen med en kabel til en mappe på din pc (kabel beholder kvaliteten på videofilene).": "Transfer the files from the camera roll on the phone with a cable to a folder on your PC (a cable keeps the quality of the video files).", "Følg så beskrivelsen nedenfor.": "Then follow the steps below.", "Velg mappe": "Choose folder", "Velg videoer": "Choose videos", "Lag én undermappe per løper": "Make one subfolder per skier", "Når du trykker «Lagre alle med navn», velger du mappen filene skal lagres i. Der lagres en kopi av hver video med løpernavn, og zoomkopien hvis du har valgt den. Originalene blir ikke endret.": "When you click «Save all with names», you choose the folder the files are saved in. A copy of each video with the skier's name is saved there, and the zoomed copy if you chose it. The originals are not changed.", "Lag også en zoomet kopi av løperen": "Also make a zoomed copy of the skier", "For hver video lagres også «… zoom.mp4», der utsnittet følger løperen og zoomer rolig inn. Det virker best med 4K filmet fra stativ, uten zoom og panorering. Originalen lagres som før, og det er den du bruker i Dobbel med ghost og linjer. Første gang markerer du løypa på et bilde fra videoen. Athleteview ser selv når kameraet er flyttet til et nytt sted, og ber deg da markere løypa på nytt.": "For each video, a «… zoom.mp4» is also saved, where the frame follows the skier and zooms in smoothly. It works best with 4K filmed from a tripod, without zoom and panning. The original is saved as before, and that is the one you use in Double with ghost and lines. The first time, you mark the course on a frame from the video. Athleteview notices by itself when the camera has been moved to a new spot, and then asks you to mark the course again.", "Marker løypa på nytt": "Mark the course again", "Den zoomede kopien har ikke lyd.": "The zoomed copy has no sound.", "Talegjenkjenningen skjer på enheten din, og ingen video eller lyd lastes opp. Første gang lastes en talemodell ned (ca. 80 MB). Etter det er den lagret i nettleseren.": "Speech recognition happens on your device, and no video or sound is uploaded. The first time, a speech model is downloaded (about 80 MB). After that it is stored in the browser.", "Lagre alle med navn": "Save all with names", "Vis bare videoer uten navn": "Show only videos without names", "Visning": "View", "Meny": "Menu", "Eksempel på analysevideo med ghost og linjer": "Example of an analysis video with ghost and lines", "Eksempel på vinkelanalyse i Enkel: legg, overkropp og skuldre": "Example of angle analysis in Single: leg, upper body and shoulders", "Videoer fra mobilen legges i en mappe og navngis på PC-en": "Videos from the phone are put in a folder and named on the PC", "Lukk": "Close", "Ett bilde tilbake for A": "One frame back for A", "Forstørr video A": "Enlarge video A", "Ett bilde frem for A": "One frame forward for A", "Ett bilde tilbake for B": "One frame back for B", "Forstørr video B": "Enlarge video B", "Ett bilde frem for B": "One frame forward for B", "Spill av": "Play", "Felles tidslinje": "Shared timeline", "Ett bilde tilbake for begge": "One frame back for both", "Ett bilde frem for begge": "One frame forward for both", "Navn på løper A": "Name of skier A", "Navn på løper B": "Name of skier B", "Type analysevideo": "Type of analysis video", "F.eks. Storslalåm Hafjell": "E.g. Giant slalom Hafjell", "Forstørret video": "Enlarged video", "Spol i denne videoen": "Scrub this video", "Finjuster startpunkt, dra sidelengs": "Fine-tune the start point, drag sideways", "Et halvt sekund tilbake": "Half a second back", "Ett bilde tilbake": "One frame back", "Ett bilde frem": "One frame forward", "Et halvt sekund frem": "Half a second forward", "Tidslinje": "Timeline", "Navn på løperen": "Name of the skier", "Sammenlign to alpinløpere side om side. Velg to videoer, synk startpunktet og lagre som én video.": "Compare two alpine skiers side by side. Choose two videos, sync the start point and save as one video.", "fra samme løype. Si løperens navn høyt i starten av opptaket, så fylles navnet inn automatisk. Film helst fra samme sted. Jo likere videoene er filmet, desto mer presis og penere blir analysevideoen.": "from the same course. Say the skier's name out loud at the start of the recording, and the name is filled in automatically. Film from the same spot if you can. The more alike the two videos are filmed, the more precise and better-looking the analysis video becomes.", ": side om side, som ghost eller ghost med linjer. Løpernavnene og Athleteview-logoen kommer med i videoen. Videoen lages fra startpunktet i valgt hastighet. Side om side er klar på noen sekunder, ghost tar gjerne 1–3 minutter, avhengig av videofilene. La siden være åpen til den er ferdig. Alt skjer på enheten din (mobil, nettbrett eller PC), ingenting lastes opp.": ": side by side, as a ghost, or as a ghost with lines. The skiers' names and the Athleteview logo are included in the video. The video is made from the start point at the chosen speed. Side by side is ready in a few seconds, a ghost usually takes 1–3 minutes, depending on the video files. Keep the page open until it is finished. Everything happens on your device (phone, tablet or PC), nothing is uploaded.", "Se analysevideoen": "Watch the analysis video", ", og lagre den.": ", and save it.", "Les": "Read", "for å få best mulig resultat.": "to get the best possible result.", "Med noen enkle grep blir analysene, ghost-løperen og linjene mer presise og visuelt bedre.": "A few simple steps make the analyses, the ghost skier and the lines more precise and better-looking.", "Videoer i HEVC-format (iPhone «Høy effektivitet») kan av og til ikke spilles av på PC. Bare hvis det skjer, velger du «Mest kompatibel» på iPhone under Innstillinger › Kamera › Formater. Da får du ikke lenger 4K med 60 bilder per sekund på mange iPhone-modeller.": "Videos in HEVC format (iPhone «High Efficiency») sometimes cannot be played on a PC. Only if that happens, choose «Most Compatible» on the iPhone under Settings › Camera › Formats. Many iPhone models then no longer offer 4K at 60 frames per second.", "Film forfra eller på skrå fra siden. Da vises svingene som buer og legger seg ikke oppå hverandre.": "Film from the front or at an angle from the side. Then the turns appear as arcs and do not stack on top of each other.", "Bruk stativ eller hold kameraet manuelt så stille som mulig. Unngå raske panoreringer og zoom underveis.": "Use a tripod or hold the camera by hand as still as possible. Avoid fast panning and zooming while filming.", "Filmer du i HD eller 4K uten å zoome underveis, zoomer og optimaliserer tjenesten automatisk når den lager analysevideoen.": "If you film in HD or 4K without zooming while filming, the service zooms and optimises automatically when it makes the analysis video.", "Trykk på et spørsmål for å se svaret.": "Tap a question to see the answer."};
   const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, { acceptNode: n => {
     const p = n.parentElement; if (!p || p.closest("script,style,.l-no,.l-en")) return NodeFilter.FILTER_REJECT;
     return /\S/.test(n.nodeValue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT; } });
@@ -3344,6 +3373,116 @@ const GhostCore = (() => {
     return { src, dst, n: src.length / 2 };
   }
 
+
+  // ---------- portflagg som ankerpunkter ----------
+  // Røde og blå flagg er de sikreste faste punktene i en alpinvideo, også i tåke og flatt lys der snøen nesten ikke har kjennetegn.
+  function gates(rgb, w, h, ch = 3) {
+    const lab = new Int32Array(w * h).fill(-1), col = new Uint8Array(w * h);
+    for (let i = 0, k = 0; i < w * h; i++, k += ch) {
+      const r = rgb[k], g = rgb[k + 1], b = rgb[k + 2];
+      if (r - Math.max(g, b) > 38 && r > 90) col[i] = 1;
+      else if (b - r > 34 && b - g > 4 && b > 70) col[i] = 2;
+    }
+    const out = [], st = [];
+    for (let i = 0; i < w * h; i++) {
+      if (!col[i] || lab[i] >= 0) continue;
+      const c = col[i], id = out.length; let n = 0, sx = 0, sy = 0, x0 = w, x1 = 0, y0 = h, y1 = 0;
+      st.push(i); lab[i] = id;
+      while (st.length) {
+        const j = st.pop(), x = j % w, y = (j / w) | 0; n++; sx += x; sy += y;
+        if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+        for (const q of [j - 1, j + 1, j - w, j + w]) {
+          if (q < 0 || q >= w * h || lab[q] >= 0 || col[q] !== c) continue;
+          if ((q === j - 1 && x === 0) || (q === j + 1 && x === w - 1)) continue;
+          lab[q] = id; st.push(q);
+        }
+      }
+      out.push({ c, n, x: sx / n, y: sy / n, x0, x1, y0, y1 });
+    }
+    // flagg: kompakt flate, ikke for liten, ikke en tynn stang
+    const res = out.filter(g => g.n >= 6 && (g.x1 - g.x0 + 1) >= 3 && (g.y1 - g.y0 + 1) >= 2 && g.n >= 0.3 * (g.x1 - g.x0 + 1) * (g.y1 - g.y0 + 1));
+    // halv oppløsning av fargemasken holder til overlappsmålingen og sparer minne
+    const w2 = w >> 1, h2 = h >> 1, m2 = new Uint8Array(w2 * h2);
+    for (let y = 0; y < h2; y++) for (let x = 0; x < w2; x++) m2[y * w2 + x] = col[(2 * y) * w + 2 * x];
+    res.mask = m2; res.mw = w2; res.mh = h2; return res;
+  }
+  
+  // Par av flagg mellom to bilder: hvert flagg i fb flyttes med pred og kobles til nærmeste flagg med samme farge i fa,
+  // bare hvis det er entydig (det nest nærmeste ligger klart lenger unna) og gjensidig. Hvert flagg gir tre punkter (midt, topp, bunn).
+  function gateMatch(gb, ga, pred, radius) {
+    const src = [], dst = []; if (!gb || !ga || !pred) return { src, dst, n: 0, k: 0 };
+    const P = gb.map(b => apply(pred, b.x, b.y));
+    const near = (p, c, list, skip) => { let b1 = 1e9, b2 = 1e9, j1 = -1; list.forEach((q, j) => { if (q.c !== c) return; const d = Math.hypot(q.x - p[0], q.y - p[1]); if (d < b1) { b2 = b1; b1 = d; j1 = j; } else if (d < b2) b2 = d; }); return { j: j1, d: b1, d2: b2 }; };
+    let k = 0;
+    gb.forEach((b, i) => {
+      const r = near(P[i], b.c, ga); if (r.j < 0 || r.d > radius || r.d2 < Math.max(2.2 * r.d, 6)) return;
+      // gjensidig: flagget i fa har dette som nærmeste
+      const a = ga[r.j]; let bi = -1, bd = 1e9; P.forEach((p, i2) => { if (gb[i2].c !== a.c) return; const d = Math.hypot(a.x - p[0], a.y - p[1]); if (d < bd) { bd = d; bi = i2; } });
+      if (bi !== i) return;
+      const hb = (b.y1 - b.y0) / 2, ha = (a.y1 - a.y0) / 2;
+      src.push(b.x, b.y, b.x, b.y - hb, b.x, b.y + hb); dst.push(a.x, a.y, a.x, a.y - ha, a.x, a.y + ha); k++;
+    });
+    return { src, dst, n: src.length / 2, k };
+  }
+
+  // Uten sikker forventning (kjeden har drevet): finn plasseringen bare fra flaggene. To flaggpar med samme farge gir en likedannethet
+  // (skala, rotasjon, flytting). Den som får flest flagg på plass vinner, og skalaen må ligge nær den siste sikre plasseringen.
+  function gateGlobal(gb, ga, Hprev, w, h) {
+    if (!gb || !ga || gb.length < 3 || ga.length < 3) return null;
+    // Mange porter i bildet (vidvinkel over hele bakken) gjør søket enormt (par × par × flagg). Bruk de 18 største flaggene på hver side,
+    // og gi opp etter en tidsgrense, så siden aldri henger (1.9.42).
+    const top = g => g.length <= 18 ? g : g.slice().sort((p, q) => (q.n || 0) - (p.n || 0)).slice(0, 18);
+    gb = top(gb); ga = top(ga);
+    const tEnd = (typeof performance !== "undefined" ? performance.now() : Date.now()) + 120;
+    let s0 = 1; if (Hprev) s0 = Math.sqrt(Math.abs(Hprev[0] * Hprev[4] - Hprev[1] * Hprev[3])) || 1;
+    const pairs = []; gb.forEach((b, i) => ga.forEach((a, j) => { if (a.c === b.c) pairs.push([i, j]); }));
+    let best = null;
+    outer: for (let u = 0; u < pairs.length; u++) for (let v = u + 1; v < pairs.length; v++) {
+      if ((v & 63) === 0 && (typeof performance !== "undefined" ? performance.now() : Date.now()) > tEnd) break outer;
+      const [i1, j1] = pairs[u], [i2, j2] = pairs[v]; if (i1 === i2 || j1 === j2) continue;
+      const b1 = gb[i1], b2 = gb[i2], a1 = ga[j1], a2 = ga[j2];
+      const bx = b2.x - b1.x, by = b2.y - b1.y, ax = a2.x - a1.x, ay = a2.y - a1.y, lb = Math.hypot(bx, by), la = Math.hypot(ax, ay);
+      if (lb < 12 || la < 12) continue;
+      const sc = la / lb; if (sc < s0 * 0.55 || sc > s0 * 1.8) continue;
+      const rot = Math.atan2(ay, ax) - Math.atan2(by, bx); const rr = Math.atan2(Math.sin(rot), Math.cos(rot)); if (Math.abs(rr) > 0.3) continue;
+      const c = sc * Math.cos(rr), sn = sc * Math.sin(rr), tx = a1.x - (c * b1.x - sn * b1.y), ty = a1.y - (sn * b1.x + c * b1.y);
+      const T = [c, -sn, tx, sn, c, ty, 0, 0, 1];
+      let k = 0, err = 0, miss = 0; const m = [];
+      gb.forEach((b, i) => { const px = c * b.x - sn * b.y + tx, py = sn * b.x + c * b.y + ty; let bd = 1e9, bj = -1;
+        ga.forEach((a, j) => { if (a.c !== b.c) return; const d = Math.hypot(a.x - px, a.y - py); if (d < bd) { bd = d; bj = j; } });
+        const tol = Math.max(5, 0.7 * (ga[bj] ? ga[bj].y1 - ga[bj].y0 + 1 : 0)); if (bj >= 0 && bd < tol) { k++; err += bd; m.push([i, bj]); }
+        else if (px > 8 && py > 8 && px < w - 8 && py < h - 8 && b.n * sc * sc >= 12) miss++; });   // et tydelig flagg som burde vært der, men mangler
+      // og motsatt: flagg i A som burde hatt et flagg i B
+      const ic = c / (sc * sc), is = sn / (sc * sc);
+      ga.forEach(a => { if (m.some(([, j]) => ga[j] === a)) return; const x = a.x - tx, y = a.y - ty, bx = ic * x + is * y, by = -is * x + ic * y;
+        if (bx > 8 && by > 8 && bx < w - 8 && by < h - 8 && a.n >= 12) miss++; });
+      const score = k - 1.5 * miss;
+      if (k >= 3 && miss <= Math.max(1, k / 3) && (!best || score > best.score || (score === best.score && err < best.err))) best = { k, err, T, m, score, miss };
+    }
+    if (!best) return null;
+    const src = [], dst = [];
+    for (const [i, j] of best.m) { const b = gb[i], a = ga[j], hb = (b.y1 - b.y0) / 2, ha = (a.y1 - a.y0) / 2; src.push(b.x, b.y, b.x, b.y - hb, b.x, b.y + hb); dst.push(a.x, a.y, a.x, a.y - ha, a.x, a.y + ha); }
+    const idx = src.map((_, i) => i).filter(i => i < src.length / 2);
+    let H = best.k >= 5 ? fitH(src, dst, idx) : null;
+    if (!sane(H, w, h)) H = Float64Array.from(best.T);
+    return { H, k: best.k };
+  }
+
+  // Hvor godt dekker flaggene hverandre når B legges på A med H (B → A)? Andel overlapp av flaggpiksler der bildene overlapper.
+  function gateIoU(gb, ga, H, w, h) {
+    const mb = gb && gb.mask, ma = ga && ga.mask, iH = H && inv(H); if (!mb || !ma || !iH) return 0;
+    let I = 0, U = 0;
+    for (let y = 0; y < h; y += 2) for (let x = 0; x < w; x += 2) {
+      const p = apply(iH, x, y), bx = p[0] >> 1, by = p[1] >> 1, ax = x >> 1, ay = y >> 1;
+      if (!(bx >= 0 && by >= 0 && bx < gb.mw && by < gb.mh) || ax >= ga.mw || ay >= ga.mh) continue;
+      const a = ma[ay * ga.mw + ax], b = mb[by * gb.mw + bx]; if (!a && !b) continue;
+      U++; if (a && a === b) I++;
+    }
+    return U >= 30 ? I / U : 0;
+  }
+  // flaggene veier tyngre enn vanlige kjennetegn: de er få, men sikre, mens kjennetegn kan sitte på løperen eller snøsprut
+  const GATE_W = 8;
+  const join = (m, g) => g.n ? { src: m.src.concat(g.src), dst: m.dst.concat(g.dst), n: m.n + g.n, g0: m.n, wt: new Float32Array(m.n + g.n).fill(1).fill(GATE_W, m.n) } : m;
   // ---------- homografi ----------
   const apply = (H, x, y) => { const z = H[6] * x + H[7] * y + H[8]; return [(H[0] * x + H[1] * y + H[2]) / z, (H[3] * x + H[4] * y + H[5]) / z]; };
   const mul = (A, B) => {
@@ -3404,23 +3543,30 @@ const GhostCore = (() => {
     const count = (H, out) => {
       let c = 0;
       for (let i = 0; i < n; i++) { const p = apply(H, m.src[2 * i], m.src[2 * i + 1]), dx = p[0] - m.dst[2 * i], dy = p[1] - m.dst[2 * i + 1];
-        if (dx * dx + dy * dy < t2) { c++; if (out) out.push(i); } }
+        if (dx * dx + dy * dy < t2) { c += m.wt ? m.wt[i] : 1; if (out) out.push(i); } }
       return c;
     };
-    let need = iters;
+    let need = iters, tw = n;
+    if (m.wt) { tw = 0; for (let i = 0; i < n; i++) tw += m.wt[i]; }
+    // med minst tre flagg trekkes annenhver prøve bare blant flaggpunktene (fra minst tre ulike flagg)
+    const g0 = m.g0 != null ? m.g0 : n, nfl = (n - g0) / 3;
+    const rg = () => { s = (Math.imul(s, 1103515245) + 12345) & 0x7fffffff; return g0 + s % (n - g0); };
     for (let it = 0; it < need && it < iters; it++) {
-      const idx = []; while (idx.length < 4) { const k = rnd(); if (!idx.includes(k)) idx.push(k); }
+      const idx = [], gs = nfl >= 3 && it % 2 === 1;
+      while (idx.length < 4) { const k = gs ? rg() : rnd(); if (!idx.includes(k)) idx.push(k); }
+      if (gs && new Set(idx.map(k => Math.floor((k - g0) / 3))).size < 3) continue;
       const H = fitH(m.src, m.dst, idx);
       if (!sane(H, w, h)) continue;
       const c = count(H);
       if (c > bestN) {
         bestN = c; bestIdx = idx;
-        const e = 1 - Math.pow(c / n, 4); need = Math.min(iters, Math.ceil(Math.log(0.01) / Math.log(Math.max(1e-9, e))) + 10);
+        const e = 1 - Math.pow(Math.min(1, c / tw), 4); need = Math.min(iters, Math.ceil(Math.log(0.01) / Math.log(Math.max(1e-9, e))) + 10);
       }
     }
     if (!bestIdx || bestN < 6) return { H: null, inl: bestN };
     let H = fitH(m.src, m.dst, bestIdx), inl = [];
-    for (let k = 0; k < 2; k++) { inl = []; count(H, inl); const H2 = inl.length >= 6 ? fitH(m.src, m.dst, inl) : null; if (sane(H2, w, h)) H = H2; }
+    const wx = ix => m.wt ? ix.flatMap(i => m.wt[i] > 1 ? [i, i, i, i] : [i]) : ix;
+    for (let k = 0; k < 2; k++) { inl = []; count(H, inl); const H2 = inl.length >= 6 ? fitH(m.src, m.dst, wx(inl)) : null; if (sane(H2, w, h)) H = H2; }
     inl = []; count(H, inl);
     return { H, inl: inl.length, n };
   }
@@ -3429,21 +3575,25 @@ const GhostCore = (() => {
   // dets[i] = [[x, y, w, h, score], ...] i koordinater for et bilde på W×H. Gir én boks (eller null) per bilde.
   // start = [x, y]: punktet brukeren trykket på i første bilde (valgfritt). Da starter sporet på personen der.
   // MA[i] = kamerabevegelsen A_{i-1} → A_i (valgfritt): forrige boks flyttes med kameraet før hopp vurderes.
-  function track(dets, W, H, start, MA) {
+  function track(dets, W, H, start, MA, pen) {   // pen[i][j]: ekstra straff for deteksjon j i bilde i (f.eks. utenfor løypa)
     const mv = (b, M) => { if (!M || !b) return b; const c = apply(M, b[0] + b[2] / 2, b[1] + b[3] / 2), k = Math.sqrt(Math.abs(M[0] * M[4] - M[1] * M[3])) || 1;
       return [c[0] - b[2] * k / 2, c[1] - b[3] * k / 2, b[2] * k, b[3] * k]; };
     const q = d => { const cx = (d[0] + d[2] / 2) / W, cy = (d[1] + d[3] / 2) / H;
       const cent = 1 - Math.min(1, Math.abs(cx - 0.5) * 1.4 + Math.abs(cy - 0.55) * 0.8);
       const s = d[4] * (0.3 + cent) * Math.sqrt(d[3] / H) * 3;
       // en løper er ikke en tynn strek: smale bokser er porter, stenger eller biter av folk bak (heller «mangler» enn dem)
-      return (d[2] < 0.28 * d[3] ? s * 0.3 - 0.6 : s) + (d[5] === 1 ? 0.8 : 0); };   // [5]: bekreftet av søket rundt den valgte løperen
+      return (d[2] < 0.28 * d[3] ? s * 0.3 - 0.6 : s) + (d[5] === 1 ? 0.8 : 0) - (d[6] === 1 ? 1.2 : 0); };   // [6]: står stille i terrenget (1.9.40)   // [5]: bekreftet av søket rundt den valgte løperen
     const jump = (a, b, gap) => { const d = Math.hypot(a[0] + a[2] / 2 - b[0] - b[2] / 2, a[1] + a[3] / 2 - b[1] - b[3] / 2) / Math.max(a[3], b[3], 20) / gap;
       const r = Math.abs(Math.log(Math.max(a[3], 1) / Math.max(b[3], 1)));
       if (!MA) return 2 * Math.max(0, d - 0.3) + 3 * Math.max(0, r / gap - 0.18);
       // Med kamerabevegelsen kjent kan hopp straffes hardere. Størrelsen endrer seg ikke fort selv om løperen var borte noen bilder.
       // En som står stille i løypa (tilskuer, trener) er ikke løperen.
-      const still = gap === 1 && d < 0.06 && r < 0.04 ? 0.3 : 0;
-      return 4 * Math.max(0, d - 0.3) + 5 * Math.max(0, r - 0.12 * Math.min(gap, 4)) + still; };
+      return 4 * Math.max(0, d - 0.3) + 5 * Math.max(0, r - 0.12 * Math.min(gap, 4)); };
+    // Står boksen stille i terrenget (kamerabevegelsen trukket fra)? En løper i fart gjør aldri det lenge, en tilskuer gjør det hele tiden.
+    // Straffen vokser for hvert bilde på rad, så noen få rolige bilder hos løperen koster lite, mens en stående gruppe blir dyr.
+    // Bevegelsen glattes (gjennomsnitt over flere bilder), siden kameraets bevegelse og boksene skjelver litt.
+    const motion = (a, b, gap) => Math.hypot(a[0] + a[2] / 2 - b[0] - b[2] / 2, a[1] + a[3] / 2 - b[1] - b[3] / 2) / Math.max(a[3], b[3], 20) / gap;
+    const stillPen = n => n < 6 ? 0 : Math.min(2, 0.08 * (n - 5));
     const MISS = -0.4, n = dets.length;
     // tilstand: (boks eller «mangler» med sist kjente boks, poeng)
     let prev = null; const back = [];
@@ -3458,16 +3608,18 @@ const GhostCore = (() => {
           const guess = [start[0] - H * 0.04, start[1] - H * 0.08, H * 0.08, H * 0.16];   // ingen person funnet der: anta en løper rundt punktet
           cur.push(d ? { box: d, gap: 1, s: d === near && hit ? q(d) + 20 : q(d) - 80 } : { box: hit ? null : guess, gap: 1, s: hit ? -20 : 0 }); bk.push(-1); continue;
         }
-        let best = -1e18, bi = 0;
+        let best = -1e18, bi = 0, bn = 0, bd = 0.2; const pj = d && pen && pen[i] ? pen[i][j] || 0 : 0;
         prev.forEach((p, k) => {
-          let v;
+          let v, sn = p.sn || 0, dm = p.dm == null ? 0.2 : p.dm;
           if (!d) v = p.s + MISS;
-          else if (!p.box) v = p.s + q(d) - 0.5;
-          else v = p.s + q(d) - jump(p.mb || p.box, d, p.gap);
-          if (v > best) { best = v; bi = k; }
+          else if (!p.box) { v = p.s + q(d) - 0.5; sn = 0; dm = 0.2; }
+          else { const pb = p.mb || p.box; dm = MA ? 0.75 * dm + 0.25 * Math.min(0.6, motion(pb, d, p.gap)) : 0.2; sn = dm < 0.1 ? sn + p.gap : 0;
+            v = p.s + q(d) - jump(pb, d, p.gap) - stillPen(sn) * Math.min(p.gap, 3); }
+          v -= pj;
+          if (v > best) { best = v; bi = k; bn = sn; bd = dm; }
         });
         const pk = prev[bi];
-        cur.push({ box: d || pk.box, mb: d ? null : pk.mb, gap: d ? 1 : pk.gap + 1, s: best, real: !!d }); bk.push(bi);
+        cur.push({ box: d || pk.box, mb: d ? null : pk.mb, gap: d ? 1 : pk.gap + 1, s: best, real: !!d, sn: bn, dm: bd }); bk.push(bi);
       }
       if (MA && MA[i + 1]) for (const c of cur) c.mb = mv(c.mb || c.box, MA[i + 1]);   // der boksen ventes i neste bilde, når kameraet flytter seg
       back.push(bk); prev = cur;
@@ -3488,6 +3640,32 @@ const GhostCore = (() => {
     return out;
   }
 
+
+  // ---------- løypa som forventning (1.9.41) ----------
+  // B kjører samme løype som A. For hvert bilde i: hvor var A (føttene) i tiden rundt, sett i A-bildet i (kamerabevegelsen MA trukket fra)?
+  // En B-deteksjon som etter B→A-matchingen (Hs) havner langt fra alle disse stedene, står trolig utenfor løypa (tilskuer, trener).
+  function coursePen(dB, trA, MA, Hs, win) {
+    const n = dB.length, out = new Array(n);
+    for (let i = 0; i < n; i++) {
+      const ds = dB[i] || []; out[i] = ds.map(() => 0);
+      if (!Hs[i] || !trA[i] || ds.length === 0) continue;
+      const pts = [], hA = trA[i][3];
+      const foot = b => [b[0] + b[2] / 2, b[1] + b[3]];
+      pts.push(foot(trA[i]));
+      let C = I3();   // bilde j → bilde i, bakover
+      for (let j = i - 1; j >= Math.max(0, i - win); j--) { if (!MA[j + 1]) break; C = mul(C, MA[j + 1]); if (trA[j]) { const f = foot(trA[j]); pts.push(apply(C, f[0], f[1])); } }
+      let D = I3();   // framover: bilde j → bilde i = inv(MA_{i+1} … MA_j)
+      for (let j = i + 1; j <= Math.min(n - 1, i + win); j++) { if (!MA[j]) break; const iv = inv(MA[j]); if (!iv) break; D = mul(D, iv); if (trA[j]) { const f = foot(trA[j]); pts.push(apply(D, f[0], f[1])); } }
+      if (pts.length < 8) continue;
+      const k = Math.sqrt(Math.abs(Hs[i][0] * Hs[i][4] - Hs[i][1] * Hs[i][3])) || 1;
+      ds.forEach((d, j) => {
+        const f = apply(Hs[i], d[0] + d[2] / 2, d[1] + d[3]), h = Math.max(8, Math.min(hA, d[3] * k));
+        let m = 1e9; for (const q of pts) { const e = Math.hypot(f[0] - q[0], f[1] - q[1]); if (e < m) m = e; }
+        out[i][j] = Math.min(3, 1.2 * Math.max(0, m / h - 2));
+      });
+    }
+    return out;
+  }
   // ---------- registrering gjennom hele forløpet ----------
   // Steg for steg: fa/fb = kjennetegn i A og B for dette tidspunktet. Returnerer tilstand som kan mates med neste bilde.
   function makeRegistrar(w, h) {
@@ -3497,8 +3675,8 @@ const GhostCore = (() => {
       // bevegelse innen hver video siden forrige bilde (A_{t-1} → A_t)
       let MA = null, MB = null, nA = 0, nB = 0;
       if (st.prevA) {
-        const ra = ransac(match(st.prevA, fa, st.MA || I3(), Math.max(w, h) * 0.12), thr, w, h); MA = ra.H; nA = ra.inl;
-        const rb = ransac(match(st.prevB, fb, st.MB || I3(), Math.max(w, h) * 0.12), thr, w, h); MB = rb.H; nB = rb.inl;
+        const ra = ransac(join(match(st.prevA, fa, st.MA || I3(), Math.max(w, h) * 0.12), gateMatch(st.prevA.g, fa.g, st.MA || I3(), Math.max(w, h) * 0.06)), thr, w, h); MA = ra.H; nA = ra.inl;
+        const rb = ransac(join(match(st.prevB, fb, st.MB || I3(), Math.max(w, h) * 0.12), gateMatch(st.prevB.g, fb.g, st.MB || I3(), Math.max(w, h) * 0.06)), thr, w, h); MB = rb.H; nB = rb.inl;
         if (!MA) { const r = ransac(match(st.prevA, fa, null, 0), thr, w, h); MA = r.H; nA = r.inl; }
         if (!MB) { const r = ransac(match(st.prevB, fb, null, 0), thr, w, h); MB = r.H; nB = r.inl; }
       }
@@ -3506,14 +3684,31 @@ const GhostCore = (() => {
       let pred = null;
       if (st.H && MA && MB) { const iMB = inv(MB); if (iMB) pred = norm(mul(MA, mul(st.H, iMB))); }
       let r = { H: null, inl: 0 };
-      if (pred) r = ransac(match(fb, fa, pred, Math.max(w, h) * 0.07), thr, w, h);
+      if (pred) r = ransac(join(match(fb, fa, pred, Math.max(w, h) * 0.07), gateMatch(fb.g, fa.g, pred, Math.max(w, h) * 0.04)), thr, w, h);
       if (!r.H || r.inl < 20) {
         const g = ransac(match(fb, fa, null, 0), thr, w, h, 500);
         if (g.H && g.inl > Math.max(r.inl, 14) && (!pred || g.inl >= 30)) r = g;
       }
+      // kjennetegnene alene holder ikke: prøv flaggene uten forventning
+      if ((!r.H || r.inl < 20) && fa.g && fb.g) {
+        const gg = gateGlobal(fb.g, fa.g, st.Hok || st.H, w, h);
+        const iou = gg ? gateIoU(fb.g, fa.g, gg.H, w, h) : 0;
+        if (gg && gg.k >= 3 && iou >= 0.6) r = { H: gg.H, inl: Math.round(12 + 40 * iou), gate: gg.k };
+      }
       let H = r.H, inl = r.inl, src = "direkte";
+      // finjuster med flaggene: koble på nytt med den funne (eller forventede) plasseringen, og tilpass med flagg + kjennetegn som stemmer
+      const base = H && inl >= 12 ? H : pred;
+      if (base && fa.g && fb.g) {
+        const g = gateMatch(fb.g, fa.g, base, Math.max(w, h) * 0.025);
+        if (g.k >= 3) {
+          const m = join(match(fb, fa, base, Math.max(w, h) * 0.03), g), idx = [];
+          for (let i = 0; i < m.n; i++) { const p = apply(base, m.src[2 * i], m.src[2 * i + 1]); if (Math.hypot(p[0] - m.dst[2 * i], p[1] - m.dst[2 * i + 1]) < thr * 2.5) idx.push(i); }
+          const H2 = idx.length >= 8 ? fitH(m.src, m.dst, idx) : null;
+          if (sane(H2, w, h)) { H = H2; inl = Math.max(inl, Math.min(60, 12 + 6 * g.k)); src = "direkte"; }
+        }
+      }
       if (!H || inl < 12) { H = pred; inl = 0; src = pred ? "forventet" : "ingen"; }
-      st.prevA = fa; st.prevB = fb; st.MA = MA; st.MB = MB; if (H) st.H = H;
+      st.prevA = fa; st.prevB = fb; st.MA = MA; st.MB = MB; if (H) st.H = H; if (H && src === "direkte" && inl >= 20) st.Hok = H;
       const o = { H, inl, src, MA, MB, nA, nB };
       st.out.push(o);
       return o;
@@ -3725,7 +3920,67 @@ const GhostCore = (() => {
     }
     return z;
   }
-  return { whittaker, resize, features, match, ransac, apply, mul, inv, norm, fitH, I3, track, makeRegistrar, smoothH, stabH, smooth1, gaps };
+  // ---------- hvor sikker er sporingen? (1.9.44) ----------
+  // 1 = trygg, 0 = usikker. Usikkert er: ingen person funnet på lenge, en person som står stille i terrenget (merket av søket),
+  // en oppreist, smal person over flere bilder (løpere i fart står bøyd: boksen er nesten like bred som høy; tilskuere står rett opp),
+  // eller (B) en person langt fra løypa til A. Brukes til å tone ned ghosten og linjene i stedet for å henge dem på feil person.
+  // anc: bilder der brukeren har pekt ut løperen (sikkert der og like rundt).
+  function trackConf(tr, dets, pen, anc) {
+    const n = tr.length, raw = new Array(n).fill(0);
+    for (let i = 0; i < n; i++) {
+      const b = tr[i]; if (!b) continue;
+      let c = b.interp ? 0.55 : 1;
+      if (b[6] === 1) c = Math.min(c, 0.15);
+      if (pen && pen[i] && dets && dets[i]) { const j = dets[i].indexOf(b); if (j >= 0 && pen[i][j] > 1.2) c = Math.min(c, 0.3); }
+      raw[i] = c;
+    }
+    // lange hull (interpolert over mange bilder) er usikre
+    for (let i = 0; i < n; ) { if (tr[i] && tr[i].interp) { let k = i; while (k < n && tr[k] && tr[k].interp) k++; if (k - i > 10) for (let t = i; t < k; t++) raw[t] = Math.min(raw[t], 0.3); i = k; } else i++; }
+    // holdning: median av bredde/høyde over ±4 bilder
+    for (let i = 0; i < n; i++) {
+      if (!tr[i]) continue;
+      const r = []; for (let k = Math.max(0, i - 4); k <= Math.min(n - 1, i + 4); k++) { const b = tr[k]; if (b && !b.interp && b[3] > 0) r.push(b[2] / b[3]); }
+      if (r.length >= 3) { r.sort((p, q) => p - q); if (r[r.length >> 1] < 0.55) raw[i] = Math.min(raw[i], 0.25); }
+    }
+    if (anc) for (const a of anc) for (let k = Math.max(0, a - 6); k <= Math.min(n - 1, a + 6); k++) if (tr[k]) raw[k] = Math.max(raw[k], 0.9);
+    // utjevning: minimum over ±2 bilder, så glidende snitt over ±3 (myk inn- og uttoning)
+    const mn = raw.map((_, i) => { let m = 1; for (let k = Math.max(0, i - 2); k <= Math.min(n - 1, i + 2); k++) m = Math.min(m, raw[k]); return m; });
+    return mn.map((_, i) => { let s = 0, c = 0; for (let k = Math.max(0, i - 3); k <= Math.min(n - 1, i + 3); k++) { s += mn[k]; c++; } return s / c; });
+  }
+
+
+  // 1.9.51: jevn ut et punkt over tid i «stabiliserte» koordinater. M[i] er kamerabevegelsen bilde i−1 → i (null = ukjent).
+  // For hvert bilde i flyttes nabopunktene (±K bilder) inn i bilde i med kamerabevegelsen, og en vektet andregradskurve
+  // gjennom dem gir det jevne punktet. Lokal tilpasning: ingen drift over lange strekk, og fart/sving beholdes.
+  function steadyPts(pts, M, w, K) {
+    const n = pts.length, res = pts.map(p => p && p.slice());
+    for (let i = 0; i < n; i++) {
+      if (!pts[i]) continue;
+      const P = [[0, pts[i][0], pts[i][1], 1]];
+      for (const dir of [-1, 1]) {
+        let T = I3();
+        for (let d = 1; d <= K; d++) {
+          const k = i + dir * d; if (k < 0 || k >= n) break;
+          const m = dir < 0 ? M[k + 1] : M[k]; if (!m) break;
+          // dir<0: punkt i bilde k → bilde i: M[k+1]…M[i]; dir>0: bilde k → bilde i: inv(M[i+1]…M[k])
+          T = dir < 0 ? mul(T, m) : mul(T, inv(m));
+          if (!pts[k] || !(w[k] > 0)) continue;
+          const q = apply(T, pts[k][0], pts[k][1]), u = d / (K + 1), tw = Math.pow(1 - u * u * u, 3) * w[k];
+          P.push([dir * d, q[0], q[1], tw]);
+        }
+      }
+      if (P.length < 5) continue;
+      P[0][3] *= Math.max(0.3, w[i] || 0.3);
+      // vektet minste kvadrater for x(t), y(t) = a + b·t + c·t² ; verdien i t = 0 er a
+      let s0 = 0, s1 = 0, s2 = 0, s3 = 0, s4 = 0, x0 = 0, x1 = 0, x2 = 0, y0 = 0, y1 = 0, y2 = 0;
+      for (const [t, x, y, v] of P) { const t2 = t * t; s0 += v; s1 += v * t; s2 += v * t2; s3 += v * t2 * t; s4 += v * t2 * t2; x0 += v * x; x1 += v * x * t; x2 += v * x * t2; y0 += v * y; y1 += v * y * t; y2 += v * y * t2; }
+      const det3 = (a, b, c, d, e, f, g, h, k) => a * (e * k - f * h) - b * (d * k - f * g) + c * (d * h - e * g);
+      const D = det3(s0, s1, s2, s1, s2, s3, s2, s3, s4); if (Math.abs(D) < 1e-9) continue;
+      res[i] = [det3(x0, s1, s2, x1, s2, s3, x2, s3, s4) / D, det3(y0, s1, s2, y1, s2, s3, y2, s3, s4) / D];
+    }
+    return res;
+  }
+  return { steadyPts, gates, gateMatch, trackConf, gateGlobal, gateIoU, whittaker, resize, features, match, ransac, apply, mul, inv, norm, fitH, I3, track, coursePen, makeRegistrar, smoothH, stabH, smooth1, gaps };
 })();
 </script>
 
@@ -3800,7 +4055,7 @@ const GhostCore = (() => {
     if (Z.p) zClose();
     pause();
     if (p.url) URL.revokeObjectURL(p.url);
-    p.url = URL.createObjectURL(file);
+    p.url = URL.createObjectURL(file); p.file = file;
     p.ready = false; p.s = 0; p.name = file.name.replace(/\.[^.]+$/, "");
     p.v.src = p.url; p.v.load();
     say((AVL ? "Loading " : "Laster ") + file.name + " …");
@@ -3843,6 +4098,7 @@ const GhostCore = (() => {
     input.addEventListener("change", () => load(p, input.files[0]));
     $(".change", p.panel).addEventListener("click", () => { input.value = ""; input.click(); });
     p.v.addEventListener("loadedmetadata", () => {
+      if (p.revP) { p.dur = p.v.duration; return; }   // lastes på nytt etter avspillerfeil: ikke nullstill visningen
       p.dur = p.v.duration; p.ready = isFinite(p.dur) && p.dur > 0;
       $(".pick", p.panel).hidden = true;
       for (const sel of [".tag", ".hud", ".hint", ".change"]) $(sel, p.panel).hidden = false;
@@ -3853,6 +4109,8 @@ const GhostCore = (() => {
     });
     p.v.addEventListener("seeked", () => onSeeked(p));
     p.v.addEventListener("error", () => {
+      if (p.revP) return;
+      if (p.ready && p.url && (p.revN || 0) < 6) { setTimeout(() => { if (p.v.error) reviveVideo(p); }, 200); return; }
       say("Video " + p.k + (AVL ? " cannot be played in this browser. Try another video, or open the page in Safari or Chrome." : " kan ikke spilles av i denne nettleseren. Prøv en annen video, eller åpne siden i Safari eller Chrome."), true);
     });
     p.v.addEventListener("ended", () => { if (st.playing && !st.recording) pause(); });
@@ -4456,24 +4714,48 @@ const GhostCore = (() => {
     }
     return m;
   }
+  // Nettleserens avspiller kan falle ut på tunge videoer (f.eks. 4K med høy bitrate). Da lastes videoen på nytt fra filen,
+  // og analysen fortsetter der den var (1.9.36). Samme løfte deles hvis flere ber om ny lasting samtidig.
+  function reviveVideo(p) {
+    if (p.revP) return p.revP;
+    if (!p.url) return Promise.resolve(false);
+    p.revN = (p.revN || 0) + 1;
+    const t = isFinite(p.want) ? p.want : (p.v.currentTime || 0);
+    p.revP = new Promise(res => {
+      let done = false;
+      const fin = ok => { if (!done) { done = true; p.revP = null; res(ok); } };
+      p.v.addEventListener("loadeddata", () => { p.v.currentTime = t; p.v.addEventListener("seeked", () => fin(true), { once: true }); setTimeout(() => fin(true), 4000); }, { once: true });
+      setTimeout(() => fin(!p.v.error), 20000);
+      p.v.src = p.url; p.v.load();
+    });
+    return p.revP;
+  }
   // Søk og vent til bildet faktisk er på plass (trege søk på store videoer skal ikke gi feil bilde)
   async function seekSure(p, time) {
-    await seekExact(p, time);
-    if (p.v.seeking) await new Promise(r => { p.v.addEventListener("seeked", r, { once: true }); setTimeout(r, 4000); });
+    if (p.fs && p.fs.ok) { try { await p.fs.frameAt(time); return; } catch (e) { console.warn("framesrc → avspiller", e); } }
+    const pause = [0, 300, 1000, 2500, 5000, 8000];   // gi nettleseren tid til å frigjøre minne mellom forsøkene
+    for (let k = 0; k < pause.length; k++) {
+      if (p.v.error || p.revP) { if (pause[k]) await new Promise(r => setTimeout(r, pause[k])); await reviveVideo(p); }
+      await seekExact(p, time);
+      if (p.v.seeking) await new Promise(r => { p.v.addEventListener("seeked", r, { once: true }); setTimeout(r, 4000); });
+      if (!p.v.error && !p.revP && p.v.readyState < 2) await new Promise(r => { p.v.addEventListener("loadeddata", r, { once: true }); setTimeout(r, 1500); });
+      if (!p.v.error && !p.revP) { p.revN = 0; return; }
+    }
+    throw new Error((AVL ? "Video " : "Video ") + p.k + (AVL ? " stopped playing in the browser several times in a row." : " sluttet å spille i nettleseren flere ganger på rad."));
   }
   function grabGray(x) {
-    x.g.drawImage(x.p.v, 0, 0, x.c.width, x.c.height);
+    x.g.drawImage(SRC(x.p), 0, 0, x.c.width, x.c.height);
     const d = x.g.getImageData(0, 0, x.c.width, x.c.height).data, o = new Uint8Array(x.c.width * x.c.height);
     for (let i = 0, j = 0; j < o.length; i += 4, j++) o[j] = (d[i] * 77 + d[i + 1] * 150 + d[i + 2] * 29) >> 8;
-    return { w: x.c.width, h: x.c.height, d: o };
+    return { w: x.c.width, h: x.c.height, d: o, g: GhostCore.gates(d, x.c.width, x.c.height, 4) };   // g = røde og blå portflagg
   }
   const lerp = (a, b, f) => a + (b - a) * f;
   const lerpBox = (a, b, f) => !a ? b : !b ? a : a.map((v, k) => lerp(v, b[k], f));
 
   async function ghostAnalyze(m, t0, tEnd, picks, wantLines) {
     const mk = p => {
-      const k = GH.an / Math.max(p.v.videoWidth, p.v.videoHeight);
-      const c = Object.assign(document.createElement("canvas"), { width: Math.round(p.v.videoWidth * k), height: Math.round(p.v.videoHeight * k) });
+      const k = GH.an / Math.max(SRC(p).videoWidth, SRC(p).videoHeight);
+      const c = Object.assign(document.createElement("canvas"), { width: Math.round(SRC(p).videoWidth * k), height: Math.round(SRC(p).videoHeight * k) });
       return { p, k, c, g: c.getContext("2d", { willReadFrequently: true }) };
     };
     const A = mk(P.A), B = mk(P.B);
@@ -4491,25 +4773,109 @@ const GhostCore = (() => {
     const roi = { A: picks && picks.A ? { c: picks.A, h: picks.hA || A.c.height * 0.06, known: !!picks.hA, miss: 0 } : null, B: picks && picks.B ? { c: picks.B, h: picks.hB || B.c.height * 0.06, known: !!picks.hB, miss: 0 } : null };
     const iou = (a, b) => { const x0 = Math.max(a[0], b[0]), y0 = Math.max(a[1], b[1]), x1 = Math.min(a[0] + a[2], b[0] + b[2]), y1 = Math.min(a[1] + a[3], b[1] + b[3]);
       const I = Math.max(0, x1 - x0) * Math.max(0, y1 - y0); return I / (a[2] * a[3] + b[2] * b[3] - I || 1); };
-    const roiFind = (x, r, M, ds) => {
-      if (!r) return ds;
-      if (M) { const q = GhostCore.apply(M, r.c[0], r.c[1]), k = Math.sqrt(Math.abs(M[0] * M[4] - M[1] * M[3])) || 1; r.c = q; r.h *= k; }   // følg kameraet
-      const W = x.c.width, Hh = x.c.height, side = Math.min(Math.max(W, Hh), Math.max(48, r.h * (5 + Math.min(r.miss, 30) / 6)));
-      const sx = r.c[0] - side / 2, sy = r.c[1] - side / 2, kk = x.p.v.videoWidth / W;
+    const detIn = (x, sx, sy, side) => {   // personfinner på et kvadratisk utsnitt (analysekoordinater), forstørret til 320
+      const kk = SRC(x.p).videoWidth / x.c.width;
       rg.fillStyle = "#000"; rg.fillRect(0, 0, 320, 320);
-      rg.drawImage(x.p.v, sx * kk, sy * kk, side * kk, side * kk, 0, 0, 320, 320);
-      let found = [];
-      try { found = (m.det.detect(rc).detections || []).map(d => { const b = d.boundingBox, f = side / 320; return [sx + b.originX * f, sy + b.originY * f, b.width * f, b.height * f, d.categories[0] ? d.categories[0].score : 0.5]; }); } catch (e) {}
+      rg.drawImage(SRC(x.p), sx * kk, sy * kk, side * kk, side * kk, 0, 0, 320, 320);
+      try { return (m.det.detect(rc).detections || []).map(d => { const b = d.boundingBox, f = side / 320; return [sx + b.originX * f, sy + b.originY * f, b.width * f, b.height * f, d.categories[0] ? d.categories[0].score : 0.5]; }); } catch (e) { return []; }
+    };
+    // Utseende (1.9.40): fargetone på det mørke i øvre og nedre halvdel av boksen (snøen tas bort). Skiller f.eks. svarte bukser fra røde.
+    const appOf = (x, b) => {
+      const W = x.c.width, Hh = x.c.height, x0 = Math.max(0, Math.round(b[0] + b[2] * 0.2)), x1 = Math.min(W, Math.round(b[0] + b[2] * 0.8)),
+        y0 = Math.max(0, Math.round(b[1] + b[3] * 0.05)), y1 = Math.min(Hh, Math.round(b[1] + b[3] * 0.95));
+      if (x1 - x0 < 2 || y1 - y0 < 4) return null;
+      let d; try { d = x.g.getImageData(x0, y0, x1 - x0, y1 - y0).data; } catch (e) { return null; }
+      const w = x1 - x0, h = y1 - y0, L = [];
+      for (let i = 0; i < d.length; i += 4) L.push(d[i] + d[i + 1] + d[i + 2]);
+      const srt = L.slice().sort((p, q) => p - q), lim = 0.8 * srt[Math.floor(srt.length * 0.9)];
+      const o = [0, 0, 0, 0], n = [0, 0];
+      for (let yy = 0; yy < h; yy++) { const hf = yy < h / 2 ? 0 : 1; for (let xx = 0; xx < w; xx++) { const j = yy * w + xx, i = j * 4; if (L[j] >= lim) continue;
+        o[hf * 2] += d[i] - d[i + 1]; o[hf * 2 + 1] += d[i + 2] - d[i + 1]; n[hf]++; } }
+      if (n[0] < 4 || n[1] < 4) return null;
+      return [o[0] / n[0], o[1] / n[0], o[2] / n[1], o[3] / n[1]];
+    };
+    const appDist = (a, b) => { if (!a || !b) return 0; let m = 0; for (let k = 0; k < 4; k++) m = Math.max(m, Math.abs(a[k] - b[k])); return Math.min(2.5, Math.max(0, m - 10) / 15); };
+    const addNew = (all, found) => { for (const b of found) if (!all.some(d => iou(d, b) > 0.4)) all.push(b); };
+    // Bakgrunnens bevegelse rett rundt et punkt (fra kjennetegn i forrige og dette bildet). Mer presis enn kamerabevegelsen for hele bildet,
+    // så det går an å se om en person står stille i terrenget (1.9.43). Gir forventet plass for et fast punkt, eller null.
+    const localMove = (fP, fC, M, c, h) => {
+      if (!fP || !fC || !M) return null;
+      const R = Math.max(40, 4 * h), idx = [];
+      for (let i = 0; i < fP.n && idx.length < 80; i++) { const dx = fP.pts[i * 3] - c[0], dy = fP.pts[i * 3 + 1] - c[1]; if (dx * dx + dy * dy < R * R) idx.push(i); }
+      if (idx.length < 5) return null;
+      const sub = { n: idx.length, pts: new Float32Array(idx.length * 3), desc: new Uint32Array(idx.length * 8) };
+      idx.forEach((i, k) => { sub.pts.set(fP.pts.subarray(i * 3, i * 3 + 3), k * 3); sub.desc.set(fP.desc.subarray(i * 8, i * 8 + 8), k * 8); });
+      const m = GhostCore.match(sub, fC, M, Math.max(12, 0.6 * h));
+      if (m.n < 4) return null;
+      const ex = [], ey = [];
+      for (let k = 0; k < m.n; k++) { const q = GhostCore.apply(M, m.src[k * 2], m.src[k * 2 + 1]); ex.push(m.dst[k * 2] - q[0]); ey.push(m.dst[k * 2 + 1] - q[1]); }
+      const med = a => a.sort((p, q) => p - q)[a.length >> 1], q = GhostCore.apply(M, c[0], c[1]);
+      return [q[0] + med(ex), q[1] + med(ey)];
+    };
+    const roiFind = (x, r, M, ds, fP, fC) => {
+      if (!r) return ds;
+      const stay = localMove(fP, fC, M, r.c, r.h);   // hvor den fulgte personen hadde stått hvis den sto stille
+      const k = M ? Math.sqrt(Math.abs(M[0] * M[4] - M[1] * M[3])) || 1 : 1;
+      if (M) { r.c = GhostCore.apply(M, r.c[0], r.c[1]); r.h *= k; if (r.still) r.still = r.still.map(b => { const q = GhostCore.apply(M, b[0], b[1]); return [q[0], q[1], b[2] * k]; }); }   // følg kameraet
+      const ex = [r.c[0], r.c[1]];   // der den fulgte personen står hvis den står stille i terrenget
+      if (r.v) { r.c = [r.c[0] + r.v[0], r.c[1] + r.v[1]]; }   // løperen er i fart: forvent at den har flyttet seg like mye som sist
+      const W = x.c.width, Hh = x.c.height, side = Math.min(Math.max(W, Hh), Math.max(48, r.h * (5 + Math.min(r.miss, 30) / 6)));
       const all = ds.slice();
-      for (const b of found) if (!all.some(d => iou(d, b) > 0.4)) all.push(b);
+      addNew(all, detIn(x, r.c[0] - side / 2, r.c[1] - side / 2, side));
+      // Har den vi følger stått stille i terrenget en stund, er det trolig en tilskuer eller trener (1.9.40):
+      // let i hele bildet med finere oppløsning (3×2 ruter) etter en som er i bevegelse.
+      if (r.sn > 2) {   // står stille: slipp den (og folk rett ved, det er ofte en gruppe), og let etter løperen
+        const grp = ds.filter(d => Math.hypot(d[0] + d[2] / 2 - ex[0], d[1] + d[3] / 2 - ex[1]) < 2.5 * Math.max(r.h, 8)).map(d => [d[0] + d[2] / 2, d[1] + d[3] / 2, d[3]]);
+        r.still = (r.still || []).concat([[ex[0], ex[1], r.h]], grp).slice(-16); r.sn = 0; r.steps = []; r.miss = 7; r.v = null; }   // står stille: slipp den, let etter løperen
+      const lost = r.miss > 6;
+      // Den som filmer følger løperen. Glir den vi følger ut mot kanten av bildet, sjekkes hele bildet jevnlig:
+      // står en lignende person mye nærmere midten, er det trolig løperen (og den ved kanten en tilskuer).
+      const atEdge = r.c[1] < 0.3 * Hh || r.c[1] > 0.92 * Hh || r.c[0] < 0.1 * W || r.c[0] > 0.9 * W;
+      r.edgeN = atEdge ? (r.edgeN || 0) + 1 : 0;
+      r.wideN = (r.wideN || 0) + 1;
+      const wide = (lost && r.wideN % 8 === 1) || r.edgeN % 6 === 3;   // helbildesøk koster: ikke i hvert bilde
+      if (wide) { const sd = Math.max(W / 3, Hh / 2); for (let ty = 0; ty < 2; ty++) for (let tx = 0; tx < 3; tx++) addNew(all, detIn(x, tx * W / 3 + (W / 3 - sd) / 2, ty * Hh / 2 + (Hh / 2 - sd) / 2, sd)); }
+      const centr = b => Math.abs((b[0] + b[2] / 2) / W - 0.5) * 1.4 + Math.abs((b[1] + b[3] / 2) / Hh - 0.55) * 0.8;
+      const nearStill = b => (r.still || []).some(s => Math.hypot(b[0] + b[2] / 2 - s[0], b[1] + b[3] / 2 - s[1]) < 0.8 * Math.max(s[2], b[3]));
       // følg den som ligner mest: nær det ventede stedet og omtrent like stor
       let best = null, bv = 1e9;
       for (const b of all) {
         if (b[2] < 0.28 * b[3]) continue;
+        if ((lost || r.edgeN) && nearStill(b)) continue;
         const d = Math.hypot(b[0] + b[2] / 2 - r.c[0], b[1] + b[3] / 2 - r.c[1]) / Math.max(r.h, 8), sz = Math.abs(Math.log(b[3] / Math.max(r.h, 1)));
-        if (d < 1.6 + r.miss * 0.1 && sz < (r.known ? 0.45 + Math.min(r.miss, 10) * 0.03 : 1.4) && d + sz < bv) { bv = d + sz; best = b; }
+        const okD = lost ? true : d < 1.6 + r.miss * 0.1, ca = r.app ? appDist(r.app, appOf(x, b)) : 0;
+        if (lost && ca > 1.2) continue;   // borte: heller vente enn å ta en med helt annen drakt
+        // i storslalåm står løperen oftest sammenkrøpet (bred boks); tilskuere står oppreist (smal boks)
+        const upr = Math.max(0, 0.6 - b[2] / b[3]) / 0.3 * (lost ? 0.8 : 0.3);
+        const v = d * (lost ? 0.15 : 1) + sz + ca + upr;
+        if (okD && sz < (r.known ? 0.45 + Math.min(r.miss, 10) * 0.03 + (lost ? 0.3 : 0) : 1.4) && v < bv) { bv = v; best = b; }
       }
-      if (best) { r.c = [best[0] + best[2] / 2, best[1] + best[3] / 2]; r.h = best[3]; r.known = true; r.miss = 0; best[5] = 1; } else r.miss++;   // [5] = valgt løper (sporingen foretrekker den)
+      let swap = false;
+      if (best && !lost && wide && r.edgeN) {
+        let alt = null, av = centr(best) - 0.35;
+        for (const b of all) {
+          if (b === best || iou(b, best) > 0.05 || b[2] < 0.28 * b[3] || b[4] < 0.4) continue;
+          if (Math.abs(Math.log(b[3] / Math.max(r.h, 1))) > 0.5 || (r.app && appDist(r.app, appOf(x, b)) > 1)) continue;
+          if (centr(b) < av) { av = centr(b); alt = b; }
+        }
+        if (alt) { swap = true; r.still = (r.still || []).concat([[best[0] + best[2] / 2, best[1] + best[3] / 2, best[3]]]).slice(-6); best = alt; }
+      }
+      if (best) {
+        const c = [best[0] + best[2] / 2, best[1] + best[3] / 2], mv = Math.hypot(c[0] - ex[0], c[1] - ex[1]) / Math.max(best[3], 8);
+        const jumped = swap || (lost && Math.hypot(c[0] - r.c[0], c[1] - r.c[1]) > 2 * Math.max(r.h, 8));
+        if (jumped) { r.still = (r.still || []).concat([[ex[0], ex[1], r.h]]).slice(-6); r.steps = []; r.sn = 0; r.v = null; }
+        else {
+          // stillestående: målt mot bakgrunnen rett rundt personen har den flyttet seg svært lite over de siste 10 bildene
+          // (en løper i fart flytter seg flere kroppslengder; en tilskuer står)
+          if (stay && !r.miss) { r.steps = (r.steps || []).concat([Math.min(0.5, Math.hypot(c[0] - stay[0], c[1] - stay[1]) / Math.max(best[3], 8))]).slice(-10); }
+          const sum = r.steps && r.steps.length >= 10 ? r.steps.reduce((a, b) => a + b, 0) : 9;
+          r.sn = sum < 0.6 ? (r.sn || 0) + 1 : 0;
+          r.v = [(c[0] - ex[0]) * 0.6, (c[1] - ex[1]) * 0.6]; if (Math.hypot(r.v[0], r.v[1]) > 1.5 * best[3]) r.v = null; }
+        r.c = c; r.h = best[3]; r.known = true; r.miss = 0;
+        // utseendet oppdateres bare når løperen står fritt (ikke overlapper andre personer)
+        if (!all.some(o => o !== best && iou(o, best) > 0.05)) { const ap = appOf(x, best); if (ap) r.app = r.app ? r.app.map((v, k) => 0.85 * v + 0.15 * ap[k]) : ap; }
+        if (!r.sn) best[5] = 1; else best[6] = 1;   // [5] = valgt løper (sporingen foretrekker den); [6] = står stille (sporingen unngår den)
+      } else { r.miss++; if (r.v) { r.v = [r.v[0] * 0.8, r.v[1] * 0.8]; } }   // ikke funnet: fortsett i samme retning, litt saktere
       return all;
     };
     const T = GH.T = { seek: 0, det: 0, feat: 0, reg: 0, seg: 0, draw: 0 };
@@ -4523,14 +4889,21 @@ const GhostCore = (() => {
       const da = detect(A), db = detect(B); lap("det");
       dA.push(da); dB.push(db);
       const fa = GhostCore.features(gA, skipOf(da)), fb = GhostCore.features(gB, skipOf(db)); lap("feat");
+      // portflaggene (ikke det som sitter på en løper, f.eks. en rød eller blå drakt)
+      const noRunner = (g, ds) => { const sk = skipOf(ds), out = g.filter(q => !sk(q.x, q.y)); out.mask = g.mask; out.mw = g.mw; out.mh = g.mh; return out; };
+      fa.g = noRunner(gA.g, da); fb.g = noRunner(gB.g, db);
       const o = reg.step(fa, fb); lap("reg"); FA.push(fa); FB.push(fb);
       // første bilde: løperen du bekreftet er med, også om personfinneren ikke ser den her
       if (i === 0) for (const [ds, bx] of [[da, picks && picks.bA], [db, picks && picks.bB]]) if (bx && !ds.some(q => iou(q, bx) > 0.5)) ds.push([...bx.slice(0, 4), 0.9]);
-      dA[i] = roiFind(A, roi.A, o && o.MA, da); dB[i] = roiFind(B, roi.B, o && o.MB, db); lap("det");
+      dA[i] = roiFind(A, roi.A, o && o.MA, da, FA[i - 1], fa); dB[i] = roiFind(B, roi.B, o && o.MB, db, FB[i - 1], fb); lap("det");
       progress(0.45 * (i + 1) / N);
       if (i % 3 === 0) { say((AVL ? `Analysing the runs … ${Math.round((i + 1) / N * 100)} %` : `Analyserer løpene … ${Math.round((i + 1) / N * 100)} %`)); await new Promise(r => setTimeout(r, 0)); }
     }
     const n = dA.length, out = reg.st.out;
+    // 1.9.47: hvor mye kameraet beveger seg (median forflytning av bildehjørnene per analysebilde, i piksler av 640) – stativ ≈ 0
+    { const mv = (key, w, h) => { const d = out.map(o => o[key]).filter(Boolean).map(M => Math.max(...[[0, 0], [w, 0], [0, h], [w, h]].map(([x, y]) => { const q = GhostCore.apply(M, x, y); return Math.hypot(q[0] - x, q[1] - y); }))).sort((p, q) => p - q);
+        return d.length ? Math.round(d[d.length >> 1] * 10) / 10 : null; };
+      GH.cam = [mv("MA", A.c.width, A.c.height), mv("MB", B.c.width, B.c.height)]; }
     // Bro over partier uten direkte match (f.eks. når den som filmer A zoomer tett inn på løperen):
     // A-bildet matches mot B-bilder fra litt før/etter (og mot andre A-bilder med kjent match),
     // og flyttes til riktig tid med kamerabevegelsen inne i den andre videoen.
@@ -4544,11 +4917,20 @@ const GhostCore = (() => {
       };
       const sane = H => { if (!H) return false; const d = H[0] * H[4] - H[1] * H[3]; return d > 0.04 && d < 25 && Math.abs(H[6]) * w < 0.6 && Math.abs(H[7]) * h < 0.6; };
       const was = out.map((o, i) => good(i));
-      let fixed = 0;
+      let fixed = 0, lastOk = null, tSay = 0;
+      // tidsgrense (1.9.39): brua kan bli svært tung når mange bilder mangler match (folk og porter overalt).
+      // Etter grensen søkes bare nærmeste naboer, og til slutt ingen; de bildene fylles inn av utjevningen (stabH).
+      const tB0 = performance.now(), todo = was.filter(x => !x).length || 1; let done = 0;
       for (let i = 0; i < n && !st.stopReq; i++) {
-        if (was[i] || !FA[i] || FA[i].n < 30) continue;
-        let best = null;
-        for (let d = 1; d <= 24 && !best; d++) for (const k of [i - d, i + d]) {
+        if (was[i]) { lastOk = out[i].H; continue; }
+        done++;
+        const used = (performance.now() - tB0) / 1000, dMax = used < 60 ? 24 : used < 120 ? 6 : 0;
+        if (performance.now() - tSay > 700) { tSay = performance.now(); say((AVL ? "Finding the background in difficult parts … " : "Finner bakgrunnen i krevende partier … ") + Math.round(done / todo * 100) + " %"); await new Promise(r => setTimeout(r, 0)); }
+        if (!dMax) continue;
+        const nG = FA[i] && FA[i].g ? FA[i].g.length : 0;
+        if (!FA[i] || (FA[i].n < 30 && nG < 3)) continue;
+        let best = null, gbest = null;
+        for (let d = 1; d <= dMax && !best; d++) for (const k of [i - d, i + d]) {
           if (k < 0 || k >= n || best) continue;
           // A_i mot B_k: H_i = (B_k → A_i) · (B_i → B_k)
           if (d % 2 === 0 || d <= 3) {
@@ -4560,13 +4942,54 @@ const GhostCore = (() => {
             const r = GhostCore.ransac(GhostCore.match(FA[k], FA[i], null, 0), thr, w, h, 400);
             if (r.H && r.inl >= 25) { const M = chain("MB", i, k); if (M) { const H = GhostCore.norm(GhostCore.mul(r.H, GhostCore.mul(out[k].H, M))); if (sane(H)) best = { H, inl: r.inl }; } }
           }
+          // A_i mot B_k med portflaggene: flaggene må dekke hverandre godt (andel overlapp ≥ 0,6). Den beste kandidaten brukes
+          // bare hvis kjennetegnene ikke gir noe svar.
+          if (!best && lastOk && nG >= 3 && FB[k].g && FB[k].g.length >= 3) {
+            const M = chain("MB", i, k), iM = M && GhostCore.inv(M);
+            if (iM) {
+              const gg = GhostCore.gateGlobal(FB[k].g, FA[i].g, GhostCore.norm(GhostCore.mul(lastOk, iM)), w, h);
+              if (gg) { const q = GhostCore.gateIoU(FB[k].g, FA[i].g, gg.H, w, h), H = GhostCore.norm(GhostCore.mul(gg.H, M));
+                if (q >= 0.6 && sane(H) && (!gbest || q > gbest.q)) gbest = { H, inl: Math.round(12 + 40 * q), q }; }
+            }
+          }
         }
-        if (best) { out[i].H = best.H; out[i].inl = Math.min(best.inl, 60); out[i].src = "direkte"; out[i].via = "bro"; fixed++; }
-        if (i % 8 === 0) { say((AVL ? `Finding the background in difficult sections … ${Math.round((i + 1) / n * 100)} %` : `Finner bakgrunnen i krevende partier … ${Math.round((i + 1) / n * 100)} %`)); await new Promise(r => setTimeout(r, 0)); }
+        if (!best) best = gbest;
+        if (best) { out[i].H = best.H; out[i].inl = Math.min(best.inl, 60); out[i].src = "direkte"; out[i].via = best.q ? "bro-flagg" : "bro"; fixed++; lastOk = best.H; }
       }
-      GH.bro = fixed;
+      GH.bro = fixed; GH.T.bro = performance.now() - tB0;
+      console.info(`ghost: bro ${fixed}/${todo} bilder på ${(GH.T.bro / 1000).toFixed(1)} s`);
     }
-    const trA = GhostCore.track(dA, A.c.width, A.c.height, picks && picks.A, out.map(o => o.MA)), trB = GhostCore.track(dB, B.c.width, B.c.height, picks && picks.B, out.map(o => o.MB));
+    say(AVL ? "Following the skiers …" : "Følger løperne …"); await new Promise(r => setTimeout(r, 0));
+    const tTr = performance.now();
+    const Hs = GhostCore.stabH(out, B.c.width, B.c.height);
+    // 1.9.44: steder der brukeren har pekt ut løperen underveis (bilde og boks); sporingen tvinges gjennom dem
+    const anc = { A: [], B: [] };
+    const force = (ds, list, pen) => { const P = pen || ds.map(d => (d || []).map(() => 0));
+      for (const a of list) { const d = ds[a.i]; let j = d.findIndex(q => iou(q, a.box) > 0.5);
+        if (j < 0) { d.push([...a.box.slice(0, 4), 0.95, 1]); j = d.length - 1; P[a.i] = P[a.i] || []; }
+        P[a.i] = d.map((_, k) => k === j ? -60 : 60); }
+      return P; };
+    let trA, trB, penB, cA, cB;
+    const runTrack = () => {
+      trA = GhostCore.track(dA, A.c.width, A.c.height, picks && picks.A, out.map(o => o.MA), anc.A.length ? force(dA, anc.A) : undefined);
+      // B kjører samme løype som A: personer som havner langt fra A sitt spor (tilskuere, trenere ved siden av) straffes (1.9.41)
+      penB = GhostCore.coursePen(dB, trA, out.map(o => o.MA), Hs, 60);
+      if (anc.B.length) penB = force(dB, anc.B, penB);
+      trB = GhostCore.track(dB, B.c.width, B.c.height, picks && picks.B, out.map(o => o.MB), penB);
+      // hvor sikker sporingen er i hvert bilde (1 = trygg); usikre partier får ikke ghost eller linjer
+      cA = GhostCore.trackConf(trA, dA, null, [0, ...anc.A.map(a => a.i)]);
+      cB = GhostCore.trackConf(trB, dB, penB, [0, ...anc.B.map(a => a.i)]);
+    };
+    runTrack();
+    // Mistet løperen i et langt parti? Be brukeren peke ut løperen i ett bilde der, og spor på nytt derfra (én gang per løper).
+    const lowRun = c => { let best = null; for (let i = 0; i < n; ) { if (c[i] < 0.45) { let k = i; while (k < n && c[k] < 0.45) k++; if (k - i >= 18 && (!best || k - i > best.len)) best = { i0: i, len: k - i }; i = k; } else i++; } return best; };
+    if (GH.askHelp !== false && !st.stopReq) for (const k of ["A", "B"]) {
+      const r = lowRun(k === "A" ? cA : cB); if (!r) continue;
+      const f = Math.min(n - 1, r.i0 + Math.max(2, Math.round(r.len * 0.3)));
+      const got = await ghostPick(m, t0 + f * GH.step, { only: k, from: r.i0 * GH.step, to: (r.i0 + r.len) * GH.step });
+      if (got && got.box) { anc[k].push({ i: f, box: got.box }); say(AVL ? "Following the skiers again …" : "Følger løperne på nytt …"); await new Promise(res => setTimeout(res, 0)); runTrack(); }
+    }
+    window.avGhostDbg = { dA, dB, trA: trA.map(b => b && b.slice(0, 4)), trB: trB.map(b => b && b.slice(0, 4)), picks, wh: [A.c.width, A.c.height], cA, cB, anc };
     // Løperboksene er urolige når løperen delvis skjules av en port (smal eller avkuttet boks): jevn ut midtpunkt og størrelse,
     // og gi boksen minst en løpers bredde, så utklippet av B ikke kuttes til en smal stripe.
     const calm = tr => { const cx = tr.map(b => b && b[0] + b[2] / 2), cy = tr.map(b => b && b[1] + b[3] / 2),
@@ -4574,12 +4997,12 @@ const GhostCore = (() => {
       const [X, Y, LH, LW] = [GhostCore.smooth1(cx, 1.2), GhostCore.smooth1(cy, 1.2), GhostCore.smooth1(lh, 2.5), GhostCore.smooth1(lw, 2.5)];
       return tr.map((b, i) => { if (!b) return null; const h = Math.exp(LH[i]), w = Math.exp(LW[i]); return [X[i] - w / 2, Y[i] - h / 2, w, h]; }); };
     for (const tr of [trA, trB]) { const c = calm(tr); for (let i = 0; i < n; i++) tr[i] = c[i]; }
-    const Hs = GhostCore.stabH(out, B.c.width, B.c.height);
+    GH.T.track = performance.now() - tTr; console.info(`ghost: sporing og utjevning ${(GH.T.track / 1000).toFixed(1)} s`);
     // Hvor sikker matchingen er: avstand (i analysebilder) til nærmeste bilde med god direkte match
     let last = -99; const near = new Array(n).fill(99);
     for (let i = 0; i < n; i++) { if (out[i].src === "direkte" && out[i].inl >= 20) last = i; near[i] = i - last; }
     last = 1e9; for (let i = n - 1; i >= 0; i--) { if (out[i].src === "direkte" && out[i].inl >= 20) last = i; near[i] = Math.min(near[i], last - i); }
-    const alpha = near.map((d, i) => !Hs[i] ? 0 : d <= 2 ? 1 : Math.max(0, 1 - (d - 2) / 3));
+    const alpha = near.map((d, i) => !Hs[i] ? 0 : d <= 4 ? 1 : Math.max(0, 1 - (d - 4) / 4));   // 1.9.43: tåler noen bilder uten direkte match før ghosten tones ned (mindre blinking)
     // Tidsavstand: hvor lenge etter A kommer B til samme sted (positiv = A foran)
     const foot = b => b ? [b[0] + b[2] / 2, b[1] + b[3]] : null;
     // Bakkeplanet: løperens høyde i bildet vokser jevnt med avstanden fra horisonten (h ≈ k·(y − yh)). Finn yh fra begge løperne
@@ -4602,7 +5025,7 @@ const GhostCore = (() => {
       } }
     GH.ground = gr;
     const gp = GhostCore.gaps(trA.map(foot), trB.map(foot), Hs, out.map(o => o.MA), GH.step, trA.map(b => b ? b[3] : 0), 1.6, gr);
-    const gv = gp.map((g, i) => g && alpha[i] > 0.9 ? g.gap : null);
+    const gv = gp.map((g, i) => g && alpha[i] > 0.9 && cA[i] > 0.6 && cB[i] > 0.6 ? g.gap : null);
     const gap = GhostCore.smooth1(gv, 4).map((v, i) => { let ok = false; for (let k = Math.max(0, i - 4); k <= Math.min(n - 1, i + 4); k++) if (gv[k] != null) ok = true; return ok ? v : null; });
     // B-boksen i A-bildet, og automatisk zoom som følger begge løperne
     const mapBox = (H, b) => { if (!H || !b) return null;
@@ -4611,14 +5034,15 @@ const GhostCore = (() => {
     const bInA = Hs.map((H, i) => alpha[i] > 0.3 ? mapBox(H, trB[i]) : null);
     const W = A.c.width, Hh = A.c.height, ar = W / Hh;
     // Største zoom følger oppløsningen: utsnittet skal være minst ca. 430 piksler på kortsiden (4K ≈ 5×, HD ≈ 2,5×)
-    const maxZoom = clamp(Math.min(A.p.v.videoWidth, A.p.v.videoHeight) / 430, 1.5, 5);
+    const maxZoom = clamp(Math.min(SRC(A.p).videoWidth, SRC(A.p).videoHeight) / 430, 1.5, 5);
     // Utzooming: er B utenfor A-bildet (A zoomet inn eller panorert bort), vises et større område, opptil 4 ganger A-bildet.
     // Området rundt A-bildet fylles da med Bs film, lagt på plass med bakgrunnsmatchingen.
     const MAX_OUT = 4, inside = b => b && b[0] + b[2] / 2 > 0 && b[0] + b[2] / 2 < W && b[1] + b[3] / 2 > 0 && b[1] + b[3] / 2 < Hh;
     const near3 = b => b && b[0] + b[2] / 2 > -2.5 * W && b[0] + b[2] / 2 < 3.5 * W && b[1] + b[3] / 2 > -2 * Hh && b[1] + b[3] / 2 < 3 * Hh && b[3] < Hh * 2;
     const zx = [], zy = [], ch = [];
     for (let i = 0; i < n; i++) {
-      const bs = [inside(trA[i]) ? trA[i] : null, bInA[i] && (inside(bInA[i]) || (alpha[i] > 0.6 && near3(bInA[i]))) ? bInA[i] : null].filter(b => b);
+      const bs = [inside(trA[i]) && cA[i] >= 0.5 ? trA[i] : null, bInA[i] && cB[i] >= 0.5 && (inside(bInA[i]) || (alpha[i] > 0.6 && near3(bInA[i]))) ? bInA[i] : null].filter(b => b);
+      if (!bs.length && cA[i] < 0.5) { zx.push(0); zy.push(0); ch.push(Hh); continue; }   // usikker på A: vis hele A-bildet
       if (!bs.length) { zx.push(null); zy.push(null); ch.push(null); continue; }
       const x0 = Math.min(...bs.map(b => b[0])), y0 = Math.min(...bs.map(b => b[1])), x1 = Math.max(...bs.map(b => b[0] + b[2])), y1 = Math.max(...bs.map(b => b[1] + b[3]));
       const h = clamp(Math.max((y1 - y0) * 2.3, (x1 - x0) * 1.8 / ar, (x1 - x0 + 0.15 * W) / ar), Hh / maxZoom, Hh * MAX_OUT), w = h * ar;
@@ -4642,12 +5066,30 @@ const GhostCore = (() => {
     // Hjørnene av B-bildet i A (for å blande homografier mellom analysebildene)
     const C = [[0, 0], [B.c.width, 0], [B.c.width, B.c.height], [0, B.c.height]];
     const corners = Hs.map(H => H ? C.flatMap(([x, y]) => GhostCore.apply(H, x, y)) : null);
+    // 1.9.51: ghosten skal ikke skjelve. Små feil i bakgrunnsmatchingen (håndholdt, zoom) flytter B noen piksler fram og tilbake.
+    // Fotpunktet til B jevnes ut over tid, først i Bs egen film (uten Bs kamerabevegelse), så i A-bildet (uten As kamerabevegelse),
+    // og B-bildet flyttes like mye som utjevningen sier. Begrenset til en tredel av løperhøyden, så en feil aldri gir store hopp.
+    if (GH.steady !== false) {
+      const okM = (M, nn) => M.map((m, i) => { if (!m || (nn && (nn[i] || 0) < 25)) return null; const d = m[0] * m[4] - m[1] * m[3]; return d > 0.8 && d < 1.25 ? m : null; });
+      const wB = trB.map((b, i) => b ? Math.min(1, cB[i]) * Math.min(1, alpha[i]) : 0);
+      const qB = GhostCore.steadyPts(trB.map(foot), okM(out.map(o => o.MB)), wB, 6);
+      const pA = qB.map((q, i) => q && Hs[i] ? GhostCore.apply(Hs[i], q[0], q[1]) : null);
+      const sA = GhostCore.steadyPts(pA, okM(out.map(o => o.MA), out.map(o => o.nA)), wB, 6);
+      let moved = 0, cnt = 0;
+      for (let i = 0; i < n; i++) {
+        if (!corners[i] || !pA[i] || !sA[i] || !bInA[i]) continue;
+        const lim = 0.33 * bInA[i][3]; let dx = sA[i][0] - pA[i][0], dy = sA[i][1] - pA[i][1]; const d = Math.hypot(dx, dy);
+        if (d > lim) { dx *= lim / d; dy *= lim / d; }
+        corners[i] = corners[i].map((v, k) => v + (k % 2 ? dy : dx)); moved += Math.min(d, lim); cnt++;
+      }
+      GH.steadyPx = cnt ? Math.round(moved / cnt * 10) / 10 : 0;
+    }
     const okFrac = out.filter(o => o.src === "direkte").length / Math.max(1, n);
     const MAs = out.map(o => o.MA);
     // Linjene bygger på kamerabevegelsen i A; usikre bilde-til-bilde-målinger (uskarpe nærbilder) bryter linjen i stedet for å gi rare streker
     const MAl = out.map(o => { const m = o.MA; if (!m || (o.nA || 0) < 25) return null; const d = m[0] * m[4] - m[1] * m[3]; return d > 0.8 && d < 1.25 ? m : null; });
-    const lines = wantLines ? await ghostFeet(m, A, B, t0, tEnd, n, trA, trB, Hs, alpha, MAl) : null;
-    return { n, lines, MAs, out: out.map(o => ({ H: o.H, inl: o.inl, src: o.src, MA: o.MA, MB: o.MB })), dA, dB, kA: A.k, kB: B.k, wA: A.c.width, hA: A.c.height, C: C.flat(), corners, trA, trB, alpha, gap, zoom, okFrac, Hs };
+    const lines = wantLines ? await ghostFeet(m, A, B, t0, tEnd, n, trA.map((b, i) => cA[i] >= 0.5 ? b : null), trB.map((b, i) => cB[i] >= 0.5 ? b : null), Hs, alpha, MAl) : null;
+    return { n, lines, cA, cB, anc, MAs, out: out.map(o => ({ H: o.H, inl: o.inl, src: o.src, MA: o.MA, MB: o.MB })), dA, dB, kA: A.k, kB: B.k, wA: A.c.width, hA: A.c.height, C: C.flat(), corners, trA, trB, alpha, gap, zoom, okFrac, Hs };
   }
 
   // ---- Linjevalg: hvor skiene er i hvert analysebilde ----
@@ -4661,11 +5103,11 @@ const GhostCore = (() => {
       const Wd = x.c.width, Ht = x.c.height;
       if (!b || b[3] > Ht * 0.55 || b[1] + b[3] > Ht * 0.985) return null;
       let pts = [];
-      if (b[3] * x.p.v.videoHeight / Ht > 70 && m.pose) {   // utsnittet hentes fra videoen i full oppløsning
+      if (b[3] * SRC(x.p).videoHeight / Ht > 70 && m.pose) {   // utsnittet hentes fra videoen i full oppløsning
         const mg = 0.35, cw = b[2] * (1 + 2 * mg), ch = b[3] * (1 + 2 * mg), sd = Math.max(cw, ch);
-        const cx = b[0] + b[2] / 2 - sd / 2, cy = b[1] + b[3] / 2 - sd / 2, kx = x.p.v.videoWidth / Wd;
+        const cx = b[0] + b[2] / 2 - sd / 2, cy = b[1] + b[3] / 2 - sd / 2, kx = SRC(x.p).videoWidth / Wd;
         cg.fillStyle = "#000"; cg.fillRect(0, 0, 256, 256);
-        cg.drawImage(x.p.v, cx * kx, cy * kx, sd * kx, sd * kx, 0, 0, 256, 256);
+        cg.drawImage(SRC(x.p), cx * kx, cy * kx, sd * kx, sd * kx, 0, 0, 256, 256);
         try {
           const r = m.pose.detect(crop), L = r.landmarks && r.landmarks[0];
           if (L) {
@@ -4750,26 +5192,47 @@ const GhostCore = (() => {
   }
 
   // ---- Velg løper: startbildet til A og så B vises stort; brukeren trykker på riktig løper og bekrefter ----
-  async function ghostPick(m, t0) {
+  async function ghostPick(m, t0, opt) {
     const dlg = $("#pickRun"), view = $("#prView"), cv = $("#prCanvas"), g = cv.getContext("2d");
-    const shots = {};
-    for (const k of ["A", "B"]) {
+    const shots = {}, one = opt && opt.only;
+    for (const k of one ? [one] : ["A", "B"]) {
       const p = P[k]; await seekSure(p, p.s + t0);
-      const kk = GH.an / Math.max(p.v.videoWidth, p.v.videoHeight);
-      const c = Object.assign(document.createElement("canvas"), { width: Math.round(p.v.videoWidth * kk), height: Math.round(p.v.videoHeight * kk) });
-      c.getContext("2d").drawImage(p.v, 0, 0, c.width, c.height);
+      const kk = GH.an / Math.max(SRC(p).videoWidth, SRC(p).videoHeight);
+      const c = Object.assign(document.createElement("canvas"), { width: Math.round(SRC(p).videoWidth * kk), height: Math.round(SRC(p).videoHeight * kk) });
+      c.getContext("2d").drawImage(SRC(p), 0, 0, c.width, c.height);
       let ds = [];
       try { ds = (m.det.detect(c).detections || []).map(d => [d.boundingBox.originX, d.boundingBox.originY, d.boundingBox.width, d.boundingBox.height]); } catch (e) {}
       // bildet vises i full oppløsning, boksene regnes i analysestørrelse
-      const big = Object.assign(document.createElement("canvas"), { width: Math.round(p.v.videoWidth * Math.min(1, 1600 / Math.max(p.v.videoWidth, p.v.videoHeight))), height: 0 });
-      big.height = Math.round(big.width * p.v.videoHeight / p.v.videoWidth); big.getContext("2d").drawImage(p.v, 0, 0, big.width, big.height);
+      const big = Object.assign(document.createElement("canvas"), { width: Math.round(SRC(p).videoWidth * Math.min(1, 1600 / Math.max(SRC(p).videoWidth, SRC(p).videoHeight))), height: 0 });
+      big.height = Math.round(big.width * SRC(p).videoHeight / SRC(p).videoWidth); big.getContext("2d").drawImage(SRC(p), 0, 0, big.width, big.height);
       shots[k] = { w: c.width, h: c.height, img: big, ds, sel: ds.length === 1 ? { box: ds[0], pt: [ds[0][0] + ds[0][2] / 2, ds[0][1] + ds[0][3] / 2] } : null };
     }
-    let k = "A", map = null;
+    let k = one || "A", map = null;
+    // 1.9.45: forstørring (knip med to fingre, dobbelttrykk, musehjul eller + / −) og dra for å flytte bildet
+    const zv = { z: 1, cx: null, cy: null };
+    const zreset = () => { zv.z = 1; zv.cx = zv.cy = null; };
+    let zb = view.querySelector(".przoom");
+    if (!zb) {
+      zb = document.createElement("div"); zb.className = "przoom";
+      zb.style.cssText = "position:absolute;right:10px;top:10px;display:flex;flex-direction:column;gap:8px;z-index:2";
+      for (const [t, lab] of [["+", AVL ? "Zoom in" : "Forstørr"], ["−", AVL ? "Zoom out" : "Forminsk"]]) {
+        const b = document.createElement("button"); b.type = "button"; b.textContent = t; b.setAttribute("aria-label", lab); b.dataset.z = t;
+        b.style.cssText = "width:44px;height:44px;border-radius:22px;border:1px solid rgba(255,255,255,.5);background:rgba(0,0,0,.55);color:#fff;font:600 24px/1 sans-serif;cursor:pointer";
+        zb.appendChild(b);
+      }
+      view.appendChild(zb);
+    }
+    cv.style.touchAction = "none";
+    const sec = v => v.toFixed(1).replace(".", AVL ? "." : ",");
     const draw = () => {
       const s = shots[k], dpr = Math.min(3, window.devicePixelRatio || 1), W = view.clientWidth, H = view.clientHeight;
       cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
-      const sc = Math.min(cv.width / s.w, cv.height / s.h), ox = (cv.width - s.w * sc) / 2, oy = (cv.height - s.h * sc) / 2;
+      const sc0 = Math.min(cv.width / s.w, cv.height / s.h), sc = sc0 * zv.z;
+      if (zv.cx == null) { zv.cx = s.w / 2; zv.cy = s.h / 2; }
+      // bildet skal dekke visningen når det er forstørret (ingen tom kant å dra inn)
+      const hw = cv.width / 2 / sc, hh = cv.height / 2 / sc;
+      zv.cx = s.w / 2 <= hw ? s.w / 2 : clamp(zv.cx, hw, s.w - hw); zv.cy = s.h / 2 <= hh ? s.h / 2 : clamp(zv.cy, hh, s.h - hh);
+      const ox = cv.width / 2 - zv.cx * sc, oy = cv.height / 2 - zv.cy * sc;
       map = { sc, ox, oy, dpr };
       g.fillStyle = "#000"; g.fillRect(0, 0, cv.width, cv.height);
       g.drawImage(s.img, ox, oy, s.w * sc, s.h * sc);
@@ -4788,6 +5251,16 @@ const GhostCore = (() => {
       $("#prHint").textContent = s.ds.length > 1 ? (AVL ? `${s.ds.length} people in the frame` : `${s.ds.length} personer i bildet`) : s.ds.length ? (AVL ? "1 person in the frame" : "1 person i bildet") : (AVL ? "Found no people automatically. Tap where the skier is." : "Fant ingen personer automatisk. Trykk der løperen er.");
       $("#prOk").textContent = (AVL ? `Confirm skier ${k}` : `Bekreft løper ${k}`); $("#prOk").disabled = !s.sel;
       $("#prBack").hidden = k === "A";
+      if (zv.z === 1 && s.ds.length !== 1) $("#prHint").textContent += AVL ? " · Pinch or + to zoom" : " · Knip eller + for å forstørre";
+      if (one) {   // hjelp underveis (1.9.44): bare én løper, og brukeren kan hoppe over
+        const nm2 = runnerName(P[k]) || (AVL ? `skier ${k}` : (AVL ? `skier ${k}` : `løper ${k}`));
+        $("#prTitle").textContent = AVL ? `Lost ${nm2} here. Tap ${nm2}` : `Mistet ${nm2} her. Trykk på ${nm2}`;
+        $("#prBack").hidden = true; $("#prCancel").textContent = AVL ? "Skip" : "Hopp over";
+        $("#prOk").textContent = AVL ? "Confirm and continue" : "Bekreft og fortsett";
+        $("#pickRun .prinfo").textContent = AVL
+          ? `The app could not follow ${nm2} safely from ${sec(opt.from)} to ${sec(opt.to)} s (fast panning, blur or people nearby). Tap ${nm2} in this frame, and the app tracks from here. Press Skip if ${nm2} is not in the frame; the ghost is then hidden in that part.`
+          : `Appen klarte ikke å følge ${nm2} sikkert fra ${sec(opt.from)} til ${sec(opt.to)} s (rask panorering, uskarphet eller folk i nærheten). Trykk på ${nm2} i dette bildet, så sporer appen videre derfra. Trykk Hopp over hvis ${nm2} ikke er i bildet; da skjules ghosten i det partiet.`;
+      }
     };
     const tap = e => {
       if (!map) return;
@@ -4819,13 +5292,42 @@ const GhostCore = (() => {
     };
     return new Promise(res => {
       const ac = new AbortController(), o = { signal: ac.signal };
-      const end = v => { ac.abort(); dlg.hidden = true; document.body.classList.remove("zoomed"); res(v); };
-      cv.addEventListener("pointerup", tap, o);
-      $("#prOk").addEventListener("click", () => { if (k === "A") { k = "B"; draw(); } else end({ A: shots.A.sel.pt, B: shots.B.sel.pt, hA: shots.A.sel.box && shots.A.sel.box[3], hB: shots.B.sel.box && shots.B.sel.box[3], bA: shots.A.sel.box, bB: shots.B.sel.box }); }, o);
-      $("#prBack").addEventListener("click", () => { k = "A"; draw(); }, o);
+      const info = $("#pickRun .prinfo"), info0 = info.textContent, cancel0 = $("#prCancel").textContent;
+      const end = v => { ac.abort(); dlg.hidden = true; dlg.style.zIndex = ""; info.textContent = info0; $("#prCancel").textContent = cancel0; document.body.classList.remove("zoomed"); res(v); };
+      // berøring: ett trykk velger, dra flytter (når forstørret), to fingre knipe-zoomer, dobbelttrykk forstørrer
+      const pts = new Map(); let gest = null, lastTap = 0, tapT = 0;
+      const toImg = (cxs, cys) => { const r = cv.getBoundingClientRect(); return [((cxs - r.left) * map.dpr - map.ox) / map.sc, ((cys - r.top) * map.dpr - map.oy) / map.sc]; };
+      const zoomAt = (f, cxs, cys) => {   // forstørr med faktor f, punktet under fingeren/musen blir liggende
+        if (!map) return; const [ix, iy] = toImg(cxs, cys), z1 = clamp(zv.z * f, 1, 8), r = cv.getBoundingClientRect();
+        const nsc = map.sc / zv.z * z1, vx = (cxs - r.left) * map.dpr, vy = (cys - r.top) * map.dpr;
+        zv.z = z1; zv.cx = ix - (vx - cv.width / 2) / nsc; zv.cy = iy - (vy - cv.height / 2) / nsc; draw(); };
+      cv.addEventListener("pointerdown", e => { cv.setPointerCapture && cv.setPointerCapture(e.pointerId); pts.set(e.pointerId, [e.clientX, e.clientY]);
+        if (pts.size === 2) { const [a, b] = [...pts.values()]; gest = { pinch: true, d0: Math.hypot(a[0] - b[0], a[1] - b[1]), z0: zv.z }; }
+        else if (pts.size === 1) gest = { x0: e.clientX, y0: e.clientY, cx0: zv.cx, cy0: zv.cy, moved: false }; }, o);
+      cv.addEventListener("pointermove", e => { if (!pts.has(e.pointerId) || !gest || !map) return; pts.set(e.pointerId, [e.clientX, e.clientY]);
+        if (gest.pinch && pts.size >= 2) { const [a, b] = [...pts.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]);
+          if (gest.d0 > 10) zoomAt(clamp(gest.z0 * d / gest.d0, 1, 8) / zv.z, (a[0] + b[0]) / 2, (a[1] + b[1]) / 2); gest.moved = true; return; }
+        const dx = e.clientX - gest.x0, dy = e.clientY - gest.y0;
+        if (Math.hypot(dx, dy) > 8) gest.moved = true;
+        if (gest.moved && zv.z > 1) { zv.cx = gest.cx0 - dx * map.dpr / map.sc; zv.cy = gest.cy0 - dy * map.dpr / map.sc; draw(); } }, o);
+      const up = e => { const had = pts.delete(e.pointerId); if (!had) return;
+        if (gest && gest.pinch) { if (pts.size === 0) gest = null; return; }
+        if (gest && !gest.moved && e.type === "pointerup") {
+          const now = performance.now(), ev = { clientX: e.clientX, clientY: e.clientY };
+          if (e.pointerType === "mouse") tap(ev);
+          else if (now - lastTap < 300) { lastTap = 0; clearTimeout(tapT); zoomAt(zv.z < 2 ? 2.5 : 1 / zv.z, e.clientX, e.clientY); }   // dobbelttrykk: forstørr, ikke velg
+          else { lastTap = now; tapT = setTimeout(() => tap(ev), 280); }
+        }
+        gest = null; };
+      cv.addEventListener("pointerup", up, o); cv.addEventListener("pointercancel", up, o);
+      cv.addEventListener("wheel", e => { e.preventDefault(); zoomAt(Math.exp(-e.deltaY * 0.0015), e.clientX, e.clientY); }, Object.assign({ passive: false }, o));
+      zb.addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; const r = cv.getBoundingClientRect(); zoomAt(b.dataset.z === "+" ? 1.6 : 1 / 1.6, r.left + r.width / 2, r.top + r.height / 2); }, o);
+      $("#prOk").addEventListener("click", () => { if (one) end({ box: shots[k].sel.box || [shots[k].sel.pt[0] - shots[k].h * 0.04, shots[k].sel.pt[1] - shots[k].h * 0.08, shots[k].h * 0.08, shots[k].h * 0.16], pt: shots[k].sel.pt }); else if (k === "A") { k = "B"; zreset(); draw(); } else end({ A: shots.A.sel.pt, B: shots.B.sel.pt, hA: shots.A.sel.box && shots.A.sel.box[3], hB: shots.B.sel.box && shots.B.sel.box[3], bA: shots.A.sel.box, bB: shots.B.sel.box }); }, o);
+      $("#prBack").addEventListener("click", () => { k = "A"; zreset(); draw(); }, o);
       $("#prCancel").addEventListener("click", () => end(null), o);
       document.addEventListener("keydown", e => { if (e.key === "Escape") end(null); }, o);
       window.addEventListener("resize", draw, o);
+      if (one) dlg.style.zIndex = 70;   // over fremdriftslinjen
       dlg.hidden = false; document.body.classList.add("zoomed");
       requestAnimationFrame(draw);
     });
@@ -4933,13 +5435,23 @@ const GhostCore = (() => {
     ctx.globalAlpha = 1;
   }
 
+  // Feil underveis skal alltid vises, ikke la fremdriften stå fast (1.9.37)
   async function makeGhost() {
+    try { return await makeGhost0(); }
+    catch (e) {
+      console.error(e); st.recording = false; st.picking = false;
+      if (els.stop) els.stop.hidden = true; if (els.bar) els.bar.hidden = true;
+      say((AVL ? "Could not make the video: " : (AVL ? "Could not make the video: " : "Kunne ikke lage videoen: ")) + (e && e.message ? e.message : e) + (AVL ? " Try again, or use HD versions of the videos." : " Prøv igjen, eller bruk HD-utgaver av videoene."), true);
+      ui();
+    }
+  }
+  async function makeGhost0() {
     if (!both() || st.recording) return;
     pause();
     const runners = await prepare(), lines = !!$("#withLines").checked, LINE_AGE = 3;
     if (!(window.VideoEncoder && window.VideoFrame && window.Mp4Muxer)) { say((AVL ? "Ghost video needs a newer browser (Safari 16.4+ or Chrome). Choose «Side by side» instead." : "Ghost-video krever en nyere nettleser (Safari 16.4+ eller Chrome). Velg «Side om side» i stedet."), true); return; }
     // Utdata: samme form som A. Mobil maks ca. 0,75 megapiksler.
-    const vw = P.A.v.videoWidth, vh = P.A.v.videoHeight, mobile = matchMedia("(pointer: coarse)").matches;
+    const vw = SRC(P.A).videoWidth, vh = SRC(P.A).videoHeight, mobile = matchMedia("(pointer: coarse)").matches;
     const kk = Math.min(1, Math.sqrt((mobile ? 750000 : 2100000) / (vw * vh))), even = x => Math.max(2, Math.floor(x / 2) * 2);
     const W = even(vw * kk), H = even(vh * kk);
     layout = { W, H, slots: [] };
@@ -4954,6 +5466,8 @@ const GhostCore = (() => {
     try {
       try { m = await ghostModels(); }
       catch (e) { say((AVL ? "Could not load the analysis model. Check your connection and try again." : "Kunne ikke laste analysemodellen. Sjekk nettforbindelsen og prøv igjen."), true); return; }
+      say(AVL ? "Preparing the videos …" : "Gjør klar videoene …");
+      await Promise.all([P.A, P.B].map(prepFrameSource));
       say((AVL ? "Tap skier A and skier B in the start frame." : "Trykk på løper A og løper B i startbildet."));
       picks = await ghostPick(m, startT());
       if (!picks) { say((AVL ? "Ghost video cancelled." : "Ghost-video avbrutt.")); return; }
@@ -4966,6 +5480,10 @@ const GhostCore = (() => {
     if (st.stopReq && G.n < 3) { st.recording = false; els.stop.hidden = true; els.bar.hidden = true; say((AVL ? "Stopped." : "Stoppet.")); ui(); return; }
     st.stopReq = false;   // «Stopp her» under analysen: lag video av det som er analysert
     const tLast = t0 + (G.n - 1) * GH.step;
+    // 1.9.46: det innfelte B-bildet vises bare når B mangler lenge (minst ca. 1 s), ikke som korte glimt
+    G.insW = new Array(G.n).fill(0);
+    { const low = q => G.cB[q] < 0.45 || G.alpha[q] < 0.3;
+      for (let q = 0; q < G.n; ) { if (low(q)) { let e = q; while (e < G.n && low(e)) e++; if (e - q >= 15) for (let t = q; t < e; t++) G.insW[t] = Math.min(1, (t - q + 1) / 4, (e - t) / 4); q = e; } else q++; } }
 
     const muxer = new Mp4Muxer.Muxer({ target: new Mp4Muxer.ArrayBufferTarget(), video: { codec: cfg.mux, width: W, height: H, frameRate: 30 }, fastStart: "in-memory" });
     let encErr = null;
@@ -4974,6 +5492,7 @@ const GhostCore = (() => {
     const step = FRAME * st.rate, N = Math.max(1, Math.floor((tLast - t0) / step) + 1), dur = Math.round(1e6 / 30), u = H / 100;
     const segIn = Object.assign(document.createElement("canvas"), { width: 256, height: 256 }), sg = segIn.getContext("2d", { willReadFrequently: true });
     const maskC = Object.assign(document.createElement("canvas"), { width: 256, height: 256 }), mg = maskC.getContext("2d");
+    const mPrev = {}, mPrevOk = {};   // forrige maske per løper (for utjevning over tid)
     const CUT = { A: document.createElement("canvas"), B: document.createElement("canvas") };
     const maskImg = mg.createImageData(256, 256);
     // Støvler og ski på B: personmodellen tar dem ofte ikke med. Rundt føttene sammenlignes B-bildet med snøen på samme sted i A sin film
@@ -4999,7 +5518,7 @@ const GhostCore = (() => {
       const ox = p0[0] / kA, oy = p0[1] / kA;
       feA.setTransform(1, 0, 0, 1, 0, 0); feA.clearRect(0, 0, FN, FN);
       feA.setTransform(d / dt, -b / dt, -c / dt, a / dt, -(d * ox - c * oy) / dt, -(-b * ox + a * oy) / dt);
-      feA.drawImage(P.A.v, 0, 0); feA.setTransform(1, 0, 0, 1, 0, 0);
+      feA.drawImage(SRC(P.A), 0, 0); feA.setTransform(1, 0, 0, 1, 0, 0);
       const VW = v.videoWidth, VH = v.videoHeight, rx0 = Math.max(0, qx), ry0 = Math.max(0, qy), rx1 = Math.min(VW, qx + side), ry1 = Math.min(VH, qy + side);
       feB.clearRect(0, 0, FN, FN);
       feB.drawImage(v, rx0, ry0, rx1 - rx0, ry1 - ry0, (rx0 - qx) / side * FN, (ry0 - qy) / side * FN, (rx1 - rx0) / side * FN, (ry1 - ry0) / side * FN);
@@ -5022,7 +5541,7 @@ const GhostCore = (() => {
         if (best < 1e9) {
           const wy = clamp((yb + 0.25 * hy - y) / (0.15 * hy), 0, 1) * clamp((y - (yb - 0.7 * hy)) / (0.2 * hy), 0, 1);
           const wx = clamp((xr - Math.abs(x - FN / 2)) / (0.3 * xr), 0, 1);
-          feT[y * FN + x] = clamp((best - 50) / 50, 0, 1) * wy * wx;
+          feT[y * FN + x] = clamp((best - 55) / 50, 0, 1) * wy * wx;
         }
       }
       // fjern løse prikker (snøstruktur): behold punkt med minst 3 sterke naboer
@@ -5030,18 +5549,19 @@ const GhostCore = (() => {
       for (let y = y0 + 1; y < y1; y++) for (let x = x0 + 1; x < x1; x++) {
         const i = y * FN + x; if (feT[i] < 0.3) continue;
         let nb = 0; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if ((dx || dy) && feT[i + dy * FN + dx] > 0.4) nb++;
-        if (nb >= 3) feM[i] = feT[i];
+        if (nb >= 4) feM[i] = feT[i];
       }
       return feM;
     };
     // Fast lag: logo, løpermerker og tittel
     const ov = Object.assign(document.createElement("canvas"), { width: W, height: H }); { const keep = ctx; ctx = ov.getContext("2d"); try { ghostMarks(W, H, runners); } finally { ctx = keep; } }
     const nm = k => runners[k === "A" ? 0 : 1] || k;
-    let shownGap = null, segFail = 0, ts = performance.now(), i = 0;
+    let cutErr = null, shownGap = null, segFail = 0, ts = performance.now(), i = 0;
     for (; i < N && !st.stopReq && !encErr; i++) {
       const t = t0 + i * step, uu = Math.min(G.n - 1.0001, (t - t0) / GH.step), j = Math.floor(uu), f = uu - j;
       let tm = performance.now();
-      await Promise.all([P.A, P.B].map(p => seekSure(p, p.s + t)));
+      try { await Promise.all([P.A, P.B].map(p => seekSure(p, p.s + t))); }
+      catch (e) { cutErr = e; break; }   // avspilleren gir opp: lagre filmen fram hit i stedet for å miste alt
       GH.T.seek2 = (GH.T.seek2 || 0) + performance.now() - tm; tm = performance.now();
       // 1) A med automatisk zoom
       const kA = G.kA, sh = clamp(lerp(G.zoom[2][j], G.zoom[2][j + 1], f) / kA, 2, vh * 4), sw = sh * W / H;
@@ -5058,10 +5578,10 @@ const GhostCore = (() => {
         // Utzoomet: Bs film rundt A-bildet (litt dempet), så A-bildet med en tynn kant
         ctx.fillStyle = "#1d2228"; ctx.fillRect(0, 0, W, H);
         const al0 = lerp(G.alpha[j], G.alpha[j + 1], f);
-        if (Hm && al0 > 0.05) { ctx.globalAlpha = 0.9 * Math.min(1, al0 * 1.5); ghostWarp(P.B.v, Hm, G.kB, toOut, W, H); ctx.globalAlpha = 1; }
-        ctx.drawImage(P.A.v, 0, 0, vw, vh, ax0, ay0, ax1 - ax0, ay1 - ay0);
+        if (Hm && al0 > 0.05) { ctx.globalAlpha = 0.9 * Math.min(1, al0 * 1.5); ghostWarp(SRC(P.B), Hm, G.kB, toOut, W, H); ctx.globalAlpha = 1; }
+        ctx.drawImage(SRC(P.A), 0, 0, vw, vh, ax0, ay0, ax1 - ax0, ay1 - ay0);
         ctx.strokeStyle = "rgba(255,255,255,.55)"; ctx.lineWidth = Math.max(1, 0.18 * u); ctx.strokeRect(ax0, ay0, ax1 - ax0, ay1 - ay0);
-      } else ctx.drawImage(P.A.v, sx, sy, sw, sh, 0, 0, W, H);
+      } else ctx.drawImage(SRC(P.A), sx, sy, sw, sh, 0, 0, W, H);
       // 2) Løperne klippes ut (B alltid, A når linjene er på), så linjene kan ligge på snøen under dem
       const I3 = GhostCore.I3();
       const cutout = (k, v, bb, kk, H, style) => {
@@ -5082,13 +5602,40 @@ const GhostCore = (() => {
         // maske: personen, myk kant, og bare nær løperboksen (ikke porter eller tilskuere lenger unna)
         const a = maskImg.data, hx = bw / side * 128, hy = bh / side * 128;
         let fe = null; if (style.feet) try { fe = footExt(v, qx, qy, side, kk, H, bw, bh, kA, style.feet.ab); } catch (e) { fe = null; }
+        // 1.9.45: skarpere kant (brattere overgang fra personmodellen), og skiene/støvlene fra sammenligningen med A
+        // tas bare med rett ved kroppen (ellers gir ulik snø i de to filmene blå flekker)
+        const body = new Float32Array(65536); let bx0 = 256, bx1 = -1, by0 = 256, by1 = -1;
         for (let y = 0; y < 256; y++) for (let x = 0; x < 256; x++) {
           const c = conf[Math.min(mh - 1, y * mh >> 8) * mw + Math.min(mw - 1, x * mw >> 8)];
           const e = Math.max(Math.abs(x - 128) / hx, Math.abs(y - 128) / hy);
-          let vv = clamp((c - 0.38) / 0.24, 0, 1) * clamp((1.4 - e) / 0.3, 0, 1), o = (y * 256 + x) * 4;
-          if (fe) vv = Math.max(vv, fe[(y >> 1) * FN + (x >> 1)]);
+          const vv = clamp((c - 0.45) / 0.15, 0, 1) * clamp((1.4 - e) / 0.3, 0, 1); body[y * 256 + x] = vv;
+          if (vv > 0.5) { if (x < bx0) bx0 = x; if (x > bx1) bx1 = x; if (y < by0) by0 = y; if (y > by1) by1 = y; }
+        }
+        // 1.9.52: ski og støvler tas med når de henger sammen med kroppen (fylles ut fra beina), også et stykke til siden
+        // der skiene stikker ut. Løse flekker på snøen som ikke henger sammen med løperen, tas ikke med (ingen blå felter).
+        let feOk = null;
+        if (fe && bx1 >= 0) {
+          const bh2 = by1 - by0 + 1, fx0 = Math.max(0, Math.floor(bx0 - 0.6 * bh2 - 6)), fx1 = Math.min(255, Math.ceil(bx1 + 0.6 * bh2 + 6));
+          const fy0 = Math.max(0, Math.floor(by0 + 0.5 * bh2)), fy1 = Math.min(255, Math.ceil(by1 + 0.15 * bh2 + 6));
+          feOk = new Uint8Array(65536); const qq = [];
+          const cand = (x, y) => x >= fx0 && x <= fx1 && y >= fy0 && y <= fy1 && fe[(y >> 1) * FN + (x >> 1)] > 0.25;
+          for (let y = fy0; y <= fy1; y++) for (let x = fx0; x <= fx1; x++) if (body[y * 256 + x] > 0.5 && cand(x, y)) { feOk[y * 256 + x] = 1; qq.push(y * 256 + x); }
+          // start også fra kanten av kroppen (beina), ikke bare inni den
+          for (let y = Math.max(fy0, by0); y <= Math.min(fy1, by1); y++) for (let x = fx0; x <= fx1; x++) if (body[y * 256 + x] > 0.5) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+            const xx = x + dx, yy = y + dy; if (cand(xx, yy) && !feOk[yy * 256 + xx]) { feOk[yy * 256 + xx] = 1; qq.push(yy * 256 + xx); } }
+          for (let h = 0; h < qq.length; h++) { const x = qq[h] & 255, y = qq[h] >> 8;
+            for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const xx = x + dx, yy = y + dy;
+              if ((dx || dy) && cand(xx, yy) && !feOk[yy * 256 + xx]) { feOk[yy * 256 + xx] = 1; qq.push(yy * 256 + xx); } } }
+        }
+        for (let y = 0; y < 256; y++) for (let x = 0; x < 256; x++) {
+          let vv = body[y * 256 + x], o = (y * 256 + x) * 4;
+          if (feOk && feOk[y * 256 + x]) vv = Math.max(vv, fe[(y >> 1) * FN + (x >> 1)]);
+          // 1.9.43: masken jevnes ut over tid (litt fra forrige bilde), så utklippet av løperen ikke flimrer (1.9.45: mindre, så det ikke blir slør bak løperen)
+          const pi = y * 256 + x; if (mPrev[k] && mPrevOk[k]) vv = Math.min(0.7 * vv + 0.3 * mPrev[k][pi], vv + 0.25);
+          (mPrev[k] || (mPrev[k] = new Float32Array(65536)))[pi] = vv;
           a[o] = a[o + 1] = a[o + 2] = 255; a[o + 3] = vv * 255;
         }
+        mPrevOk[k] = true;
         mg.putImageData(maskImg, 0, 0);
         const det = Math.sqrt(Math.abs(H[0] * H[4] - H[1] * H[3]));
         const gs = clamp(Math.round(side * kk * det / kA * so * 1.25), 64, 800);
@@ -5104,20 +5651,22 @@ const GhostCore = (() => {
         const foot = GhostCore.apply(H, bb[0] + bb[2] / 2, bb[1] + bb[3]);
         return { depth: toOut(foot[0], foot[1])[1], draw: () => {
           ctx.setTransform(a1, b1, c2, d2, p0[0] - a1 * h2 - c2 * h2, p0[1] - b1 * h2 - d2 * h2);
-          ctx.globalAlpha = style.alpha; if (style.glow) { ctx.shadowColor = style.glow; ctx.shadowBlur = 0.45 * u; } ctx.imageSmoothingQuality = "high";
+          ctx.globalAlpha = style.alpha; if (style.glow) { ctx.shadowColor = style.glow; ctx.shadowBlur = (style.glowW || 0.45) * u; } ctx.imageSmoothingQuality = "high";
           ctx.drawImage(c, 0, 0);
           ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.shadowBlur = 0; } };
       };
-      const al = lerp(G.alpha[j], G.alpha[j + 1], f), bb = lerpBox(G.trB[j], G.trB[j + 1], f);
-      const ab = lerpBox(G.trA[j], G.trA[j + 1], f), aHead = ab ? toOut(ab[0] + ab[2] / 2, ab[1]) : null;
+      // 1.9.44: usikker sporing tones ned (heller ingen ghost enn ghost på feil person)
+      const qA = lerp(G.cA[j], G.cA[j + 1], f), qB = lerp(G.cB[j], G.cB[j + 1], f), sm = v => clamp((v - 0.3) / 0.3, 0, 1);
+      const al0b = lerp(G.alpha[j], G.alpha[j + 1], f), al = al0b * sm(qB), bb = lerpBox(G.trB[j], G.trB[j + 1], f);
+      const ab = sm(qA) > 0.02 ? lerpBox(G.trA[j], G.trA[j + 1], f) : null, aHead = ab ? toOut(ab[0] + ab[2] / 2, ab[1]) : null;
       let bHead = null; const cuts = [];
       if (al > 0.02 && bb && c0 && Hm) {
-        const cB = cutout("B", P.B.v, bb, G.kB, Hm, { alpha: 0.9 * al, tint: `rgba(${GH.blue},.2)`, glow: `rgba(${GH.blue},.95)`, filter: "contrast(1.18) saturate(1.1)", feet: { ab } });
+        const cB = cutout("B", SRC(P.B), bb, G.kB, Hm, { alpha: 0.95 * al, tint: `rgba(${GH.blue},.14)`, glow: `rgba(${GH.blue},.6)`, glowW: 0.15, filter: "contrast(1.2) saturate(1.1)", feet: { ab } });
         if (cB) cuts.push(cB);
         const top = GhostCore.apply(Hm, bb[0] + bb[2] / 2, bb[1]);
         bHead = { p: toOut(top[0], top[1]), al, Hm };
-      }
-      if (G.lines && ab) { const cA = cutout("A", P.A.v, ab, kA, I3, { alpha: 1 }); if (cA) cuts.push(cA); }
+      } else mPrevOk.B = false;
+      if (G.lines && ab) { const cA = cutout("A", SRC(P.A), ab, kA, I3, { alpha: 1 }); if (cA) cuts.push(cA); }
       GH.T.seg += performance.now() - tm; tm = performance.now();
       // 3) Linjevalg: sporet ved analysebilde j, flyttet et stykke f mot bilde j+1, og så frem til der skiene er nå
       if (G.lines) {
@@ -5139,17 +5688,27 @@ const GhostCore = (() => {
         const mx = (aHead[0] + bHead.p[0]) / 2, my = Math.min(aHead[1], bHead.p[1]);
         aHead[0] = mx - 3 * u; aHead[1] = my; bHead.p = [mx + 3 * u, my];
       }
-      if (aHead) ghostTag("A", aHead, W, H, u, 1);
+      if (aHead) ghostTag("A", aHead, W, H, u, sm(qA));
       if (bHead) ghostTag("B", bHead.p, W, H, u, Math.max(0.35, bHead.al));
       // 4b) Kan B ikke plasseres (ingen felles bakgrunn i dette partiet): vis B i et lite innfelt bilde fra Bs egen film
-      const inset = bb ? clamp(1 - al / 0.3, 0, 1) : 0;
+      // 4c) Usikker på B (1.9.44): vis hele B-bildet innfelt, som i Dobbel, så B alltid er med
+      const insW = lerp(G.insW[j], G.insW[j + 1], f), full = clamp(1 - sm(qB), 0, 1) * insW;
+      if (full > 0.02) {
+        const BW = SRC(P.B).videoWidth, BH = SRC(P.B).videoHeight, iw = Math.min(0.4 * W, 0.4 * H * BW / BH), ih = iw * BH / BW, ix = 2.2 * u, iy = H - ih - 9 * u;
+        ctx.globalAlpha = full;
+        ctx.save(); ctx.beginPath(); ctx.roundRect(ix, iy, iw, ih, 1.2 * u); ctx.clip(); ctx.drawImage(SRC(P.B), 0, 0, BW, BH, ix, iy, iw, ih); ctx.restore();
+        ctx.strokeStyle = `rgb(${GH.blue})`; ctx.lineWidth = 0.45 * u; ctx.beginPath(); ctx.roundRect(ix, iy, iw, ih, 1.2 * u); ctx.stroke();
+        ghostTag("B", [ix + iw / 2, iy + 0.5 * u], W, H, u, full);
+        ctx.globalAlpha = 1;
+      }
+      const inset = bb && full < 0.5 ? clamp(1 - al0b / 0.3, 0, 1) * insW : 0;
       if (inset > 0.02) {
         const ih = 0.34 * H, iw = ih * 0.8, ix = 2.2 * u, iy = H - ih - 9 * u;
-        const ch = Math.max(bb[3] / G.kB * 1.9, 120), cw = ch * 0.8, BW = P.B.v.videoWidth, BH = P.B.v.videoHeight;
+        const ch = Math.max(bb[3] / G.kB * 1.9, 120), cw = ch * 0.8, BW = SRC(P.B).videoWidth, BH = SRC(P.B).videoHeight;
         const cx = clamp((bb[0] + bb[2] / 2) / G.kB - cw / 2, 0, Math.max(0, BW - cw)), cy = clamp((bb[1] + bb[3] / 2) / G.kB - ch / 2, 0, Math.max(0, BH - ch));
         ctx.globalAlpha = inset;
         ctx.save(); ctx.beginPath(); ctx.roundRect(ix, iy, iw, ih, 1.2 * u); ctx.clip();
-        ctx.drawImage(P.B.v, cx, cy, Math.min(cw, BW), Math.min(ch, BH), ix, iy, iw, ih); ctx.restore();
+        ctx.drawImage(SRC(P.B), cx, cy, Math.min(cw, BW), Math.min(ch, BH), ix, iy, iw, ih); ctx.restore();
         ctx.strokeStyle = `rgb(${GH.blue})`; ctx.lineWidth = 0.45 * u; ctx.beginPath(); ctx.roundRect(ix, iy, iw, ih, 1.2 * u); ctx.stroke();
         ghostTag("B", [ix + iw / 2, iy + 0.5 * u], W, H, u, inset);
         ctx.globalAlpha = 1;
@@ -5164,21 +5723,62 @@ const GhostCore = (() => {
       const frame = new VideoFrame(canvas, { timestamp: i * dur, duration: dur });
       enc.encode(frame, { keyFrame: i % 60 === 0 });
       frame.close();
-      while (enc.encodeQueueSize > 4) await new Promise(res => setTimeout(res, 4));
+      for (const tq = performance.now(); enc.encodeQueueSize > 4 && !encErr; ) {
+        if (enc.state === "closed" || performance.now() - tq > 20000) { encErr = new Error(AVL ? "the video encoder stopped responding." : "videokoderen i nettleseren sluttet å svare."); break; }
+        await new Promise(res => setTimeout(res, 4));
+      }
       progress(0.45 + 0.55 * (i + 1) / N);
       if (i % 5 === 0) {
         const used = (performance.now() - st.t0) / 1000, fr = 0.45 + 0.55 * (i + 1) / N;
         say((AVL ? `Making ghost video … ${Math.round(fr * 100)} % · about ${Math.max(1, Math.round(used / fr - used))} s left` : `Lager ghost-video … ${Math.round(fr * 100)} % · ca. ${Math.max(1, Math.round(used / fr - used))} s igjen`));
       }
     }
-    try { await enc.flush(); enc.close(); } catch (e) { encErr = encErr || e; }
+    if (!encErr) try { await Promise.race([enc.flush(), new Promise((_, rej) => setTimeout(() => rej(new Error(AVL ? "the video encoder did not finish." : "videokoderen i nettleseren ble ikke ferdig.")), 60000))]); enc.close(); } catch (e) { encErr = encErr || e; }
     st.recording = false;
     if (encErr || i === 0) { els.stop.hidden = true; els.bar.hidden = true; say((AVL ? "Could not make the video: " : "Kunne ikke lage videoen: ") + (encErr ? encErr.message : "ingen bilder"), true); ui(); return; }
-    st.method = `ghost${lines ? " med linjer" : ""} · analyse ${secA.toFixed(1)} s (${G.n} bilder, bakgrunn matchet direkte i ${Math.round(G.okFrac * 100)} %, ${GH.bro || 0} via bro) · video ${((performance.now() - ts) / 1000).toFixed(1)} s` +
+    st.method = `ghost${lines ? " med linjer" : ""} · analyse ${secA.toFixed(1)} s (${G.n} bilder, bakgrunn matchet direkte i ${Math.round(G.okFrac * 100)} %, ${GH.bro || 0} via bro) · video ${((performance.now() - ts) / 1000).toFixed(1)} s` + (GH.cam ? ` · kamerabevegelse A ${GH.cam[0]} / B ${GH.cam[1]} px` : "") + (GH.steadyPx != null ? ` · ro ${GH.steadyPx} px` : "") +
+      ` · start A ${(startT() + P.A.s).toFixed(2)} / B ${(startT() + P.B.s).toFixed(2)} s · personfinner ${window.avDet || "?"}` +
       (segFail ? ` · utklipp feilet ${segFail}` : "") + ` · ${cfg.mux === "avc" ? "H.264" : "VP9"} · ` +
+      [P.A, P.B].map(p => p.k + ": " + (p.fs ? `fil (${p.fs.codec}${p.fs.sw ? ", programvare" : ", maskinvare"}${p.fs.ok ? "" : ", falt tilbake"}, ${p.fs.resets} starter${p.fs.check ? `, sjekk ${p.fs.check.d}/${p.fs.check.lum}/${p.fs.check.rep ?? "-"}` : ""}${p.fs.staleBad ? ", samme bilde" : ""})` : "avspiller")).join(" · ") + " · " +
       Object.entries(GH.T).map(([k, v]) => `${k} ${(v / 1000).toFixed(1)} s`).join(" · ");
     muxer.finalize();
     done(new Blob([muxer.target.buffer], { type: "video/mp4" }), "mp4");
+    // 1.9.48: analysedata kan lastes ned og sendes til feilsøking (sporingsboksene, kamerabevegelse, sikkerhet; ingen bilder)
+    setTimeout(() => { if (!els.diag || els.diag.querySelector(".dbgdl")) return;
+      const a = document.createElement("a"); a.href = "#"; a.className = "dbgdl"; a.textContent = AVL ? " · Download analysis data" : " · Last ned analysedata";
+      a.addEventListener("click", async e => { e.preventDefault();
+        const D = window.avGhostDbg || {}, Gl = window.avGhostLast || {}, outs = Gl.out || [];
+        const r2 = v => Array.isArray(v) ? v.map(r2) : typeof v === "number" ? Math.round(v * 100) / 100 : v;
+        const mx = m => m ? Array.from({ length: 9 }, (_, k) => +(+m[k]).toPrecision(7)) : null;
+        const data = { ver: typeof AV_VERSION !== "undefined" ? AV_VERSION : (document.querySelector("#ver, .ver") || {}).textContent || "?", ua: navigator.userAgent, det: window.avDet || "?", method: st.method, quality: GH.quality || null,
+          start: [startT() + P.A.s, startT() + P.B.s], step: GH.step, cam: GH.cam || null,
+          src: [P.A, P.B].map(p => ({ w: p.v.videoWidth, h: p.v.videoHeight, dur: p.dur, fs: p.fs ? { codec: p.fs.codec, sw: p.fs.sw, ok: p.fs.ok, check: p.fs.check } : null })),
+          dA: r2(D.dA), dB: r2(D.dB), trA: r2(D.trA), trB: r2(D.trB), picks: r2(D.picks), wh: D.wh, cA: r2(D.cA), cB: r2(D.cB), anc: r2(D.anc),
+          MA: outs.map(o => mx(o.MA)), MB: outs.map(o => mx(o.MB)), H: outs.map(o => mx(o.H)), Hs: (Gl.Hs || []).map(mx), wB: [Gl.wA, Gl.hA],
+          inl: outs.map(o => o.inl), okFrac: Gl.okFrac };
+        const blob = new Blob([JSON.stringify(data)], { type: "application/json" }), filename = (st.resultName || "ghost") + " analysedata.json";
+        if (typeof downloads !== "undefined" && downloads) { try { await downloads.save({ filename, data: blob }); return; } catch (e2) { if (e2 && e2.code === "declined") return; } }
+        const u = URL.createObjectURL(blob), l = document.createElement("a"); l.href = u; l.download = filename; document.body.appendChild(l); l.click(); l.remove(); setTimeout(() => URL.revokeObjectURL(u), 5000);
+      });
+      els.diag.appendChild(a); }, 60);
+    // 1.9.44: si fra om partier der ghosten er skjult eller usikker, så det ikke oppleves som en feil
+    { const bad = []; for (let q = 0; q < G.n; q++) bad.push(G.cA[q] < 0.45 || G.cB[q] < 0.45 || G.alpha[q] < 0.3);
+      const parts = []; for (let q = 0; q < G.n; ) { if (bad[q]) { let e = q; while (e < G.n && bad[e]) e++; if (e - q >= 6) parts.push([q * GH.step, e * GH.step]); q = e; } else q++; }
+      const tot = parts.reduce((a, p) => a + p[1] - p[0], 0), fmt = v => v.toFixed(1).replace(".", AVL ? "." : ",");
+      if (parts.length && tot >= 0.5) {
+        const ls = parts.slice(0, 3).map(p => `${fmt(p[0])}–${fmt(p[1])} s`).join(", ") + (parts.length > 3 ? " …" : "");
+        const still = GH.cam && Math.max(GH.cam[0], GH.cam[1]) < 1.5;
+        const msg = still
+          ? (AVL ? `The ghost is hidden or less precise at ${ls}, where the app could not tell the skier apart from other people or the skier was far away. Tap «Download analysis data» below and send the file to us, so we can improve this.`
+                 : `Ghosten er skjult eller mindre presis ved ${ls}, der appen ikke klarte å skille løperen fra andre personer, eller løperen var langt unna. Trykk «Last ned analysedata» under og send filen til oss, så kan vi forbedre dette.`)
+          : tot > 0.5 * G.n * GH.step
+          ? (AVL ? `Much of this video is hard to analyse (fast panning, blur or people close to the skiers), so the ghost is hidden or less precise in large parts (${ls}). A steadier video, ideally from a tripod, gives a better result.`
+                 : `Mye av denne filmen er vanskelig å analysere (rask panorering, uskarphet eller folk tett på løperne), så ghosten er skjult eller mindre presis i store deler (${ls}). En roligere film, gjerne fra stativ, gir bedre resultat.`)
+          : (AVL ? `The ghost is hidden or less precise at ${ls}, where the skier was hard to follow (fast panning, blur or people nearby). B is shown in a small picture there instead.`
+                 : `Ghosten er skjult eller mindre presis ved ${ls}, der løperen var vanskelig å følge (rask panorering, uskarphet eller folk i nærheten). B vises i et lite bilde der i stedet.`);
+        GH.quality = msg; setTimeout(() => say(els.msg.textContent + " " + msg), 40);
+      } else GH.quality = null; }
+    if (cutErr) setTimeout(() => say((AVL ? `The video stops at ${(i * step).toFixed(1)} s because the browser could not play the source video further (${cutErr.message}) Save it, or try HD versions of the videos.` : `Filmen stopper ved ${(i * step).toFixed(1).replace(".", AVL ? "." : ",")} s fordi nettleseren ikke klarte å spille kildevideoen videre (${cutErr.message}) Lagre den, eller prøv HD-utgaver av videoene.`), true), 50);
   }
   // Lite merke med bokstav over hodet på løperen; pil i kanten når løperen er utenfor bildet
   function ghostTag(k, p, W, H, u, a) {
@@ -5219,7 +5819,7 @@ const GhostCore = (() => {
     for (const it of items) {
       box(x, y, it.w, h, 1 * u, VCOL[it.k]);
       ctx.fillStyle = "#fff"; ctx.textAlign = "left"; ctx.textBaseline = "middle";
-      ctx.fillText(fit(it.t, it.w - 3 * u), x + 1.5 * u, y + h * 0.54);
+      ctx.fillText(fit(it.t, it.w - 3 * u + 2), x + 1.5 * u, y + h * 0.54);
       x += it.w + gap;
     }
     if (st.resultTitle) {
@@ -5386,12 +5986,269 @@ const GhostCore = (() => {
     } finally { URL.revokeObjectURL(url); v.removeAttribute("src"); v.load(); }
   }
   window.avZoomCopy = zoomCopy;
+  // ---- Bilder rett fra fila med nettleserens videodekoder (WebCodecs), 1.9.38 ----
+  // Analysen og ghost-filmen går stort sett framover i tid. Videoavspilleren må da hoppe i fila for hvert bilde,
+  // og på tunge 4K-filer kan den falle ut. Her leses MP4/MOV-fila direkte, og bildene dekodes i rekkefølge fra
+  // nærmeste nøkkelbilde. Virker ikke dette for en fil (ukjent format, kodek som ikke støttes, feil), brukes
+  // videoavspilleren som før.
+  const SRC = p => (p.fs && p.fs.ok ? p.fs.canvas : p.v);
+  async function openFrameSource(file) {
+    if (!window.VideoDecoder || !window.EncodedVideoChunk || !file) return null;
+    const rd = async (o, n) => new DataView(await file.slice(o, o + n).arrayBuffer());
+    const typ = (dv, o) => String.fromCharCode(dv.getUint8(o), dv.getUint8(o + 1), dv.getUint8(o + 2), dv.getUint8(o + 3));
+    let off = 0, moov = null;
+    while (off + 8 <= file.size) {
+      const h = await rd(off, 16); let size = h.getUint32(0); const t = typ(h, 4), hl = size === 1 ? 16 : 8;
+      if (size === 1) size = h.getUint32(8) * 4294967296 + h.getUint32(12);
+      if (size === 0) size = file.size - off;
+      if (size < 8) return null;
+      if (t === "moov") { if (size > 200 * 1048576) return null; moov = new DataView(await file.slice(off + hl, off + size).arrayBuffer()); break; }
+      off += size;
+    }
+    if (!moov) return null;
+    const M = moov, u32 = o => M.getUint32(o), u16 = o => M.getUint16(o), u8 = o => M.getUint8(o);
+    const kids = (s, e) => { const out = []; let o = s;
+      while (o + 8 <= e) { let sz = u32(o); const t = typ(M, o + 4); let hl = 8;
+        if (sz === 1) { sz = u32(o + 8) * 4294967296 + u32(o + 12); hl = 16; } if (sz === 0) sz = e - o;
+        if (sz < 8 || o + sz > e) break; out.push({ t, s: o + hl, e: o + sz }); o += sz; }
+      return out; };
+    const find = (b, path) => { let cur = b; for (const p of path) { cur = kids(cur.s, cur.e).find(k => k.t === p); if (!cur) return null; } return cur; };
+    const mvhd = kids(0, M.byteLength).find(k => k.t === "mvhd");
+    const movieTs = mvhd ? (u8(mvhd.s) === 1 ? u32(mvhd.s + 20) : u32(mvhd.s + 12)) : 1000;
+    for (const trak of kids(0, M.byteLength).filter(k => k.t === "trak")) {
+      const hdlr = find(trak, ["mdia", "hdlr"]); if (!hdlr || typ(M, hdlr.s + 8) !== "vide") continue;
+      const mdhd = find(trak, ["mdia", "mdhd"]), stbl = find(trak, ["mdia", "minf", "stbl"]), tkhd = find(trak, ["tkhd"]); if (!mdhd || !stbl) continue;
+      const ts = u8(mdhd.s) === 1 ? u32(mdhd.s + 20) : u32(mdhd.s + 12);
+      const box = n => kids(stbl.s, stbl.e).find(k => k.t === n);
+      const stsd = box("stsd"), stsz = box("stsz"), stsc = box("stsc"), stco = box("stco") || box("co64"), stts = box("stts"), stss = box("stss"), ctts = box("ctts");
+      if (!stsd || !stsz || !stsc || !stco || !stts) continue;
+      // prøvebeskrivelse: avc1/avc3 (H.264) eller hvc1/hev1 (HEVC), med avcC/hvcC
+      const ent = { s: stsd.s + 8 + 8, t: typ(M, stsd.s + 8 + 4), e: stsd.s + 8 + u32(stsd.s + 8) };
+      const W0 = u16(ent.s + 24), H0 = u16(ent.s + 26);
+      const cfgBox = kids(ent.s + 78, ent.e).find(k => k.t === "avcC" || k.t === "hvcC");
+      if (!cfgBox) return null;
+      const desc = new Uint8Array(M.buffer, M.byteOffset + cfgBox.s, cfgBox.e - cfgBox.s).slice();
+      const hx = n => n.toString(16).padStart(2, "0").toUpperCase();
+      let codec;
+      if (cfgBox.t === "avcC") codec = ent.t + "." + [desc[1], desc[2], desc[3]].map(hx).join("");
+      else {
+        const b1 = desc[1], space = ["", "A", "B", "C"][b1 >> 6], tier = (b1 >> 5) & 1 ? "H" : "L", prof = b1 & 31;
+        let compat = (desc[2] << 24 | desc[3] << 16 | desc[4] << 8 | desc[5]) >>> 0, rev = 0;
+        for (let k = 0; k < 32; k++) { rev = (rev << 1) | (compat & 1); compat >>>= 1; }
+        const cons = []; for (let k = 6; k < 12; k++) cons.push(desc[k]);
+        while (cons.length && !cons[cons.length - 1]) cons.pop();
+        codec = [ent.t, space + prof, (rev >>> 0).toString(16).toUpperCase(), tier + desc[12], ...cons.map(c => c.toString(16).toUpperCase())].join(".");
+      }
+      // tabeller: tid (stts), visningsforskyvning (ctts), nøkkelbilder (stss), størrelse (stsz), plassering (stsc + stco)
+      const n = u32(stsz.s + 8), fixed = u32(stsz.s + 4);
+      const size = new Uint32Array(n), pos = new Float64Array(n), dts = new Float64Array(n), pts = new Float64Array(n), key = new Uint8Array(n);
+      for (let i = 0; i < n; i++) size[i] = fixed || u32(stsz.s + 12 + 4 * i);
+      { let i = 0, t = 0; const ne = u32(stts.s + 4);
+        for (let k = 0; k < ne && i < n; k++) { const c = u32(stts.s + 8 + 8 * k), d = u32(stts.s + 12 + 8 * k); for (let j = 0; j < c && i < n; j++) { dts[i++] = t; t += d; } } }
+      for (let i = 0; i < n; i++) pts[i] = dts[i];
+      if (ctts) { let i = 0; const v1 = u8(ctts.s) === 1, ne = u32(ctts.s + 4);
+        for (let k = 0; k < ne && i < n; k++) { const c = u32(ctts.s + 8 + 8 * k), o = v1 ? M.getInt32(ctts.s + 12 + 8 * k) : u32(ctts.s + 12 + 8 * k); for (let j = 0; j < c && i < n; j++) pts[i++] += o; } }
+      if (stss) { const ne = u32(stss.s + 4); for (let k = 0; k < ne; k++) { const i = u32(stss.s + 8 + 4 * k) - 1; if (i >= 0 && i < n) key[i] = 1; } }
+      else key.fill(1);
+      { const nC = u32(stco.s + 4), big = stco.t === "co64", ne = u32(stsc.s + 4), se = [];
+        for (let k = 0; k < ne; k++) se.push([u32(stsc.s + 8 + 12 * k) - 1, u32(stsc.s + 12 + 12 * k)]);
+        let i = 0, e = 0;
+        for (let c = 0; c < nC && i < n; c++) {
+          while (e + 1 < se.length && se[e + 1][0] <= c) e++;
+          let o = big ? u32(stco.s + 8 + 8 * c) * 4294967296 + u32(stco.s + 12 + 8 * c) : u32(stco.s + 8 + 4 * c);
+          for (let j = 0; j < se[e][1] && i < n; j++) { pos[i] = o; o += size[i]; i++; }
+        } }
+      // redigeringsliste (elst): avspilleren starter tiden 0 der redigeringen sier, så bildene må forskyves likt
+      let shift = 0;
+      const elst = find(trak, ["edts", "elst"]);
+      if (elst) { const v1 = u8(elst.s) === 1, ne = u32(elst.s + 4); let o = elst.s + 8, empty = 0;
+        for (let k = 0; k < ne; k++) {
+          const dur = v1 ? u32(o) * 4294967296 + u32(o + 4) : u32(o), mt = v1 ? M.getInt32(o + 8) * 4294967296 + u32(o + 12) : M.getInt32(o + 4);
+          o += v1 ? 20 : 12;
+          if (mt === -1) { empty += dur / movieTs; continue; }
+          shift = mt / ts - empty; break;
+        } }
+      // dreining fra tkhd-matrisen (mobilvideo i stående format)
+      let rot = 0;
+      if (tkhd) { const v1 = u8(tkhd.s) === 1, mo = tkhd.s + (v1 ? 52 : 40), a = M.getInt32(mo), b = M.getInt32(mo + 4);
+        rot = a === 0 && b > 0 ? 90 : a < 0 && b === 0 ? 180 : a === 0 && b < 0 ? 270 : 0; }
+      const tryCfg = async hw => { const c = { codec, description: desc, codedWidth: W0, codedHeight: H0, hardwareAcceleration: hw, optimizeForLatency: true };
+        try { const r = await VideoDecoder.isConfigSupported(c); return r.supported ? c : null; } catch (e) { return null; } };
+      const cfgs = [];
+      // programvare først: forutsigbart, ingen grense på lånte bilder
+      for (const hw of ["prefer-software", "no-preference"]) { const c = await tryCfg(hw); if (c) cfgs.push(c); }
+      if (!cfgs.length) return null;
+      const order = Array.from({ length: n }, (_, i) => i).sort((a, b) => pts[a] - pts[b]);   // visningsrekkefølge
+      const step = n > 1 ? (pts[order[n - 1]] - pts[order[0]]) / (n - 1) : ts / 30;
+      const t0 = pts[order[0]];
+      const vw = rot % 180 ? H0 : W0, vh = rot % 180 ? W0 : H0;
+      const canvas = Object.assign(document.createElement("canvas"), { width: vw, height: vh });
+      canvas.videoWidth = vw; canvas.videoHeight = vh;
+      const g = canvas.getContext("2d");
+      return makeFrameSource({ file, n, size, pos, pts, key, order, step, ts, shift, t0, rot, cfgs, canvas, g, W0, H0 });
+    }
+    return null;
+  }
+  function makeFrameSource(S) {
+    const { file, n, size, pos, pts, key, order, step, ts, shift, rot, canvas, g, W0, H0 } = S;
+    let gen = 0, dec = null, cfgIdx = 0, next = 0, outQ = [], err = null, shownPts = -1e18, lastFed = -1, blk = null, blkAt = 0, fails = 0;
+    const fs = { ok: true, canvas, codec: S.cfgs[0].codec, sw: false, frames: 0, resets: 0 };
+    const make = () => {
+      if (dec) try { dec.close(); } catch (e) {}
+      err = null; outQ.forEach(f => f.close()); outQ = [];
+      const d = new VideoDecoder({ output: f => { if (d === dec) outQ.push(f); else f.close(); }, error: e => { if (d === dec) err = e; } });
+      dec = d;
+      dec.configure(S.cfgs[cfgIdx]); fs.sw = S.cfgs[cfgIdx].hardwareAcceleration === "prefer-software";
+    };
+    const read = async i => {   // les store blokker om gangen; bildene ligger stort sett etter hverandre i fila
+      const a = pos[i], b = a + size[i];
+      if (!blk || a < blkAt || b > blkAt + blk.byteLength) {
+        const len = Math.max(size[i], Math.min(16 * 1048576, file.size - a));
+        blk = new Uint8Array(await file.slice(a, a + len).arrayBuffer()); blkAt = a;
+      }
+      return blk.subarray(a - blkAt, b - blkAt);
+    };
+    const draw = f => {
+      g.save();
+      if (rot === 90) { g.translate(canvas.width, 0); g.rotate(Math.PI / 2); }
+      else if (rot === 180) { g.translate(canvas.width, canvas.height); g.rotate(Math.PI); }
+      else if (rot === 270) { g.translate(0, canvas.height); g.rotate(-Math.PI / 2); }
+      g.drawImage(f, 0, 0, W0, H0); g.restore();
+      shownPts = f.timestamp; fs.frames++;
+    };
+    // tidspunkt i avspillerens tid → bildet som vises da (siste bilde med visningstid ≤ t)
+    const targetOf = t => {
+      const T = (t + shift) * ts + 0.001 * ts;   // som avspilleren: siste bilde som har startet
+      let lo = 0, hi = n - 1;
+      if (T < pts[order[0]]) return order[0];
+      while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (pts[order[mid]] <= T) lo = mid; else hi = mid - 1; }
+      return order[lo];
+    };
+    const keyBefore = i => { let k = i; while (k > 0 && !key[k]) k--; return k; };
+    // 1.9.48: noen maskinvaredekodere (sett med iPhone-HEVC i Chrome på Windows) gir samme bilde om igjen i nesten et sekund.
+    // Hvert nytt bilde får et lite fingeravtrykk; er det helt likt forrige gang flere ganger på rad, brukes avspilleren i stedet.
+    // fingeravtrykk: 8 små ruter i full oppløsning (støyen gjør to ekte bilder forskjellige, også fra stativ)
+    let prevSig = null, same = 0;
+    const sigNow = () => { const W = canvas.width, H = canvas.height, P = 24, out = [];
+      for (let k = 0; k < 8; k++) { const x = Math.floor((0.1 + 0.8 * ((k % 4) / 3)) * (W - P)), y = Math.floor((k < 4 ? 0.3 : 0.7) * (H - P));
+        out.push(g.getImageData(x, y, P, P).data); }
+      return out; };
+    const sameAsPrev = sg => { if (!prevSig) return false; for (let k = 0; k < sg.length; k++) { const a = sg[k], b = prevSig[k]; for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false; } return true; };
+    fs.stale = 0;
+    async function frameAt(t) {
+      const ti = targetOf(t), want = pts[ti];
+      if (want === shownPts) return;
+      const before = shownPts;
+      await frameAt0(ti, want);
+      if (!fs.watch) return;
+      const sg = sigNow(), eq = shownPts === before || sameAsPrev(sg); prevSig = sg;
+      if (eq) { same++; fs.stale++; if (same >= 3) { fs.ok = false; fs.staleBad = true; throw new Error("dekoderen gir samme bilde om igjen"); } } else same = 0;
+    }
+    async function frameAt0(ti, want) {
+      for (let tries = 0; ; tries++) {
+        try {
+          let timer; const tmo = new Promise((_, rej) => { timer = setTimeout(() => rej(new Error("dekoderen ble ikke ferdig")), 25000); });
+          try { await Promise.race([decodeTo(ti, want), tmo]); } finally { clearTimeout(timer); }
+          fails = 0; return;
+        }
+        catch (e) {
+          fails++; gen++; console.warn("framesrc", e);
+          if (dec) { try { dec.close(); } catch (x) {} dec = null; }
+          if (cfgIdx + 1 < S.cfgs.length && tries < 1) { cfgIdx++; dec = null; continue; }   // prøv den andre dekoderen
+          if (tries < 2) { dec = null; await new Promise(r => setTimeout(r, 300)); continue; }
+          fs.ok = false; throw e;
+        }
+      }
+    }
+    async function decodeTo(ti, want) {
+      const my = ++gen;   // en avbrutt (tidsavbrudd) runde skal ikke fortsette å bruke dekoderen
+      // start på nytt fra nøkkelbildet hvis vi skal bakover eller langt fram
+      let k = keyBefore(ti);
+      while (k > 0 && pts[k] > want) k = keyBefore(k - 1);   // åpen GOP: B-bilder foran nøkkelbildet trenger forrige GOP
+      const nextKeyAfterFed = (() => { let j = lastFed + 1; while (j < n && !key[j]) j++; return j; })();
+      const fresh = !dec || dec.state !== "configured" || want < shownPts || ti < next - 64 || (ti > nextKeyAfterFed && k > lastFed);
+      if (fresh) { make(); next = k; lastFed = k - 1; shownPts = -1e18; fs.resets++; }
+      const tStart = performance.now();
+      let got = false, drew = false;
+      // bare bildet som skal vises tegnes; mellombilder lukkes straks (dekoderen har få bilder å låne ut)
+      const take = end => {
+        outQ.sort((a, b) => a.timestamp - b.timestamp);
+        while (outQ.length) {
+          const f = outQ[0];
+          if (f.timestamp > want) { if (fresh && !drew) { outQ.shift(); draw(f); f.close(); } got = true; break; }   // målbildet fantes ikke (f.eks. helt i starten): vis nærmeste
+          if (f.timestamp === want || (outQ[1] && outQ[1].timestamp > want) || (end && outQ.length === 1)) { outQ.shift(); draw(f); f.close(); drew = true; got = true; break; }
+          if (outQ[1]) { outQ.shift(); f.close(); continue; }
+          break;   // vent på neste bilde for å vite om dette er det siste før målet
+        }
+        // hold aldri mer enn to bilder: dekoderen har få bilder å låne ut, og venter ellers på at vi gir dem tilbake
+        while (outQ.length > 2) outQ.pop().close();
+      };
+      while (!got) {
+        if (my !== gen) throw new Error("avbrutt");
+        if (err) throw err;
+        take(); if (got) break;
+        if (next < n && dec.decodeQueueSize < 6) {
+          const data = await read(next);
+          dec.decode(new EncodedVideoChunk({ type: key[next] ? "key" : "delta", timestamp: pts[next], duration: Math.round(step), data }));
+          lastFed = next; next++;
+        } else if (next >= n) {
+          // tøm dekoderen ved slutten av fila. Maskinvaredekodere kan vente for alltid her, så vent maks 4 s (1.9.39)
+          await Promise.race([dec.flush().catch(() => {}), new Promise(r => setTimeout(r, 4000))]);
+          take(true); got = true; try { dec.close(); } catch (e) {} dec = null;   // etter flush må neste start være et nøkkelbilde
+        }   // etter flush må neste start være et nøkkelbilde
+        else await new Promise(r => setTimeout(r, 2));
+        if (performance.now() - tStart > 20000) throw new Error("dekoderen svarte ikke");
+      }
+      if (err) throw err;
+    }
+    fs.frameAt = frameAt;
+    fs.close = () => { try { dec && dec.close(); } catch (e) {} outQ.forEach(f => f.close()); outQ = []; dec = null; };
+    return fs;
+  }
+  // åpnes én gang per fil før analysen; ved feil brukes videoavspilleren
+  async function prepFrameSource(p) {
+    if (p.fs && p.fs.file === p.file && p.fs.ok) return;
+    if (p.fs) try { p.fs.close(); } catch (e) {}
+    p.fs = null;
+    try { const fs = await openFrameSource(p.file); if (fs) { fs.file = p.file; fs.shownPts = null; p.fs = fs; } }
+    catch (e) { console.warn("framesrc åpning", e); p.fs = null; }
+    // 1.9.47: kontroll av bildene fra dekoderen mot videoavspilleren på noen tidspunkt. Avviker de (feil bilde, feil tid,
+    // feil farger, f.eks. HDR-video fra iPhone), brukes avspilleren som før 1.9.38.
+    if (p.fs && p.fs.ok) try {
+      const S = 48, c1 = Object.assign(document.createElement("canvas"), { width: S, height: S }), g1 = c1.getContext("2d", { willReadFrequently: true });
+      const sig = src => { g1.drawImage(src, 0, 0, S, S); const d = g1.getImageData(0, 0, S, S).data, v = new Float32Array(S * S);
+        let m = 0; for (let i = 0; i < S * S; i++) { v[i] = d[i * 4] + d[i * 4 + 1] + d[i * 4 + 2]; m += v[i]; } m /= S * S;
+        let sd = 0; for (let i = 0; i < S * S; i++) sd += (v[i] - m) ** 2; sd = Math.sqrt(sd / (S * S)) || 1;
+        return { v: v.map(x => (x - m) / sd), m: m / 3 }; };
+      const dist = (a, b) => { let e = 0; for (let i = 0; i < a.v.length; i++) e += Math.abs(a.v[i] - b.v[i]); return e / a.v.length; };
+      const dur = p.v.duration || 0, ts = [0.35, 0.7].map(f => f * dur).filter(t => t > 0.2);
+      let worst = 0, lum = 0;
+      for (const t of ts) {
+        await p.fs.frameAt(t); const a = sig(p.fs.canvas);
+        p.v.currentTime = t; await new Promise(r => { p.v.addEventListener("seeked", r, { once: true }); setTimeout(r, 5000); });
+        await new Promise(r => setTimeout(r, 60)); const b = sig(p.v);
+        // ett bilde forskjøvet er greit (avrunding av tid): prøv også nabobildene fra dekoderen
+        let best = dist(a, b);
+        for (const dt of [-1 / 30, 1 / 30]) { try { await p.fs.frameAt(Math.max(0, t + dt)); best = Math.min(best, dist(sig(p.fs.canvas), b)); } catch (e) {} }
+        worst = Math.max(worst, best); lum = Math.max(lum, Math.abs(a.m - b.m));
+      }
+      // 1.9.48: fire analysebilder etter hverandre skal ikke være like (stativfilm: støyen alene gjør dem forskjellige)
+      let rep = 0;
+      { const t1 = 0.35 * dur; p.fs.watch = true; p.fs.stale = 0;
+        try { for (let k = 0; k < 5; k++) await p.fs.frameAt(t1 + k / 15); } catch (e) {}
+        rep = p.fs.stale; p.fs.stale = 0; if (p.fs.staleBad) { p.fs.ok = true; p.fs.staleBad = false; rep = Math.max(rep, 3); } }
+      p.fs.check = { d: Math.round(worst * 100) / 100, lum: Math.round(lum), rep };
+      if (rep >= 2) { console.warn("framesrc gir samme bilde om igjen", rep); p.fs.ok = false; p.fsBad = p.fs.check; }
+      if (worst > 0.35 || lum > 40) { console.warn("framesrc avviker fra avspilleren", p.fs.check); p.fs.ok = false; p.fsBad = p.fs.check; }
+    } catch (e) { console.warn("framesrc kontroll", e); }
+  }
+  window.__fsOpen = openFrameSource;   // for feilsøking og test
 
   st.kind = "side";
   for (const c of document.querySelectorAll(".chip[data-kind]")) c.addEventListener("click", () => {
     st.kind = c.dataset.kind;
     document.querySelectorAll(".chip[data-kind]").forEach(x => x.setAttribute("aria-pressed", String(x === c)));
-    $("#kindNote").hidden = st.kind !== "ghost"; $("#makeNote").hidden = st.kind === "ghost"; $("#linesOpt").hidden = st.kind !== "ghost";
+    $("#kindNote").hidden = st.kind !== "ghost"; $("#makeNote").hidden = true; $("#linesOpt").hidden = st.kind !== "ghost";
   });
   st.lines = $("#withLines").checked;
   $("#withLines").addEventListener("change", e => { st.lines = e.target.checked; });
@@ -6317,7 +7174,7 @@ const GhostCore = (() => {
   els.onlyMissing.addEventListener("change", () => {
     for (const c of clips) c.el.classList.toggle("has-name", !!c.newName);   // fast utvalg, så kortet ikke forsvinner mens du skriver
     els.clips.classList.toggle("only-missing", els.onlyMissing.checked);
-    if (els.onlyMissing.checked) window.scrollTo({ top: els.clips.offsetTop - 12, behavior: "smooth" });
+    if (els.onlyMissing.checked) window.scrollTo({ top: els.clips.offsetTop - 12 - (parseInt(getComputedStyle(document.documentElement).getPropertyValue("--hdrH")) || 0), behavior: "smooth" });
   });
 
   // ---- lagring: mappe på PC, delingsmeny på mobil, ellers nedlasting ----
@@ -6545,7 +7402,7 @@ const GhostCore = (() => {
           pose: await lib.PoseLandmarker.createFromOptions(fs, { baseOptions: { ...pose, delegate }, runningMode: "IMAGE", numPoses: 1, minPoseDetectionConfidence: 0.2, minPosePresenceConfidence: 0.2 }),
           det: await lib.ObjectDetector.createFromOptions(fs, { baseOptions: { ...det, delegate }, runningMode: "IMAGE", categoryAllowlist: ["person"], scoreThreshold: 0.25, maxResults: 6 })
         });
-        try { return { ...(await make("GPU")), lib, fs, asset }; } catch (e) { return { ...(await make("CPU")), lib, fs, asset }; }
+        try { const r = { ...(await make("GPU")), lib, fs, asset }; window.avDet = "GPU"; return r; } catch (e) { const r = { ...(await make("CPU")), lib, fs, asset }; window.avDet = "CPU"; return r; }
       };
       try { return await build(LOCAL); } catch (e) { return await build(REMOTE.lib); }
     })().catch(e => { mpP = null; throw e; });
@@ -6871,7 +7728,7 @@ const GhostCore = (() => {
       if (hn) { hn.hidden = !on("nameView"); if (hn.hidden) hn.pause(); else if (!rm()) heroPlay(hn); } };
     for (const b of document.querySelectorAll(".tabs button[data-view]")) b.addEventListener("click", () => requestAnimationFrame(sync));
     sync(); }
-  const AV_VERSION = "1.9.33 · 12.11.2026";
+  const AV_VERSION = "1.9.52 · 16.11.2026";
   const btn = document.getElementById("menuBtn"), list = document.getElementById("menuList"), about = document.getElementById("about");
   document.getElementById("aboutVer").textContent = (AVL ? "Version " : "Versjon ") + AV_VERSION;
   const setOpen = open => { list.hidden = !open; btn.setAttribute("aria-expanded", String(open)); };
@@ -6968,6 +7825,16 @@ const GhostCore = (() => {
     track("Feil", { melding: String((e && e.message) || "ukjent").slice(0, 80) });
   });
   window.avTrack = track; /* for senere hendelser, f.eks. avTrack("Analyse ferdig") */
+})();
+</script>
+<script>
+/* Fast topp (topp-patch.py): måler høyden på toppen så annet innhold ikke havner under den */
+(function () {
+  var h = document.querySelector("header.sticktop");
+  if (!h) return;
+  var set = function () { document.documentElement.style.setProperty("--hdrH", h.offsetHeight + "px"); };
+  set();
+  if (window.ResizeObserver) new ResizeObserver(set).observe(h); else window.addEventListener("resize", set);
 })();
 </script>
 </body>
