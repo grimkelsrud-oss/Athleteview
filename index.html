@@ -2311,6 +2311,54 @@ html { scroll-padding-top: calc(var(--hdrH, 64px) + 8px); }
 @media (min-width: 1024px) {
   .side { top: calc(var(--hdrH, 64px) + 14px); }
 }
+
+/* Tilbakemelding (tilbakemelding-patch.py) */
+.fbbtn { position: fixed; z-index: 45; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  width: 52px; height: 52px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+  display: grid; place-items: center; cursor: pointer; padding: 0; box-shadow: 0 4px 14px rgba(0,0,0,.22); transition: transform .15s; }
+.fbbtn:hover { transform: scale(1.06); }
+.fbbtn:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+.fbbtn svg { width: 28px; height: 28px; }
+.fbbtn .fbf { fill: var(--surface); }
+body.exporting .fbbtn { display: none; }
+body::after { content: ""; display: block; height: 72px; }
+@media (max-width: 600px) { .fbbtn { width: 48px; height: 48px; } .fbbtn svg { width: 26px; height: 26px; } }
+dialog.about.feedback { width: min(440px, calc(100% - 32px)); }
+@media (max-width: 767px) { dialog.about.feedback { width: 100%; } }
+dialog.about.feedback .fbq { display: block; font-weight: 600; margin: 4px 0 8px; }
+dialog.about.feedback .fbdev { display: flex; gap: 8px; margin: 0 0 16px; }
+dialog.about.feedback .fbdev label { flex: 1; position: relative; }
+dialog.about.feedback .fbdev input { position: absolute; opacity: 0; pointer-events: none; }
+dialog.about.feedback .fbdev label > span { display: flex; align-items: center; justify-content: center; min-height: 44px; border-radius: 8px; border: 1px solid var(--line);
+  background: var(--bg); font: 600 1rem var(--body); cursor: pointer; }
+dialog.about.feedback .fbdev input:checked + span { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+dialog.about.feedback .fbdev input:focus-visible + span { outline: 3px solid var(--blue); outline-offset: 2px; }
+dialog.about.feedback textarea { box-sizing: border-box; display: block; width: 100%; min-height: 130px; resize: vertical; padding: 12px; border-radius: 8px; border: 1px solid var(--line);
+  background: var(--bg); color: var(--ink); font: 1rem/1.45 var(--body); margin: 0 0 6px; }
+dialog.about.feedback textarea:focus { outline: 2px solid var(--blue); outline-offset: 1px; }
+dialog.about.feedback .fbnote { font-size: .85rem; color: var(--muted); margin: 0 0 14px; }
+dialog.about.feedback .fbsend { width: 100%; min-height: 48px; }
+dialog.about.feedback .fbmsg { margin: 10px 0 0; min-height: 1.4em; font-weight: 600; }
+dialog.about.feedback .fbmsg.err { color: var(--red); }
+
+/* Mobiljusteringer (mobil-patch.py) */
+.wrap > *, .main > *, .side > *, .card > *, .runner, .view { min-width: 0; }
+.wrap, .card { grid-template-columns: minmax(0, 1fr); }
+.runners { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 480px) { .runners { grid-template-columns: minmax(0, 1fr); } }
+input, select, textarea { min-width: 0; max-width: 100%; }
+video, canvas, img { max-width: 100%; }
+.note, .msg, .rs, .prinfo, .zname, #busyTxt { overflow-wrap: anywhere; }
+.prrow, .zctl, .ztop { flex-wrap: wrap; min-width: 0; }
+html, body { overflow-x: clip; }
+.panel { touch-action: pan-y pinch-zoom; }
+.mprog { position: fixed; z-index: 44; left: 50%; transform: translateX(-50%); top: calc(var(--hdrH, 64px) + 6px);
+  width: min(440px, calc(100% - 24px)); box-sizing: border-box; background: var(--surface); color: var(--ink); border: 1px solid var(--line);
+  border-radius: 10px; box-shadow: 0 6px 18px rgba(0,0,0,.18); padding: 8px 12px 10px; display: grid; gap: 6px; cursor: pointer; text-align: left; font: inherit; }
+.mprog[hidden] { display: none !important; }
+.mprog .mtxt { font-size: .85rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mprog .bar { height: 6px; }
+body.exporting .mprog, body.zoomed .mprog { display: none !important; }
 </style>
 </head>
 <body>
@@ -8151,7 +8199,7 @@ const GhostCore = (() => {
       if (hn) { hn.hidden = !on("nameView"); if (hn.hidden) hn.pause(); else if (!rm()) heroPlay(hn); } };
     for (const b of document.querySelectorAll(".tabs button[data-view]")) b.addEventListener("click", () => requestAnimationFrame(sync));
     sync(); }
-  const AV_VERSION = "1.9.76 · 18.11.2026";
+  const AV_VERSION = "1.9.77 · 18.11.2026";
   const btn = document.getElementById("menuBtn"), list = document.getElementById("menuList"), about = document.getElementById("about");
   document.getElementById("aboutVer").textContent = (AVL ? "Version " : "Versjon ") + AV_VERSION;
   const setOpen = open => { list.hidden = !open; btn.setAttribute("aria-expanded", String(open)); };
@@ -8634,6 +8682,129 @@ const GhostCore = (() => {
   var set = function () { document.documentElement.style.setProperty("--hdrH", h.offsetHeight + "px"); };
   set();
   if (window.ResizeObserver) new ResizeObserver(set).observe(h); else window.addEventListener("resize", set);
+})();
+</script>
+
+<button type="button" class="fbbtn" id="fbBtn" aria-haspopup="dialog" aria-label="Gi tilbakemelding" title="Gi tilbakemelding"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"><path d="M3.5 9h8a1.5 1.5 0 0 1 1.5 1.5v5a1.5 1.5 0 0 1-1.5 1.5H7.5l-3 3v-3h-1A1.5 1.5 0 0 1 2 15.5v-5A1.5 1.5 0 0 1 3.5 9z"/><path class="fbf" d="M9.5 3h11A1.5 1.5 0 0 1 22 4.5v7a1.5 1.5 0 0 1-1.5 1.5H20v3l-3-3H9.5A1.5 1.5 0 0 1 8 11.5v-7A1.5 1.5 0 0 1 9.5 3z"/><path d="M11.5 6.5h7M11.5 9.5h4.5"/></svg></button>
+<dialog class="about feedback" id="feedback" aria-labelledby="fbTitle">
+  <button type="button" class="aboutx" aria-label="Lukk">✕</button>
+  <h2 id="fbTitle"><span class="l-no">Tilbakemelding</span><span class="l-en" lang="en">Feedback</span></h2>
+  <form id="fbForm" novalidate>
+    <p class="fbq"><span class="l-no">Hvilken type enhet bruker du?</span><span class="l-en" lang="en">What kind of device are you using?</span></p>
+    <div class="fbdev" role="radiogroup">
+      <label><input type="radio" name="fbDev" value="Mobil"><span><span class="l-no">Mobil</span><span class="l-en" lang="en">Phone</span></span></label>
+      <label><input type="radio" name="fbDev" value="PC"><span>PC</span></label>
+    </div>
+    <label class="fbq" for="fbText"><span class="l-no">Din tilbakemelding</span><span class="l-en" lang="en">Your feedback</span></label>
+    <textarea id="fbText" maxlength="4000" required></textarea>
+    <p class="fbnote"><span class="l-no">Sendes til utvikleren av Athleteview sammen med versjonsnummer og nettlesertype. Ingen videoer sendes.</span><span class="l-en" lang="en">Sent to the developer of Athleteview together with the version number and browser type. No videos are sent.</span></p>
+    <button type="submit" class="btn primary fbsend">Send</button>
+    <p class="fbmsg" id="fbMsg" role="status" aria-live="polite"></p>
+  </form>
+</dialog>
+<script>
+/* Tilbakemelding (tilbakemelding-patch.py) */
+(function () {
+  var KEY = "ca7f1c34-428d-458b-8557-9ad9788b987f";
+  var EN = (typeof AVL !== "undefined" && AVL);
+  var btn = document.getElementById("fbBtn"), d = document.getElementById("feedback");
+  var form = document.getElementById("fbForm"), txt = document.getElementById("fbText"), msg = document.getElementById("fbMsg");
+  var send = form.querySelector(".fbsend");
+  var ml = document.querySelector('#about a[href^="mailto:"]');
+  var TO = ml ? ml.getAttribute("href").slice(7).split("?")[0] : "";
+  if (EN) { btn.setAttribute("aria-label", "Give feedback"); btn.title = "Give feedback"; d.querySelector(".aboutx").setAttribute("aria-label", "Close"); }
+  function T(no, en) { return EN ? en : no; }
+  function guess() { return (window.matchMedia && matchMedia("(pointer: coarse)").matches && Math.min(screen.width, screen.height) < 900) ? "Mobil" : "PC"; }
+  function say(s, err) { msg.textContent = s; msg.className = "fbmsg" + (err ? " err" : ""); }
+  function open() {
+    if (!form.querySelector("input[name=fbDev]:checked")) { var r = form.querySelector('input[value="' + guess() + '"]'); if (r) r.checked = true; }
+    say(""); send.disabled = false;
+    d.showModal ? d.showModal() : d.setAttribute("open", "");
+    if (!window.matchMedia || !matchMedia("(pointer: coarse)").matches) setTimeout(function () { try { txt.focus(); } catch (e) {} }, 50);
+  }
+  function close() { d.close ? d.close() : d.removeAttribute("open"); btn.focus(); }
+  btn.addEventListener("click", open);
+  d.querySelector(".aboutx").addEventListener("click", close);
+  d.addEventListener("click", function (e) { if (e.target === d) close(); });
+  function info() {
+    var v = (document.getElementById("aboutVer") || {}).textContent || "";
+    var tab = document.querySelector('.tabs button[aria-selected="true"]');
+    return { versjon: v.replace(/^(Versjon|Version) /, ""), fane: tab ? tab.textContent.trim() : "", sprak: EN ? "engelsk" : "norsk",
+      skjerm: screen.width + "x" + screen.height + " (vindu " + innerWidth + "x" + innerHeight + ")", nettleser: navigator.userAgent };
+  }
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    var text = txt.value.trim();
+    var devEl = form.querySelector("input[name=fbDev]:checked");
+    if (!devEl) { say(T("Velg mobil eller PC.", "Choose phone or PC."), true); return; }
+    if (!text) { say(T("Skriv en tilbakemelding først.", "Please write your feedback first."), true); txt.focus(); return; }
+    var i = info(), dev = devEl.value;
+    var body = "Enhet: " + dev + "\n\n" + text + "\n\n---\nVersjon: " + i.versjon + "\nFane: " + i.fane + "\nSpråk: " + i.sprak + "\nSkjerm: " + i.skjerm + "\nNettleser: " + i.nettleser;
+    var subject = "Athleteview tilbakemelding (" + dev + ")";
+    if (!KEY) { location.href = "mailto:" + TO + "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body); return; }
+    send.disabled = true; say(T("Sender …", "Sending …"));
+    fetch("https://api.web3forms.com/submit", {
+      method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ access_key: KEY, subject: subject, from_name: "Athleteview", enhet: dev, melding: text,
+        versjon: i.versjon, fane: i.fane, sprak: i.sprak, skjerm: i.skjerm, nettleser: i.nettleser, botcheck: "" })
+    }).then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok || j.success === false) throw new Error(j.message || r.status); }); })
+      .then(function () {
+        say(T("Takk! Tilbakemeldingen er sendt.", "Thank you! Your feedback has been sent."));
+        txt.value = "";
+        try { if (window.avTrack) window.avTrack("Tilbakemelding sendt", { enhet: dev }); } catch (e) {}
+        setTimeout(function () { if (d.open) close(); }, 2200);
+      })
+      .catch(function () {
+        send.disabled = false;
+        say(T("Kunne ikke sende. Sjekk nettet og prøv igjen, eller bruk e-postadressen under «Om Athleteview».",
+              "Could not send. Check your connection and try again, or use the email address under “About Athleteview”."), true);
+      });
+  });
+})();
+</script>
+<button type="button" class="mprog" id="mProg" hidden><span class="mtxt" id="mProgTxt"></span><span class="bar"><i></i></span></button>
+<script>
+/* Mobiljusteringer (mobil-patch.py): fremdrift alltid synlig, ferdig video scrolles fram */
+(function () {
+  var EN = (typeof AVL !== "undefined" && AVL);
+  var box = document.getElementById("mProg"), txt = document.getElementById("mProgTxt"), fill = box.querySelector("i");
+  var pairs = [["bar", "msg"], ["nBar", "nMsg"]].map(function (p) { return { bar: document.getElementById(p[0]), msg: document.getElementById(p[1]), vis: true }; })
+    .filter(function (p) { return p.bar && p.msg; });
+  // statuslinja rett under fremdriftslinja (like under «Lag analysevideo»), så den ikke havner langt nede
+  pairs.forEach(function (p) { if (p.bar.parentNode === p.msg.parentNode && p.bar.nextElementSibling !== p.msg) p.bar.after(p.msg); });
+  function hdr() { return parseInt(getComputedStyle(document.documentElement).getPropertyValue("--hdrH")) || 0; }
+  function onScreen(el) { var r = el.getBoundingClientRect(); return r.bottom > hdr() + 4 && r.top < innerHeight - 4; }
+  var cur = null;
+  function update() {
+    cur = null;
+    for (var i = 0; i < pairs.length; i++) { var p = pairs[i]; if (!p.bar.hidden && p.bar.offsetParent !== null && !onScreen(p.bar)) { cur = p; break; } }
+    if (!cur) { box.hidden = true; return; }
+    fill.style.width = cur.bar.firstElementChild.style.width || "0%";
+    txt.textContent = cur.msg.textContent || (EN ? "Working …" : "Jobber …");
+    box.setAttribute("aria-label", (EN ? "Show progress: " : "Vis fremdrift: ") + txt.textContent);
+    box.hidden = false;
+  }
+  box.addEventListener("click", function () { if (cur) cur.bar.scrollIntoView({ block: "center", behavior: "smooth" }); });
+  var mo = new MutationObserver(update);
+  pairs.forEach(function (p) {
+    mo.observe(p.bar, { attributes: true, attributeFilter: ["hidden"] });
+    mo.observe(p.bar.firstElementChild, { attributes: true, attributeFilter: ["style"] });
+    mo.observe(p.msg, { childList: true, characterData: true, subtree: true });
+  });
+  addEventListener("scroll", update, { passive: true });
+  addEventListener("resize", update);
+  // «Lag analysevideo»: vis knappen, fremdriften og statusen
+  var make = document.getElementById("make");
+  if (make) make.addEventListener("click", function () { var b = document.getElementById("bar"); setTimeout(function () { if (b && !b.hidden && !document.body.classList.contains("exporting") && !onScreen(b)) b.scrollIntoView({ block: "center", behavior: "smooth" }); }, 60); });
+  // ferdig analysevideo: scroll den fram når fullskjermvisningen er lukket
+  var res = document.getElementById("result");
+  if (res) {
+    var was = res.hidden;
+    new MutationObserver(function () {
+      if (was && !res.hidden) setTimeout(function () { if (!res.hidden && !onScreen(res)) res.scrollIntoView({ block: "center", behavior: "smooth" }); }, 300);
+      was = res.hidden;
+    }).observe(res, { attributes: true, attributeFilter: ["hidden"] });
+  }
 })();
 </script>
 </body>
