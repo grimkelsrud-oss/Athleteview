@@ -2171,6 +2171,8 @@ p.intro { margin: 0; font-size: .95rem; line-height: 1.45; }
 .step h3 { margin: 0; font-size: 1rem; font-weight: 700; }
 .step:has(#nStart.go) h3 { color: var(--blue); }
 #nStart.go { animation: avgo 1.4s ease-in-out infinite; }
+label.today { display: block; margin: 10px 0 4px; font-size: .9rem; color: var(--muted, inherit); }
+input.today { width: 100%; max-width: 520px; box-sizing: border-box; font: inherit; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line, #ccc); background: var(--card, transparent); color: inherit; margin-bottom: 10px; }
 @keyframes avgo { 0%, 100% { box-shadow: 0 0 0 0 rgba(29, 91, 208, .55); } 50% { box-shadow: 0 0 0 8px rgba(29, 91, 208, 0); } }
 @media (prefers-reduced-motion: reduce) { #nStart.go { animation: none; outline: 3px solid var(--blue); outline-offset: 2px; } }
 .savebar { position: sticky; bottom: 8px; box-shadow: 0 4px 18px rgba(0,0,0,.18); }
@@ -3284,6 +3286,7 @@ body.exporting .mprog, body.zoomed .mprog { display: none !important; }
       <p class="note" id="sAngNote">Legg, overkropp og skuldre måles mot det vannrette i bildet. Hold telefonen rett når du filmer. «Overkropp mot legg» påvirkes ikke av hvordan telefonen holdes.</p>
       <label for="sRunner">Løper (valgfritt)</label>
       <input type="text" id="sRunner" list="roster" placeholder="Navn på løperen" maxlength="60" autocomplete="off">
+      <p class="note" id="sRunNote" hidden></p>
       <div class="row">
         <button class="btn primary" id="sSave" type="button">Lagre bilde</button>
       </div>
@@ -3344,6 +3347,8 @@ body.exporting .mprog, body.zoomed .mprog { display: none !important; }
       <div class="step"><h3>3. Start analyse</h3>
       <p class="note">Athleteview lytter etter løpernavnet i starten av hver video, og lager zoomkopiene ved avansert filming.</p>
       <p class="note">Talegjenkjenningen skjer på enheten din, og ingen video eller lyd lastes opp. Første gang lastes en talemodell ned (ca. 80 MB). Etter det er den lagret i nettleseren.</p>
+      <label class="today" for="nToday"><span class="l-no">Våre løpere (valgfritt, men hjelper tjenesten på match på navn i videoene)</span><span class="l-en">Our skiers (optional, but helps the service match names in the videos)</span></label>
+      <input type="text" id="nToday" class="today" maxlength="600" autocomplete="off" placeholder="Kristin, Sonja, Tobbe …">
       <div class="row"><button class="btn primary" id="nStart" type="button" disabled>Start analyse</button></div>
       <div class="bar" id="nBar" hidden><i></i></div>
       <p class="msg" id="nMsg" role="status"></p></div>
@@ -4215,7 +4220,9 @@ const GhostCore = (() => {
     if (p.edited && runnerName(p)) { runnerState(p, "heard", (AVL ? "Name set by you." : "Navn satt av deg.")); return; }
     if (r && r.name) {
       p.run.value = r.name; tag(p);
-      runnerState(p, r.known ? "heard" : "check", r.known ? (AVL ? `Heard «${r.text}».` : `Hørte «${r.text}».`) : (AVL ? `Heard «${r.text}». Check the spelling.` : `Hørte «${r.text}». Sjekk stavingen.`));
+      const inText = r.text && r.text.toLowerCase().includes(r.name.toLowerCase().split(" ")[0]);
+      runnerState(p, r.known ? "heard" : "check", r.known ? (inText ? (AVL ? `Heard «${r.text}».` : `Hørte «${r.text}».`) : (AVL ? `Recognised ${r.name}.` : `Kjente igjen ${r.name}.`))
+        : inText ? (AVL ? `Heard «${r.text}». Check the spelling.` : `Hørte «${r.text}». Sjekk stavingen.`) : (AVL ? "Best guess. Check the name." : "Beste gjetning. Sjekk navnet."));
     } else runnerState(p, "missing", r && r.error ? (AVL ? "Could not listen for the name. Enter who is skiing." : "Kunne ikke lytte etter navnet. Skriv inn hvem som kjører.")
       : r && r.text ? (AVL ? `Heard «${r.text}», but found no name. Enter who is skiing.` : `Hørte «${r.text}», men fant ikke et navn. Skriv inn hvem som kjører.`)
       : (AVL ? "Could not find the name in the audio. Enter who is skiing." : "Fant ikke navnet på lyden. Skriv inn hvem som kjører."));
@@ -7122,6 +7129,7 @@ const GhostCore = (() => {
     els.roster.replaceChildren(...getRoster().sort((a, b) => a.localeCompare(b, "nb")).map(n => Object.assign(document.createElement("option"), { value: n })));
   }
   fillRoster();
+  try { const t = $("#nToday"); if (t) t.value = localStorage.getItem("av.today") || ""; } catch (e) {}
 
   // ---- matching av det som ble sagt mot kjente navn ----
   const norm = s => s.toLowerCase().replace(/æ/g, "ae").replace(/ø/g, "o").replace(/å/g, "a")
@@ -7398,6 +7406,58 @@ const GhostCore = (() => {
 
   // Brukes av Dobbel: lytter etter navnet i én video. Én video om gangen, så to valg samtidig ikke krasjer.
   let queue = Promise.resolve();
+  // 1.9.80: sammenlign lyden med kjente navn. Talemodellen regner ut hvor sannsynlig hvert navn er som hele teksten,
+  // mot støymerker og mot det den selv skrev fritt. Mye sikrere enn fri tekst når navnet er kort og lyden støyete.
+  let TODAY = [];
+  async function nameScores(m, audio, names, free) {
+    const { Tensor, cat } = await import(TJS);
+    const tok = m.tokenizer, model = m.model, idOf = t => tok.model.tokens_to_ids.get(t);
+    const pre = ["<|startoftranscript|>", "<|no|>", "<|transcribe|>", "<|notimestamps|>"].map(idOf), eot = idOf("<|endoftext|>");
+    if (pre.some(x => x == null) || eot == null || typeof model._prepare_encoder_decoder_kwargs_for_generation !== "function") return null;
+    const { input_features } = await m.processor(audio);
+    const enc = t => tok.encode(" " + t, { add_special_tokens: false });
+    const cands = names.map(n => ({ n, ids: enc(n) }));
+    for (const b of ["(Applaus)", "(Tekstet)"]) cands.push({ noise: true, ids: enc(b) });
+    if (free) cands.push({ free: true, ids: enc(free) });
+    const seqOf = c => [...pre, ...c.ids, eot];
+    const d1 = new Tensor("int64", BigInt64Array.from(pre.slice(0, 2).map(BigInt)), [1, 2]);
+    const kw = await model._prepare_encoder_decoder_kwargs_for_generation({ inputs_tensor: input_features, model_inputs: { input_features, decoder_input_ids: d1 }, model_input_name: "input_features", generation_config: { guidance_scale: null } });
+    for (let c0 = 0; c0 < cands.length; c0 += 8) {   // 8 om gangen: minnet holdes lite også på mobil
+      const part = cands.slice(c0, c0 + 8), seqs = part.map(seqOf), L = Math.max(...seqs.map(x => x.length)), N = seqs.length;
+      const flat = new BigInt64Array(N * L); seqs.forEach((x, i) => { for (let j = 0; j < L; j++) flat[i * L + j] = BigInt(j < x.length ? x[j] : eot); });
+      const eo = N === 1 ? kw.encoder_outputs : cat(Array.from({ length: N }, () => kw.encoder_outputs), 0);
+      const o = await model({ encoder_outputs: eo, decoder_input_ids: new Tensor("int64", flat, [N, L]) });
+      const V = o.logits.dims[2], d = o.logits.data;
+      seqs.forEach((x, i) => { let lp = 0;
+        for (let j = pre.length - 1; j < x.length - 1; j++) { const b = (i * L + j) * V; let mx = -1e30; for (let v = 0; v < V; v++) if (d[b + v] > mx) mx = d[b + v];
+          let z = 0; for (let v = 0; v < V; v++) z += Math.exp(d[b + v] - mx); lp += d[b + x[j + 1]] - mx - Math.log(z); }
+        part[i].lp = lp; });
+    }
+    const nm = cands.filter(c => c.n).sort((a, b) => b.lp - a.lp), fr = cands.find(c => c.free);
+    return { best: nm[0] && nm[0].n, lp: nm[0] ? nm[0].lp : -1e9, second: nm[1] ? nm[1].lp : -1e9,
+      noise: Math.max(...cands.filter(c => c.noise).map(c => c.lp)), free: fr ? fr.lp : -1e9 };
+  }
+  // Navnet godtas bare når det slår støy og nest beste navn tydelig, og ikke er mye dårligere enn det modellen skrev selv
+  const nameOk = r => r && r.best && r.lp > r.noise + 1 && r.lp > r.second + 1.5 && r.lp > r.free - 6;
+  async function scoreRoster(audio, free) {
+    if (!audio) return null;
+    const seen = new Set(), names = [];
+    for (const n of [...TODAY, ...getRoster().slice().reverse()]) { const k = n.toLowerCase(); if (n && !seen.has(k)) { seen.add(k); names.push(n); } if (names.length >= (TODAY.length ? 24 : 16)) break; }
+    if (!names.length) return null;
+    const m = await getAsr(); let first = null;
+    for (const a of [audio, audio.full]) { if (!a) continue;
+      const r = await nameScores(m, a, names, free); window.avNameDbg = r; if (!first) first = r;
+      if (nameOk(r)) return { name: r.best, sure: true };
+      if (a === audio.full) break; }
+    // ikke sikkert: beste kjente navn som gjetning (treneren retter raskt)
+    return first && first.best ? { name: first.best, sure: false } : null;
+  }
+  const loud = a => { if (!a) return false; let pk = 0; for (let i = 0; i < a.length; i += 16) pk = Math.max(pk, Math.abs(a[i])); return pk >= 0.02; };
+  // beste frie gjetning når ingenting annet passer: støymerker og tall tas bort, høyst to ord
+  function looseGuess(text) {
+    const w = (text || "").replace(/[(\[*"«»♪][^)\]*"«»♪]*[)\]*"«»♪]?/g, " ").replace(/[^\p{L}\p{M}\s'-]+/gu, " ").split(/\s+/).filter(x => x && !/^-/.test(x) && !FILLER.has(x.toLowerCase()));
+    return w.slice(0, 2).map(x => x[0].toUpperCase() + x.slice(1).toLowerCase()).join(" ");
+  }
   window.avHearName = (file, onNote) => {
     const job = queue.then(async () => {
       note = onNote || null;
@@ -7406,7 +7466,9 @@ const GhostCore = (() => {
         if (onNote) onNote((AVL ? "Listening for a name at the start of the video …" : "Lytter etter navn i starten av videoen …"));
         const audio = await decodeStart(file);
         const text = audio ? await listen(audio) : "";
-        const known = text && matchRoster(text), guess = text && !known && (matchRoster(text, 0.7) || guessName(text));
+        let known = text && matchRoster(text), sc = null;
+        if (!known && loud(audio)) try { sc = await scoreRoster(audio, text); if (sc && sc.sure) known = sc.name; } catch (e) { console.warn("navnesammenligning", e); }
+        const guess = !known && ((text && (matchRoster(text, 0.7) || guessName(text))) || (sc && sc.name) || looseGuess(text));
         return { text, name: known || guess || "", known: !!known };
       } finally { note = null; }
     });
@@ -7573,17 +7635,22 @@ const GhostCore = (() => {
       c.listened = true;
       setState(c, "listening", (AVL ? "Listening for names …" : "Lytter etter navn …"));
       say((AVL ? `Listening for names: video ${i + 1} of ${clips.length}` : `Lytter etter navn: video ${i + 1} av ${clips.length}`)); progress(i / clips.length);
-      let text = "";
+      let text = "", audio = null;
       try {
-        const audio = await decodeStart(c.file);
+        audio = await decodeStart(c.file);
         if (audio) text = await listen(audio);
       } catch (e) {
         if (!asr) { say((AVL ? "The speech model could not be loaded. Check your connection, or enter the names yourself." : "Talemodellen kunne ikke lastes. Sjekk nettforbindelsen, eller skriv inn navnene selv."), true); for (const x of clips) if (!x.edited && !x.input.value) setState(x, "missing", (AVL ? "Missing a name. Enter who it is." : "Mangler navn. Skriv inn hvem det er.")); progress(null); return false; }
       }
       if (my !== run) return false;
       if (c.edited) continue;
-      const known = text && matchRoster(text), guess = text && !known && (matchRoster(text, 0.7) || guessName(text));
-      if (known) { c.input.value = known; setState(c, "heard", (AVL ? `Heard «${text}».` : `Hørte «${text}».`)); heard++; }
+      let known = text && matchRoster(text), sc = null;
+      if (!known && loud(audio)) { setState(c, "listening", (AVL ? "Comparing with known names …" : "Sammenligner med kjente navn …")); try { sc = await scoreRoster(audio, text); if (sc && sc.sure) known = sc.name; } catch (e) { console.warn("navnesammenligning", e); } }
+      if (my !== run) return false;
+      if (c.edited) continue;
+      const guess = !known && text && (matchRoster(text, 0.7) || guessName(text)), unsure = !known && !guess && ((sc && sc.name) || looseGuess(text));
+      if (known) { c.input.value = known; setState(c, "heard", text && text.toLowerCase().includes(known.toLowerCase().split(" ")[0]) ? (AVL ? `Heard «${text}».` : `Hørte «${text}».`) : (AVL ? `Recognised ${known}.` : `Kjente igjen ${known}.`)); heard++; }
+      else if (unsure) { c.input.value = unsure; setState(c, "check", (AVL ? `Best guess${text ? ` (heard «${text}»)` : ""}. Check the name.` : `Beste gjetning${text ? ` (hørte «${text}»)` : ""}. Sjekk navnet.`)); heard++; }
       else if (guess) { c.input.value = guess; setState(c, "check", (AVL ? `Heard «${text}». New skier? Check the spelling.` : `Hørte «${text}». Ny løper? Sjekk stavingen.`)); heard++; }
       else { setState(c, "missing", (AVL ? "Found no name. Enter who it is." : "Fant ikke noe navn. Skriv inn hvem det er.")); missing++; }
       newNames();
@@ -7613,7 +7680,9 @@ const GhostCore = (() => {
     else els.saveAll.scrollIntoView({ block: "nearest", behavior: "smooth" });
     return true;
   }
-  els.start.addEventListener("click", async () => { els.start.classList.remove("go"); await analyse(); els.start.disabled = !clips.length; });
+  els.start.addEventListener("click", async () => { els.start.classList.remove("go");
+    { const t = $("#nToday"); TODAY = t ? t.value.split(/[,;\n]+/).map(x => x.trim().replace(/\s+/g, " ")).filter(x => x && x.length <= 40) : []; if (TODAY.length) addToRoster(TODAY); try { localStorage.setItem("av.today", t ? t.value : ""); } catch (e) {} }
+    await analyse(); els.start.disabled = !clips.length; });
 
   // ---- PC: velg en hel mappe, lagre kopier med løpernavn i en ny mappe inni den ----
   let folder = null;   // { src, out }
@@ -7785,8 +7854,14 @@ const GhostCore = (() => {
     S.url = URL.createObjectURL(file); S.ready = false; S.name = file.name.replace(/\.[^.]+$/, "");
     els.v.src = S.url; els.v.load();
     if (runner != null) els.runner.value = runner;
+    else { els.runner.value = ""; els.runner.dataset.edited = ""; const my = S.hear = (S.hear || 0) + 1, n = $("#sRunNote");   // 1.9.80: lytt etter navnet også i Enkel
+      if (window.avHearName) { if (n) { n.hidden = false; n.textContent = AVL ? "Listening for a name at the start of the video …" : "Lytter etter navn i starten av videoen …"; }
+        window.avHearName(file).then(r => { if (my !== S.hear || els.runner.dataset.edited) return;
+          if (r && r.name) { els.runner.value = r.name; if (n) n.textContent = r.known ? (AVL ? `Recognised ${r.name}.` : `Kjente igjen ${r.name}.`) : (AVL ? "Best guess. Check the name." : "Beste gjetning. Sjekk navnet."); }
+          else if (n) n.textContent = AVL ? "Found no name. Enter it yourself." : "Fant ikke noe navn. Skriv det inn selv."; }).catch(() => { if (n && my === S.hear) n.hidden = true; }); } }
     say((AVL ? "Loading " : "Laster ") + file.name + " …");
   }
+  els.runner.addEventListener("input", () => { els.runner.dataset.edited = "1"; const n = $("#sRunNote"); if (n) n.hidden = true; });
   els.file.addEventListener("change", () => load(els.file.files[0]));
   els.v.addEventListener("loadedmetadata", () => {
     S.dur = els.v.duration; S.ready = isFinite(S.dur) && S.dur > 0;
@@ -8238,7 +8313,7 @@ const GhostCore = (() => {
       if (hn) { hn.hidden = !on("nameView"); if (hn.hidden) hn.pause(); else if (!rm()) heroPlay(hn); } };
     for (const b of document.querySelectorAll(".tabs button[data-view]")) b.addEventListener("click", () => requestAnimationFrame(sync));
     sync(); }
-  const AV_VERSION = "1.9.79 · 19.11.2026";
+  const AV_VERSION = "1.9.80 · 20.11.2026";
   const btn = document.getElementById("menuBtn"), list = document.getElementById("menuList"), about = document.getElementById("about");
   document.getElementById("aboutVer").textContent = (AVL ? "Version " : "Versjon ") + AV_VERSION;
   const setOpen = open => { list.hidden = !open; btn.setAttribute("aria-expanded", String(open)); };
