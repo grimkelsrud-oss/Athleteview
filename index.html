@@ -3755,6 +3755,7 @@ const GhostCore = (() => {
           cur.push(d ? { box: d, gap: 1, s: d === near && hit ? q(d) + 20 : q(d) - 80 } : { box: hit ? null : guess, gap: 1, s: hit ? -20 : 0 }); bk.push(-1); continue;
         }
         let best = -1e18, bi = 0, bn = 0, bd = 0.2; const pj = d && pen && pen[i] ? pen[i][j] || 0 : 0;
+        const L = d && pen && pen.lag && pen.lag[i] ? pen.lag[i][j] : null;   // 1.9.88
         prev.forEach((p, k) => {
           let v, sn = p.sn || 0, dm = p.dm == null ? 0.2 : p.dm;
           if (!d) v = p.s + MISS;
@@ -3787,6 +3788,140 @@ const GhostCore = (() => {
   }
 
 
+  // ---------- 1.9.86: robust sporing gjennom hele løpet ----------
+  // Som track, men hver tilstand husker fart, jevnet høyde og drakt langs veien. Se robust-patch.py.
+  function appD(a, b) { if (!a || !b) return 0; let m = 0; for (let k = 0; k < 4; k++) m = Math.max(m, Math.abs(a[k] - b[k])); return Math.min(2.5, Math.max(0, m - 10) / 15); }
+  function track2(dets, W, H, start, MA, pen) {
+    const cen = b => [b[0] + b[2] / 2, b[1] + b[3] / 2];
+    const mvB = (b, M) => { if (!M || !b) return b; const c = apply(M, b[0] + b[2] / 2, b[1] + b[3] / 2), k = Math.sqrt(Math.abs(M[0] * M[4] - M[1] * M[3])) || 1;
+      return [c[0] - b[2] * k / 2, c[1] - b[3] * k / 2, b[2] * k, b[3] * k]; };
+    const mvV = (v, M) => v && M ? [v[0] * M[0] + v[1] * M[1], v[0] * M[3] + v[1] * M[4]] : v;
+    const iou = (a, b) => { const x0 = Math.max(a[0], b[0]), y0 = Math.max(a[1], b[1]), x1 = Math.min(a[0] + a[2], b[0] + b[2]), y1 = Math.min(a[1] + a[3], b[1] + b[3]);
+      const i = Math.max(0, x1 - x0) * Math.max(0, y1 - y0); return i / (a[2] * a[3] + b[2] * b[3] - i + 1e-9); };
+    const q = d => { const cx = (d[0] + d[2] / 2) / W, cy = (d[1] + d[3] / 2) / H;
+      const cent = 1 - Math.min(1, Math.abs(cx - 0.5) * 1.4 + Math.abs(cy - 0.55) * 0.8);
+      const s = 0.3 + 0.25 * d[4] * (0.5 + 0.5 * cent);   // nesten lik for alle: veien avgjøres av sammenhengen, ikke av at en annen person er større eller tydeligere
+      return (d[2] < 0.28 * d[3] ? s * 0.3 - 0.6 : s) - (d[6] === 1 ? 1.2 : 0) - (d[7] === 1 ? 1.5 : 0) - (d[9] === 1 ? 0.6 : 0); };
+    const motion = (a, b, gap) => Math.hypot(a[0] + a[2] / 2 - b[0] - b[2] / 2, a[1] + a[3] / 2 - b[1] - b[3] / 2) / Math.max(a[3], b[3], 20) / gap;
+    const stillPen = n => n < 6 ? 0 : Math.min(2, 0.08 * (n - 5));
+    const appW = h => Math.min(1, Math.max(0.1, (h - 8) / 16));   // under ca. 12 px er drakten nesten bare støy (porter, snø)
+    const MISS = -0.5, n = dets.length;
+    const szT = b => track2.wide === false ? b[3] : Math.max(b[3], Math.min(1.1 * b[2], 1.6 * b[3]));   // 1.9.93: sammenkrøpet løper er lav og bred
+    // 1.9.90: står d der veien var for minst 12 bilder siden, og har veien vært minst 2 høyder unna stedet siden?
+    const backPen = (hist, f, h, i) => { if (!hist || track2.back === false) return 0;
+      for (let k = 0; k < hist.length; k++) { const e = hist[k]; if (i - e[2] < 12) break;
+        if (Math.hypot(f[0] - e[0], f[1] - e[1]) > 0.8 * h) continue;
+        for (let m = k + 1; m < hist.length; m++) if (Math.hypot(hist[m][0] - e[0], hist[m][1] - e[1]) > 2 * h) return 1.5; }
+      return 0; };
+    const lagIn = (x, [a, b]) => x < a ? a : x > b ? b : x, lagD = (x, L) => Math.min(...L.map(v => Math.abs(x - lagIn(x, v)))),   // 1.9.88
+      lagT = (x, L) => L.map(v => lagIn(x, v)).reduce((a, b) => Math.abs(b - x) < Math.abs(a - x) ? b : a);
+    let startApp = null, prev = null; const back = [];
+    for (let i = 0; i < n; i++) {
+      const ds = dets[i] || [], cur = [], bk = [];
+      const free = ds.map(d => !ds.some(o => o !== d && iou(o, d) > 0.05));   // står fritt: drakten kan læres
+      for (let j = 0; j <= (prev ? ds.length - 1 : ds.length); j++) {
+        const d = j < ds.length ? ds[j] : null;
+        if (!prev) {
+          if (!start) { cur.push({ box: d, gap: 1, s: d ? q(d) : MISS, hs: d ? d[3] : 0, app: d && d[8] }); bk.push(-1); continue; }
+          const dist = x => Math.hypot(x[0] + x[2] / 2 - start[0], x[1] + x[3] / 2 - start[1]) / Math.max(x[3], 20);
+          const near = ds.length ? ds.reduce((a, x) => dist(x) < dist(a) ? x : a) : null, hit = near && dist(near) < 1.5;
+          if (d && d === near && hit) startApp = d[8] || null;
+          const guess = [start[0] - H * 0.04, start[1] - H * 0.08, H * 0.08, H * 0.16];
+          cur.push(d ? { box: d, gap: 1, s: d === near && hit ? q(d) + 20 : q(d) - 80, hs: d[3], app: d[8] } : { box: hit ? null : guess, gap: 1, s: hit ? -20 : 0, hs: hit ? 0 : guess[3] }); bk.push(-1); continue;
+        }
+        let best = -1e18, bi = 0, bn = 0, bd = 0.2; const pj = d && pen && pen[i] ? pen[i][j] || 0 : 0;
+        const L = d && pen && pen.lag && pen.lag[i] ? pen.lag[i][j] : null;   // 1.9.88
+        prev.forEach((p, k) => {
+          let v, sn = p.sn || 0, dm = p.dm == null ? 0.2 : p.dm;
+          if (!d) v = p.s + MISS * (p.gap > 10 ? 1.5 : 1);
+          else if (!p.box) { v = p.s + q(d) - 0.5; sn = 0; dm = 0.2; }
+          else {
+            const pb = p.mb || p.box, pc = cen(pb), g = p.gap, hs = Math.max(p.hs || szT(pb), 1), dc = cen(d);
+            const gv = Math.min(g, 12), pred = p.v ? [pc[0] + p.v[0] * gv, pc[1] + p.v[1] * gv] : pc;   // 1.9.90
+            const dpos = Math.hypot(dc[0] - pred[0], dc[1] - pred[1]) / Math.max(hs, 8);
+            let c = 3.5 * Math.max(0, dpos - (0.45 + 0.2 * (g - 1)));
+            c += 4 * Math.max(0, Math.abs(Math.log(szT(d) / hs)) - 0.25 - 0.04 * Math.min(g, 6));
+            const w = appW(Math.min(d[3], hs));
+            c += 0.3 * w * Math.min(appD(p.app, d[8]), appD(startApp, d[8]) + 0.5);   // drakten varierer mye med lys og stilling: bare et lite tillegg
+            dm = MA ? 0.75 * dm + 0.25 * Math.min(0.6, motion(pb, d, g)) : 0.2; sn = dm < 0.1 ? sn + g : 0;
+            if (L && p.lg != null) c += 0.3 * Math.max(0, lagD(p.lg, L) - 4 - 0.12 * Math.min(i - p.lgi, 40));   // 1.9.88: hopp i tidsforskjell til A
+            c += backPen(p.hist, [dc[0], d[1] + d[3]], hs, i);   // 1.9.90: tilbake dit løperen var
+            v = p.s + q(d) - c - stillPen(sn) * Math.min(g, 3);
+          }
+          v -= pj;
+          if (v > best) { best = v; bi = k; bn = sn; bd = dm; }
+        });
+        const pk = prev[bi];
+        if (d) {
+          let vel = null, hs = szT(d);
+          if (pk.box) { const pc = cen(pk.mb || pk.box), dc = cen(d), o = [(dc[0] - pc[0]) / pk.gap, (dc[1] - pc[1]) / pk.gap];
+            vel = pk.v ? [0.6 * pk.v[0] + 0.4 * o[0], 0.6 * pk.v[1] + 0.4 * o[1]] : o;
+            hs = pk.hs ? 0.8 * pk.hs + 0.2 * szT(d) : szT(d);
+            if (Math.hypot(vel[0], vel[1]) > 1.5 * hs) vel = null; }
+          const app = d[8] && free[j] ? (pk.app ? pk.app.map((x, k) => 0.9 * x + 0.1 * d[8][k]) : d[8]) : pk.app;
+          let lg = pk.lg, lgi = pk.lgi;
+          if (L && L.length) { if (lg == null || !pk.box) lg = lagT(0, L); else { const r = 0.5 + 0.12 * Math.min(i - lgi, 12), t = lagT(lg, L); lg += Math.max(-r, Math.min(r, t - lg)); } lgi = i; }
+          const hist = (pk.hist || []).filter(e => i - e[2] <= 150); hist.push([d[0] + d[2] / 2, d[1] + d[3], i]);   // 1.9.90: hvor veien har vært
+          cur.push({ box: d, mb: null, gap: 1, s: best, real: true, sn: bn, dm: bd, v: vel, hs, app, lg, lgi, hist });
+        } else cur.push({ box: pk.box, mb: pk.mb, gap: pk.gap + 1, s: best, real: false, sn: bn, dm: bd, v: pk.v, hs: pk.hs, app: pk.app, lg: pk.lg, lgi: pk.lgi, hist: pk.hist });   // farten holdes mens løperen er skjult
+        bk.push(bi);
+      }
+      // «mangler»-tilstander: én for hver av de beste veiene som ligger på ulike steder, så en løper som er skjult noen bilder
+      // ikke mister plassen sin til en annen vei som også mangler treff
+      if (prev) {
+        const cand = prev.map((p, k) => ({ p, k, v: p.s + MISS * (p.gap > 10 ? 1.5 : 1) })).sort((a, b) => b.v - a.v), took = [];
+        for (const c of cand) {
+          if (took.length >= 6) break;
+          const pb = c.p.mb || c.p.box;
+          if (pb && took.some(t => { const tb = t.p.mb || t.p.box; return tb && Math.hypot(cen(tb)[0] - cen(pb)[0], cen(tb)[1] - cen(pb)[1]) < Math.max(c.p.hs || pb[3], 8); })) continue;
+          took.push(c); const pk = c.p;
+          cur.push({ box: pk.box, mb: pk.mb, gap: pk.gap + 1, s: c.v, real: false, sn: pk.sn, dm: pk.dm, v: pk.v, hs: pk.hs, app: pk.app, lg: pk.lg, lgi: pk.lgi, hist: pk.hist }); bk.push(c.k);
+        }
+      }
+      if (MA && MA[i + 1]) for (const c of cur) { c.mb = mvB(c.mb || c.box, MA[i + 1]); c.v = mvV(c.v, MA[i + 1]);
+        if (c.hist) c.hist = c.hist.map(e => { const q = apply(MA[i + 1], e[0], e[1]); return [q[0], q[1], e[2]]; }); }   // 1.9.90
+      back.push(bk); prev = cur;
+    }
+    let j = 0; prev.forEach((p, k) => { if (p.s > prev[j].s) j = k; });
+    const out = new Array(n);
+    for (let i = n - 1; i >= 0; i--) { const ds = dets[i] || []; out[i] = j < ds.length ? ds[j] : null; j = back[i][j]; if (j < 0) j = 0; }
+    for (let i = 0; i < n; i++) if (!out[i]) {
+      let a = i - 1; while (a >= 0 && !out[a]) a--;
+      let b = i + 1; while (b < n && !out[b]) b++;
+      if (a >= 0 && b < n && b - a < 20) { const f = (i - a) / (b - a); out[i] = out[a].slice(0, 4).map((v, k) => v + (out[b][k] - v) * f); out[i].interp = true; }
+    }
+    return out;
+  }
+
+
+  // ---------- 1.9.88: tidsforskjell til A langs løypa ----------
+  // lag[i][j] = liste av mulige tidsforskjeller [fra, til] (i − bildet der A var der B-person j er i bilde i), null utenfor løypa.
+  function courseLag(dB, trA, MA, Hs, win) {
+    const n = dB.length, out = new Array(n), foot = b => [b[0] + b[2] / 2, b[1] + b[3]];
+    for (let i = 0; i < n; i++) {
+      const ds = dB[i] || []; out[i] = ds.map(() => null);
+      if (!Hs[i] || ds.length === 0) continue;
+      const pts = [];
+      if (trA[i]) pts.push([i, foot(trA[i])]);
+      let C = I3();
+      for (let j = i - 1; j >= Math.max(0, i - win); j--) { if (!MA[j + 1]) break; C = mul(C, MA[j + 1]); if (trA[j]) { const f = foot(trA[j]); pts.push([j, apply(C, f[0], f[1])]); } }
+      let D = I3();
+      for (let j = i + 1; j <= Math.min(n - 1, i + win); j++) { if (!MA[j]) break; const iv = inv(MA[j]); if (!iv) break; D = mul(D, iv); if (trA[j]) { const f = foot(trA[j]); pts.push([j, apply(D, f[0], f[1])]); } }
+      if (pts.length < 8) continue;
+      const k = Math.sqrt(Math.abs(Hs[i][0] * Hs[i][4] - Hs[i][1] * Hs[i][3])) || 1;
+      ds.forEach((d, jj) => {
+        const f = apply(Hs[i], d[0] + d[2] / 2, d[1] + d[3]), h = Math.max(8, d[3] * k);
+        let m = 1e9, bj = -1; const e = pts.map(([j, q]) => { const v = Math.hypot(f[0] - q[0], f[1] - q[1]); if (v < m) { m = v; bj = j; } return v; });
+        if (m > 2 * h) return;
+        // alle steder på A sitt spor som passer omtrent like godt (A sto stille, løypa går nær seg selv): flere mulige tidsforskjeller
+        const js = pts.filter((_, t) => e[t] < m + 0.6 * h).map(([j]) => j).sort((a, b) => a - b), iv = [];
+        for (const j of js) { const l = iv[iv.length - 1]; if (l && j - l[1] <= 3) l[1] = j; else iv.push([j, j]); }
+        out[i][jj] = iv.map(([a, b]) => [i - b, i - a]);
+      });
+    }
+    return out;
+  }
+
   // ---------- løypa som forventning (1.9.41) ----------
   // B kjører samme løype som A. For hvert bilde i: hvor var A (føttene) i tiden rundt, sett i A-bildet i (kamerabevegelsen MA trukket fra)?
   // En B-deteksjon som etter B→A-matchingen (Hs) havner langt fra alle disse stedene, står trolig utenfor løypa (tilskuer, trener).
@@ -3794,10 +3929,14 @@ const GhostCore = (() => {
     const n = dB.length, out = new Array(n);
     for (let i = 0; i < n; i++) {
       const ds = dB[i] || []; out[i] = ds.map(() => 0);
-      if (!Hs[i] || !trA[i] || ds.length === 0) continue;
-      const pts = [], hA = trA[i][3];
+      if (!Hs[i] || ds.length === 0) continue;
+      // 1.9.93: også når den andre løperen ikke er funnet akkurat nå: løypa er kjent fra bildene før og etter
+      let hA = trA[i] ? trA[i][3] : 0;
+      if (!hA) { if (coursePen.gap === false) continue; for (let g = 1; g <= 20 && !hA; g++) hA = (trA[i - g] && trA[i - g][3]) || (trA[i + g] && trA[i + g][3]) || 0; }
+      if (!hA) continue;
+      const pts = [];
       const foot = b => [b[0] + b[2] / 2, b[1] + b[3]];
-      pts.push(foot(trA[i]));
+      if (trA[i]) pts.push(foot(trA[i]));
       let C = I3();   // bilde j → bilde i, bakover
       for (let j = i - 1; j >= Math.max(0, i - win); j--) { if (!MA[j + 1]) break; C = mul(C, MA[j + 1]); if (trA[j]) { const f = foot(trA[j]); pts.push(apply(C, f[0], f[1])); } }
       let D = I3();   // framover: bilde j → bilde i = inv(MA_{i+1} … MA_j)
@@ -4081,12 +4220,12 @@ const GhostCore = (() => {
       raw[i] = c;
     }
     // lange hull (interpolert over mange bilder) er usikre
-    for (let i = 0; i < n; ) { if (tr[i] && tr[i].interp) { let k = i; while (k < n && tr[k] && tr[k].interp) k++; if (k - i > 10) for (let t = i; t < k; t++) raw[t] = Math.min(raw[t], 0.3); i = k; } else i++; }
+    for (let i = 0; i < n; ) { if (tr[i] && tr[i].interp) { let k = i; while (k < n && tr[k] && tr[k].interp) k++; if (k - i > 10) { const v = k - i <= (trackConf.hold || 10) ? 0.5 : 0.3; for (let t = i; t < k; t++) raw[t] = Math.min(raw[t], v); } i = k; }   /* 1.9.87: beregnet inntil ca. 1 s */ else i++; }
     // holdning: median av bredde/høyde over ±4 bilder
     for (let i = 0; i < n; i++) {
       if (!tr[i]) continue;
       const r = []; for (let k = Math.max(0, i - 4); k <= Math.min(n - 1, i + 4); k++) { const b = tr[k]; if (b && !b.interp && b[3] > 0) r.push(b[2] / b[3]); }
-      if (r.length >= 3) { r.sort((p, q) => p - q); if (r[r.length >> 1] < 0.55) raw[i] = Math.min(raw[i], 0.25); }
+      if (r.length >= 3) { r.sort((p, q) => p - q); if (r[r.length >> 1] < (trackConf.thin || 0.55)) raw[i] = Math.min(raw[i], 0.25); }   // 1.9.87: terskel kan senkes
     }
     if (anc) for (const a of anc) for (let k = Math.max(0, a - 6); k <= Math.min(n - 1, a + 6); k++) if (tr[k]) raw[k] = Math.max(raw[k], 0.9);
     // utjevning: minimum over ±2 bilder, så glidende snitt over ±3 (myk inn- og uttoning)
@@ -4126,7 +4265,7 @@ const GhostCore = (() => {
     }
     return res;
   }
-  return { steadyPts, gateLike, gates, gateMatch, trackConf, gateGlobal, gateIoU, whittaker, resize, features, match, ransac, apply, mul, inv, norm, fitH, I3, track, coursePen, makeRegistrar, smoothH, stabH, smooth1, gaps };
+  return { steadyPts, gateLike, gates, gateMatch, trackConf, gateGlobal, gateIoU, whittaker, resize, features, match, ransac, apply, mul, inv, norm, fitH, I3, track, track2, coursePen, courseLag, makeRegistrar, smoothH, stabH, smooth1, gaps };
 })();
 </script>
 
@@ -4210,7 +4349,15 @@ const GhostCore = (() => {
     p.run.value = runner || ""; p.edited = false;
     if (runner) { runnerState(p, "heard", (AVL ? "Name from «Volume»." : "Navn fra «Volum».")); tag(p); return; }
     tag(p);
+    const mob = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1) || matchMedia("(pointer: coarse)").matches;
+    if (mob) { p.hearWait = { file, my }; runnerState(p, "listening", AVL ? "Listens for the name when both videos are chosen …" : "Lytter etter navnet når begge videoene er valgt …");
+      if (P.A.file && P.B.file) hearQueued(); return; }
     hear(p, file, my);
+  }
+  async function hearQueued() {
+    if (hearQueued.busy) return; hearQueued.busy = true;
+    try { for (const q of [P.A, P.B]) { const w = q.hearWait; if (!w) continue; q.hearWait = null; await new Promise(r => setTimeout(r, 1500)); await hear(q, w.file, w.my); } }
+    finally { hearQueued.busy = false; if (window.avAsrFree) window.avAsrFree(); if (P.A.hearWait || P.B.hearWait) hearQueued(); }
   }
 
   // ---- løpernavn: lytter etter navnet i starten av videoen, ellers skriver brukeren det inn ----
@@ -4993,16 +5140,39 @@ const GhostCore = (() => {
       const med = a => a.sort((p, q) => p - q)[a.length >> 1], q = GhostCore.apply(M, c[0], c[1]);
       return [q[0] + med(ex), q[1] + med(ey)];
     };
+    const szOf = b => GH.size === false ? b[3] : Math.max(b[3], Math.min(1.1 * b[2], 1.6 * b[3]));   // 1.9.93
     const roiFind = (x, r, M, ds, fP, fC) => {
       if (!r) return ds;
+      if (r.gone) { GH.goneN = (GH.goneN || 0) + 1; return []; }   // 1.9.84: kjørt ut av bildet, kommer ikke tilbake
       const stay = localMove(fP, fC, M, r.c, r.h);   // hvor den fulgte personen hadde stått hvis den sto stille
       const k = M ? Math.sqrt(Math.abs(M[0] * M[4] - M[1] * M[3])) || 1 : 1;
-      if (M) { r.c = GhostCore.apply(M, r.c[0], r.c[1]); r.h *= k; if (r.still) r.still = r.still.map(b => { const q = GhostCore.apply(M, b[0], b[1]); return [q[0], q[1], b[2] * k]; }); }   // følg kameraet
+      if (M) { r.c = GhostCore.apply(M, r.c[0], r.c[1]); r.h *= k; if (r.hs) r.hs *= k; if (r.still) r.still = r.still.map(b => { const q = GhostCore.apply(M, b[0], b[1]); return [q[0], q[1], b[2] * k]; }); }   // følg kameraet
       const ex = [r.c[0], r.c[1]];   // der den fulgte personen står hvis den står stille i terrenget
       if (r.v) { r.c = [r.c[0] + r.v[0], r.c[1] + r.v[1]]; }   // løperen er i fart: forvent at den har flyttet seg like mye som sist
       const W = x.c.width, Hh = x.c.height, side = Math.min(Math.max(W, Hh), Math.max(48, r.h * (5 + Math.min(r.miss, 30) / 6)));
+      // 1.9.84: var løperen på vei ut av bildet (avkuttet ved kanten og i fart utover), og er den ventede plassen nå utenfor,
+      // eller er den ikke funnet igjen, er løperen borte
+      if (r.exitN && (r.c[1] - 0.25 * r.h > Hh || r.c[0] + 0.25 * r.h < 0 || r.c[0] - 0.25 * r.h > W || r.miss >= 2)) { r.gone = true; GH.goneAt = GH.goneAt || []; GH.goneAt.push(Math.round(r.h)); return []; }
       const all = ds.slice();
       addNew(all, detIn(x, r.c[0] - side / 2, r.c[1] - side / 2, side));
+      if (r.alt) {   // 1.9.93: sporingen mener løperen er et annet sted: let der også (søket flyttes ikke)
+        const a = r.alt; a.age++;
+        if (M) { a.c = GhostCore.apply(M, a.c[0], a.c[1]); a.h *= k; if (a.v) a.v = [a.v[0] * k, a.v[1] * k]; }
+        const pre = a.c.slice(); if (a.v) a.c = [a.c[0] + a.v[0], a.c[1] + a.v[1]];
+        if (a.miss > 12 || a.age > 45 || Math.hypot(a.c[0] - r.c[0], a.c[1] - r.c[1]) < Math.max(a.h, 8)) r.alt = null;
+        else {
+          const sd = Math.min(Math.max(W, Hh), Math.max(48, a.h * (5 + Math.min(a.miss, 30) / 6))), fa = detIn(x, a.c[0] - sd / 2, a.c[1] - sd / 2, sd);
+          addNew(all, fa); GH.altDet = (GH.altDet || 0) + 1;
+          let bb = null, bv = 1e9;
+          for (const b of fa) { if (b[2] < 0.28 * b[3]) continue;
+            const dd = Math.hypot(b[0] + b[2] / 2 - a.c[0], b[1] + b[3] / 2 - a.c[1]) / Math.max(a.h, 8), ss = Math.abs(Math.log(szOf(b) / Math.max(a.h, 1)));
+            if (dd < 1.6 + a.miss * 0.25 && ss < 0.6 && dd + ss < bv) { bv = dd + ss; bb = b; } }
+          if (bb) { const c = [bb[0] + bb[2] / 2, bb[1] + bb[3] / 2], o = [c[0] - pre[0], c[1] - pre[1]];
+            a.v = a.v ? [0.6 * a.v[0] + 0.4 * o[0], 0.6 * a.v[1] + 0.4 * o[1]] : o; if (Math.hypot(a.v[0], a.v[1]) > 1.5 * a.h) a.v = null;
+            a.c = c; a.h = 0.8 * a.h + 0.2 * szOf(bb); a.miss = 0; }
+          else { a.miss++; if (a.v) a.v = [a.v[0] * 0.8, a.v[1] * 0.8]; }
+        }
+      }
       // Har den vi følger stått stille i terrenget en stund, er det trolig en tilskuer eller trener (1.9.40):
       // let i hele bildet med finere oppløsning (3×2 ruter) etter en som er i bevegelse.
       if (r.sn > 2) {   // står stille: slipp den (og folk rett ved, det er ofte en gruppe), og let etter løperen
@@ -5030,14 +5200,18 @@ const GhostCore = (() => {
       for (const b of all) {
         if (b[2] < 0.28 * b[3]) continue;
         if ((lost || r.edgeN) && nearStill(b)) continue;
-        if (fixedN(b) >= 2) { GH.fixedN = (GH.fixedN || 0) + 1; continue; }   // 1.9.81: står fast i terrenget
-        const d = Math.hypot(b[0] + b[2] / 2 - r.c[0], b[1] + b[3] / 2 - r.c[1]) / Math.max(r.h, 8), sz = Math.abs(Math.log(b[3] / Math.max(r.h, 1)));
-        const okD = lost ? true : d < 1.6 + r.miss * 0.1, ca = r.app ? appDist(r.app, appOf(x, b)) : 0;
-        if (lost && ca > 1.2) continue;   // borte: heller vente enn å ta en med helt annen drakt
+        if (fixedN(b) >= 2) { GH.fixedN = (GH.fixedN || 0) + 1; b[7] = 1; continue; }   // 1.9.81: står fast i terrenget
+        const d = Math.hypot(b[0] + b[2] / 2 - r.c[0], b[1] + b[3] / 2 - r.c[1]) / Math.max(r.h, 0.8 * (r.hs || 0), 8), sz = Math.abs(Math.log(szOf(b) / Math.max(r.hs || r.h, 1)));   // 1.9.85: jevnet høyde (en sammenslått boks ved kryssing endrer den lite)
+        const okD = lost ? true : d < 1.6 + r.miss * 0.25, ca0 = r.app ? appDist(r.app, appOf(x, b)) : 0;
+        if (lost && ca0 > 1.2) continue;   // borte: heller vente enn å ta en med helt annen drakt
+        // 1.9.85: på små løpere (under ca. 20 px høye i analysen) er drakten bare noen få piksler og lite til å stole på
+        // (ikke når løperen er mistet: da er drakten det eneste som skiller løperen fra tilskuere i hele bildet)
+        // Drakten dempes bare for den som står der løperen ventes (d < 0,5); en som kommer fra siden (kryssing) må fortsatt ligne.
+        const ca = lost || d >= 0.5 ? ca0 : ca0 * Math.min(1, Math.max(0.3, (Math.min(b[3], r.h) - 6) / 14));
         // i storslalåm står løperen oftest sammenkrøpet (bred boks); tilskuere står oppreist (smal boks)
         const upr = Math.max(0, 0.6 - b[2] / b[3]) / 0.3 * (lost ? 0.8 : 0.3);
         const v = d * (lost ? 0.15 : 1) + sz + ca + upr + (flagLike(x, b) ? 0.6 : 0);
-        if (okD && sz < (r.known ? 0.45 + Math.min(r.miss, 10) * 0.03 + (lost ? 0.3 : 0) : 1.4) && v < bv) { bv = v; best = b; }
+        if (okD && sz < (r.known ? 0.45 + Math.min(r.miss, 10) * 0.03 + (lost ? 0.3 : 0) + (d < 0.5 && r.h < 30 ? 0.25 : 0) : 1.4) && v < bv) { bv = v; best = b; }
       }
       let swap = false;
       if (best && !lost && wide && r.edgeN) {
@@ -5060,14 +5234,18 @@ const GhostCore = (() => {
           const sum = r.steps && r.steps.length >= 10 ? r.steps.reduce((a, b) => a + b, 0) : 9;
           r.sn = sum < 0.6 ? (r.sn || 0) + 1 : 0;
           r.v = [(c[0] - ex[0]) * 0.6, (c[1] - ex[1]) * 0.6]; if (Math.hypot(r.v[0], r.v[1]) > 1.5 * best[3]) r.v = null; }
-        r.c = c; r.h = best[3]; r.known = true; r.miss = 0;
+        // 1.9.84: avkuttet ved kanten og på vei ut: nederst (løperen kommer mot kameraet) eller ved siden når løperen er stor (nær kameraet)
+        { const vx = r.v ? r.v[0] : 0, vy = r.v ? r.v[1] : 0, big = best[3] > 0.3 * Hh || !M || Math.abs(M[2]) + Math.abs(M[5]) < 3;   // stor, eller kameraet står i ro (stativ)
+          const out = (best[1] + best[3] > Hh - 2 && vy > 0) || (big && best[0] < 2 && vx < 0) || (big && best[0] + best[2] > W - 2 && vx > 0);
+          r.exitN = out ? (r.exitN || 0) + 1 : 0; }
+        r.c = c; r.h = best[3]; r.hs = r.hs ? 0.85 * r.hs + 0.15 * szOf(best) : szOf(best); r.known = true; r.miss = 0;
         // utseendet oppdateres bare når løperen står fritt (ikke overlapper andre personer)
         if (!all.some(o => o !== best && iou(o, best) > 0.05)) { const ap = appOf(x, best); if (ap) r.app = r.app ? r.app.map((v, k) => 0.85 * v + 0.15 * ap[k]) : ap; }
         if (!r.sn) best[5] = 1; else best[6] = 1;   // [5] = valgt løper (sporingen foretrekker den); [6] = står stille (sporingen unngår den)
       } else { r.miss++; if (r.v) { r.v = [r.v[0] * 0.8, r.v[1] * 0.8]; } }   // ikke funnet: fortsett i samme retning, litt saktere
       return all;
     };
-    const T = GH.T = { seek: 0, det: 0, feat: 0, reg: 0, seg: 0, draw: 0 }; GH.fixedN = 0;
+    const T = GH.T = { seek: 0, det: 0, feat: 0, reg: 0, seg: 0, draw: 0 }; GH.fixedN = 0; GH.goneN = 0; GH.goneAt = null; GH.roiFix = 0; GH.endAt = null; GH.endWho = null; GH.reseatN = 0; GH.goneFalse = 0; GH.altN = 0; GH.altDet = 0;
     window.avPlay = { ok: 0, miss: 0 }; [P.A, P.B].forEach(p => { p.pgMiss = p.pgOkN = 0; p.pgBad = false; p.pcOn = false; });
     let tm = performance.now();
     const lap = k => { const now = performance.now(); T[k] += now - tm; tm = now; };
@@ -5085,7 +5263,34 @@ const GhostCore = (() => {
       const o = reg.step(fa, fb); lap("reg"); FA.push(fa); FB.push(fb);
       // første bilde: løperen du bekreftet er med, også om personfinneren ikke ser den her
       if (i === 0) for (const [ds, bx] of [[da, picks && picks.bA], [db, picks && picks.bB]]) if (bx && !ds.some(q => iou(q, bx) > 0.5)) ds.push([...bx.slice(0, 4), 0.9]);
-      dA[i] = roiFind(A, roi.A, o && o.MA, da, FA[i - 1], fa); dB[i] = roiFind(B, roi.B, o && o.MB, db, FB[i - 1], fb); lap("det");
+      dA[i] = roiFind(A, roi.A, o && o.MA, da, FA[i - 1], fa); dB[i] = roiFind(B, roi.B, o && o.MB, db, FB[i - 1], fb);
+      if (GH.robust !== false) for (const [x, ds] of [[A, dA[i]], [B, dB[i]]]) for (const b of ds) { b[8] = appOf(x, b); b[9] = flagLike(x, b) ? 1 : 0; }   // 1.9.86
+      lap("det");
+      // 1.9.91: sporingen så langt bestemmer hvor søket leter, og om løperen virkelig har kjørt ut
+      if (GH.robust !== false && GH.reseat !== false) {
+        const online = (x, r, ds, start, key) => {
+          const tr = GhostCore.track2(ds, x.c.width, x.c.height, start, reg.st.out.map(o => o && o[key]));
+          let k = i; while (k >= 0 && (!tr[k] || tr[k].interp)) k--;
+          return k >= 0 ? { b: tr[k], k, tr } : null; };
+        const seat = (r, b) => { r.c = [b[0] + b[2] / 2, b[1] + b[3] / 2]; r.h = b[3]; r.hs = b[3]; r.miss = 0; r.v = null; r.exitN = 0; r.gone = false; r.steps = []; r.sn = 0; r.known = true; GH.reseatN = (GH.reseatN || 0) + 1; };
+        for (const [x, r, ds, start, key] of [[A, roi.A, dA, picks && picks.A, "MA"], [B, roi.B, dB, picks && picks.B, "MB"]]) {
+          if (!r || (!r.gone && i % 3 !== 2)) continue;
+          const o2 = online(x, r, ds, start, key); if (!o2) continue;
+          const b = o2.b, W = x.c.width, Hh = x.c.height, edge = b[1] + b[3] > Hh - 3 || b[0] < 3 || b[0] + b[2] > W - 3;
+          if (r.gone) { if (!(edge && i - o2.k <= 6)) { seat(r, b); GH.goneFalse = (GH.goneFalse || 0) + 1; } }
+          else if (i - o2.k <= 10 && r.c) {   // 1.9.92: også når sporingen har mistet løperen et øyeblikk: dit løperen ventes nå
+            let p = null; for (let q = o2.k - 1; q >= Math.max(0, o2.k - 5); q--) if (o2.tr[q] && !o2.tr[q].interp) { p = o2.tr[q]; break; }
+            const g = i - o2.k, kq = p ? o2.k - (o2.tr.indexOf(p)) : 1, vx = p ? (b[0] + b[2] / 2 - p[0] - p[2] / 2) / kq : 0, vy = p ? (b[1] + b[3] / 2 - p[1] - p[3] / 2) / kq : 0;
+            const e = [b[0] + vx * g, b[1] + vy * g, b[2], b[3]];
+            if (Math.hypot(r.c[0] - e[0] - e[2] / 2, r.c[1] - e[1] - e[3] / 2) > 2 * Math.max(b[3], 8)) {
+              if (GH.alt === false) { seat(r, e); r.miss = Math.min(g, 6); }
+              else { r.alt = { c: [e[0] + e[2] / 2, e[1] + e[3] / 2], h: szOf(e), v: g <= 2 && (vx || vy) ? [vx, vy] : null, miss: Math.min(g, 6), age: 0 }; GH.altN = (GH.altN || 0) + 1; }   // 1.9.93
+            } else if (r.alt && g <= 2) r.alt = null;   // enige igjen
+          }
+        }
+      }
+      if (GH.endAt == null && i > 0.5 * N && ((roi.A && roi.A.gone) || (roi.B && roi.B.gone))) { GH.endAt = i + 3; GH.endWho = roi.A && roi.A.gone ? "A" : "B"; }
+      if (GH.endAt != null && i >= GH.endAt) break;
       progress(0.45 * (i + 1) / N);
       if (i % 3 === 0) { say((AVL ? `Analysing the runs … ${Math.round((i + 1) / N * 100)} %` : `Analyserer løpene … ${Math.round((i + 1) / N * 100)} %`)); await new Promise(r => setTimeout(r, 0)); }
     }
@@ -5160,16 +5365,42 @@ const GhostCore = (() => {
         P[a.i] = d.map((_, k) => k === j ? -60 : 60); }
       return P; };
     let trA, trB, penB, cA, cB;
-    const runTrack = () => {
-      trA = GhostCore.track(dA, A.c.width, A.c.height, picks && picks.A, out.map(o => o.MA), anc.A.length ? force(dA, anc.A) : undefined);
+    let runTrack = () => {
+      const TR = GH.robust === false ? GhostCore.track : GhostCore.track2;   // 1.9.86
+      GhostCore.track2.back = GH.back !== false; GhostCore.track2.wide = GH.size !== false; GhostCore.coursePen.gap = GH.course2 !== false;   // 1.9.90
+      GhostCore.trackConf.thin = GH.robust === false ? 0.55 : 0.36; GhostCore.trackConf.hold = GH.hold === true ? Math.round(1 / GH.step) : 10;   // 1.9.87: GH.hold = true viser beregnede hull inntil ca. 1 s (reserve)
+      trA = TR(dA, A.c.width, A.c.height, picks && picks.A, out.map(o => o.MA), anc.A.length ? force(dA, anc.A) : undefined);
       // B kjører samme løype som A: personer som havner langt fra A sitt spor (tilskuere, trenere ved siden av) straffes (1.9.41)
       penB = GhostCore.coursePen(dB, trA, out.map(o => o.MA), Hs, 60);
       if (anc.B.length) penB = force(dB, anc.B, penB);
-      trB = GhostCore.track(dB, B.c.width, B.c.height, picks && picks.B, out.map(o => o.MB), penB);
+      if (GH.lag !== false && GH.robust !== false) penB.lag = GhostCore.courseLag(dB, trA, out.map(o => o.MA), Hs, 120);   // 1.9.88
+      trB = TR(dB, B.c.width, B.c.height, picks && picks.B, out.map(o => o.MB), penB);
+      if (GH.mutual !== false && GH.robust !== false) {   // 1.9.90
+        const HsI = Hs.map(h => h ? GhostCore.inv(h) : null);
+        let penA = GhostCore.coursePen(dA, trB, out.map(o => o.MB), HsI, 60);
+        if (anc.A.length) penA = force(dA, anc.A, penA);
+        if (GH.lag !== false) penA.lag = GhostCore.courseLag(dA, trB, out.map(o => o.MB), HsI, 120);
+        trA = TR(dA, A.c.width, A.c.height, picks && picks.A, out.map(o => o.MA), penA);
+        penB = GhostCore.coursePen(dB, trA, out.map(o => o.MA), Hs, 60);
+        if (anc.B.length) penB = force(dB, anc.B, penB);
+        if (GH.lag !== false) penB.lag = GhostCore.courseLag(dB, trA, out.map(o => o.MA), Hs, 120);
+        trB = TR(dB, B.c.width, B.c.height, picks && picks.B, out.map(o => o.MB), penB);
+      }
       // hvor sikker sporingen er i hvert bilde (1 = trygg); usikre partier får ikke ghost eller linjer
       cA = GhostCore.trackConf(trA, dA, null, [0, ...anc.A.map(a => a.i)]);
       cB = GhostCore.trackConf(trB, dB, penB, [0, ...anc.B.map(a => a.i)]);
     };
+    // 1.9.84: søket rundt den valgte løperen (roiFind) har mest kunnskap (faste ting, stillestående, drakt, ut av bildet).
+    // Kvitfjell 21.11 viste at sporingen ellers kunne velge andre personer selv om søket fulgte riktig løper. Søkets valg gjelder derfor,
+    // og et valg uten søkets støtte som ligger langt fra der søket sist så løperen, fjernes (heller ingen ghost enn feil person).
+    const trustRoi = (ds, tr) => { let lj = -1, lb = null; GH.roiFix = GH.roiFix || 0;
+      return tr.map((b, i) => { const m = (ds[i] || []).find(d => d[5] === 1 && d[6] !== 1);
+        if (m) { if (!b || Math.hypot(b[0] - m[0], b[1] - m[1]) > 0.3 * m[3]) GH.roiFix++; lj = i; lb = m; return m.slice(0, 4); }
+        if (b && lb && i - lj <= 8 && Math.hypot(b[0] + b[2] / 2 - lb[0] - lb[2] / 2, b[1] + b[3] / 2 - lb[1] - lb[3] / 2) > (1.5 + 0.6 * (i - lj)) * Math.max(lb[3], 8)) { GH.roiFix++; return null; }
+        return b; }); };
+    const runTrack0 = runTrack;
+    runTrack = () => { runTrack0(); if (GH.robust === false) { if (!anc.A.length) trA = trustRoi(dA, trA); if (!anc.B.length) trB = trustRoi(dB, trB); }
+      cA = GhostCore.trackConf(trA, dA, null, [0, ...anc.A.map(a => a.i)]); cB = GhostCore.trackConf(trB, dB, penB, [0, ...anc.B.map(a => a.i)]); };
     runTrack();
     // Mistet løperen i et langt parti? Be brukeren peke ut løperen i ett bilde der, og spor på nytt derfra (én gang per løper).
     const lowRun = c => { let best = null; for (let i = 0; i < n; ) { if (c[i] < 0.45) { let k = i; while (k < n && c[k] < 0.45) k++; if (k - i >= 18 && (!best || k - i > best.len)) best = { i0: i, len: k - i }; i = k; } else i++; } return best; };
@@ -5395,6 +5626,10 @@ const GhostCore = (() => {
       // bildet vises i full oppløsning, boksene regnes i analysestørrelse
       const big = Object.assign(document.createElement("canvas"), { width: Math.round(SRC(p).videoWidth * Math.min(1, 1600 / Math.max(SRC(p).videoWidth, SRC(p).videoHeight))), height: 0 });
       big.height = Math.round(big.width * SRC(p).videoHeight / SRC(p).videoWidth); big.getContext("2d").drawImage(SRC(p), 0, 0, big.width, big.height);
+      { const kb = big.width / c.width, tc = document.createElement("canvas"), tg = tc.getContext("2d", { willReadFrequently: true });
+        ds = ds.filter(b => { if (b[2] < 0.28 * b[3]) return false;
+          const w = Math.max(2, Math.round(Math.min(64, b[2] * kb))), h = Math.max(2, Math.round(w * b[3] / Math.max(b[2], 1)));
+          tc.width = w; tc.height = h; try { tg.drawImage(big, b[0] * kb, b[1] * kb, b[2] * kb, b[3] * kb, 0, 0, w, h); return !GhostCore.gateLike(tg.getImageData(0, 0, w, h).data); } catch (e) { return true; } }); }
       shots[k] = { w: c.width, h: c.height, img: big, ds, sel: ds.length === 1 ? { box: ds[0], pt: [ds[0][0] + ds[0][2] / 2, ds[0][1] + ds[0][3] / 2] } : null };
     }
     let k = one || "A", map = null;
@@ -5461,7 +5696,8 @@ const GhostCore = (() => {
       const tol = 28 * map.dpr / map.sc;
       let best = null, bd = 1e9;
       for (const b of s.ds) { const d = Math.hypot(Math.max(b[0] - x, 0, x - b[0] - b[2]), Math.max(b[1] - y, 0, y - b[1] - b[3])); if (d < bd || (d === 0 && bd === 0 && b[2] * b[3] < best[2] * best[3])) { bd = d; best = b; } }
-      if (!(best && bd <= tol)) {   // ingen person funnet der: let i et forstørret utsnitt rundt trykket (små løpere langt unna)
+      const near0 = best && bd <= tol ? best : null;
+      if (bd > 0) {   // 1.9.84: trykket traff ingen boks: let forstørret først, bruk boksen i nærheten bare hvis søket ikke finner noe   // ingen person funnet der: let i et forstørret utsnitt rundt trykket (små løpere langt unna)
         const c = Object.assign(document.createElement("canvas"), { width: 320, height: 320 }), cg = c.getContext("2d"), kb = s.img.width / s.w;
         best = null; bd = 1e9;
         for (const f0 of [0.22, 0.12, 0.35]) {   // flere forstørrelser: løperen kan være liten eller middels stor
@@ -5470,12 +5706,14 @@ const GhostCore = (() => {
           let ds = [];
           try { ds = (m.det.detect(c).detections || []).map(d => { const b = d.boundingBox, f = side / 320; return [sx + b.originX * f, sy + b.originY * f, b.width * f, b.height * f]; }); } catch (e) {}
           for (const b of ds) { if (b[2] < 0.28 * b[3]) continue;   // smale bokser er stenger, ikke løpere
+            try { const f = 320 / side, gx = Math.max(0, Math.round((b[0] - sx) * f)), gy = Math.max(0, Math.round((b[1] - sy) * f)), gw = Math.max(2, Math.min(320 - gx, Math.round(b[2] * f))), gh = Math.max(2, Math.min(320 - gy, Math.round(b[3] * f)));
+              if (GhostCore.gateLike(cg.getImageData(gx, gy, gw, gh).data)) continue; } catch (e) {}   // 1.9.84: portflagg
             // trykket må treffe boksen (med litt slingring), ellers er det noe annet i nærheten
             const out = Math.hypot(Math.max(b[0] - x, 0, x - b[0] - b[2]), Math.max(b[1] - y, 0, y - b[1] - b[3]));
             const d = Math.hypot(b[0] + b[2] / 2 - x, b[1] + b[3] / 2 - y); if (out <= 0.5 * b[3] && d < bd) { bd = d; best = b; } }
           if (best) break;
         }
-        if (best) { s.ds.push(best); bd = 0; }
+        if (best) { s.ds.push(best); bd = 0; } else if (near0) { best = near0; bd = 0; }
       }
       s.sel = best && bd <= tol ? { box: best, pt: [best[0] + best[2] / 2, best[1] + best[3] / 2] } : { box: null, pt: [x, y] };
       draw();
@@ -6092,7 +6330,9 @@ const GhostCore = (() => {
         { let ms = 0; for (let x = 0; x < 65536; x++) ms += body[x];
           if (mPrev[k] && mPrevOk[k] && mMass[k] > 200 && ms < 0.4 * mMass[k] && t - (mGoodT[k] ?? -9) < 0.5 && GH.segHoldOff !== true) { hold = true; mHold[k] = (mHold[k] || 0) + 1; GH.segHold++;
             // 1.9.76: siste gode utklipp vises i stedet (gammel maske på nytt bilde ga en blek, feil figur)
-            if (L0 && t - L0.t < 0.3 && GH.holdOld !== true) return placeCut(L0); }
+            if (L0 && t - L0.t < 0.3 && GH.holdOld !== true) { if (GH.holdOld2 === true) return placeCut(L0);
+              if (k === "A") return null;   // 1.9.89: A står allerede i bildet; et gammelt utklipp ble en ekstra kopi
+              return placeCut(Object.assign({}, L0, { qx, qy, side })); } }   // 1.9.89: B flyttes dit B er nå
           else { mHold[k] = 0; mMass[k] = ms; mGoodT[k] = t; } }   // 1.9.75: holdes inntil 0,5 s filmtid (ikke 3 utbilder; sakte film har mange utbilder per filmbilde)
         if (hold) for (let x = 0, o = 0; x < 65536; x++, o += 4) { a[o] = a[o + 1] = a[o + 2] = 255; a[o + 3] = mPrev[k][x] * 255; }
         else
@@ -6236,7 +6476,7 @@ const GhostCore = (() => {
     if (r4k) for (const p of [P.A, P.B]) { p.url = p.hdUrl; p.pcOn = false; p.v.src = p.url; p.v.load(); }   // tilbake til HD-kopien for neste analyse
     let encCut = null; if (encErr && i > 30) { encCut = encErr; encErr = null; }   // 1.9.57: behold filmen fram hit
     if (encErr || i === 0) { els.stop.hidden = true; els.bar.hidden = true; say((AVL ? "Could not make the video: " : "Kunne ikke lage videoen: ") + (encErr ? encErr.message : "ingen bilder"), true); ui(); return; }
-    st.method = `ghost${lines ? " med linjer" : ""} · analyse ${secA.toFixed(1)} s (${G.n} bilder, bakgrunn matchet direkte i ${Math.round(G.okFrac * 100)} %, ${GH.bro || 0} via bro) · video ${((performance.now() - ts) / 1000).toFixed(1)} s` + (GH.cam ? ` · kamerabevegelse A ${GH.cam[0]} / B ${GH.cam[1]} px` : "") + (GH.steadyPx != null ? ` · ro ${GH.steadyPx} px` : "") + (GH.segUse ? ` · utklipp ${GH.segUse}` : "") + (GH.snowCut ? ` · snøsprut fjernet i ${GH.snowCut} bilder` : "") + (GH.segHold ? ` · maske holdt ${GH.segHold}` : "") + (GH.rvOk ? ` · bilde-vent ${GH.rvOk}` : "") + (GH.snapN ? ` · bildekopi ${GH.snapN}` : "") + (GH.filtSoft ? ` · kontrast i kode` : "") + (GH.segNormN ? ` · lysstrukket ${GH.segNormN}` : "") + (GH.reuseN ? ` · samme bilde ${GH.reuseN}` : "") + (GH.fixedN ? ` · faste ting avvist ${GH.fixedN}` : "") + (GH.wake === true ? " · skjerm holdt på" : GH.wake === false ? " · skjermlås ikke mulig" : "") + (GH.hiddenN ? ` · ventet på synlig side ${GH.hiddenN}` : "") + (GH.plateNote ? ` · ${GH.plateNote} (${GH.plateUse || 0} bilder${GH.plateRej ? `, ${GH.plateRej} avvist` : ""})` : "") + (GH.hdNote ? ` · ${GH.hdNote}` : "") + (r4k ? " · film fra 4K" : "") + (encRe ? ` · ny videokoder ${encRe}` : "") + (window.avPlay && (avPlay.ok || avPlay.miss) ? ` · avspilt ${avPlay.ok}/${avPlay.ok + avPlay.miss}` : "") +
+    st.method = `ghost${lines ? " med linjer" : ""} · analyse ${secA.toFixed(1)} s (${G.n} bilder, bakgrunn matchet direkte i ${Math.round(G.okFrac * 100)} %, ${GH.bro || 0} via bro) · video ${((performance.now() - ts) / 1000).toFixed(1)} s` + (GH.cam ? ` · kamerabevegelse A ${GH.cam[0]} / B ${GH.cam[1]} px` : "") + (GH.steadyPx != null ? ` · ro ${GH.steadyPx} px` : "") + (GH.segUse ? ` · utklipp ${GH.segUse}` : "") + (GH.snowCut ? ` · snøsprut fjernet i ${GH.snowCut} bilder` : "") + (GH.segHold ? ` · maske holdt ${GH.segHold}` : "") + (GH.rvOk ? ` · bilde-vent ${GH.rvOk}` : "") + (GH.snapN ? ` · bildekopi ${GH.snapN}` : "") + (GH.filtSoft ? ` · kontrast i kode` : "") + (GH.segNormN ? ` · lysstrukket ${GH.segNormN}` : "") + (GH.reuseN ? ` · samme bilde ${GH.reuseN}` : "") + (GH.fixedN ? ` · faste ting avvist ${GH.fixedN}` : "") + (GH.goneN ? ` · ut av bildet ${GH.goneN}` : "") + (GH.endWho ? ` · slutt: ${GH.endWho} ut av bildet` : "") + (GH.roiFix ? ` · søket rettet sporingen ${GH.roiFix}` : "") + (GH.reseatN ? ` · søket flyttet ${GH.reseatN}` : "") + (GH.goneFalse ? ` · ikke ute likevel ${GH.goneFalse}` : "") + (GH.altDet ? ` · ekstra søk ${GH.altN}/${GH.altDet}` : "") + (GH.wake === true ? " · skjerm holdt på" : GH.wake === false ? " · skjermlås ikke mulig" : "") + (GH.hiddenN ? ` · ventet på synlig side ${GH.hiddenN}` : "") + (GH.plateNote ? ` · ${GH.plateNote} (${GH.plateUse || 0} bilder${GH.plateRej ? `, ${GH.plateRej} avvist` : ""})` : "") + (GH.hdNote ? ` · ${GH.hdNote}` : "") + (r4k ? " · film fra 4K" : "") + (encRe ? ` · ny videokoder ${encRe}` : "") + (window.avPlay && (avPlay.ok || avPlay.miss) ? ` · avspilt ${avPlay.ok}/${avPlay.ok + avPlay.miss}` : "") +
       ` · start A ${(startT() + P.A.s).toFixed(2)} / B ${(startT() + P.B.s).toFixed(2)} s · personfinner ${window.avDet || "?"}` +
       (segFail ? ` · utklipp feilet ${segFail}` : "") + ` · ${cfg.mux === "avc" ? "H.264" : "VP9"} · ` +
       [P.A, P.B].map(p => p.k + ": " + (p.fs ? `fil (${p.fs.codec}${p.fs.sw ? ", programvare" : ", maskinvare"}${p.fs.ok ? "" : ", falt tilbake"}, ${p.fs.resets} starter${p.fs.misses ? `, ${p.fs.misses} omstart` : ""}${p.fs.check ? `, sjekk ${p.fs.check.d}/${p.fs.check.lum}/${p.fs.check.rep ?? "-"}` : ""}${p.fs.staleBad ? ", samme bilde" : ""}${p.fs.missBad ? ", mister bilder" : ""})` : "avspiller")).join(" · ") + " · " +
@@ -7397,6 +7637,7 @@ const GhostCore = (() => {
 
   // ---- talemodell ----
   let asrP = null, note = null;   // note: ekstra statuslinje når Dobbel lytter
+  window.avAsrFree = () => { const a = asr; asr = null; asrP = null; try { if (a && a.dispose) a.dispose(); } catch (e) {} };   // 1.9.84: frigjør talemodellen (mobil)
   function getAsr() {
     if (asr) return Promise.resolve(asr);
     if (asrP) return asrP;
@@ -7968,7 +8209,8 @@ const GhostCore = (() => {
     els.v.style.transform = Zs.z > 1.001 ? `translate(${Zs.tx}px, ${Zs.ty}px) scale(${Zs.z})` : "";
     els.stage.classList.toggle("zin", Zs.z > 1.01);
     for (const b of document.querySelectorAll("[data-sz]")) b.setAttribute("aria-pressed", String(Math.abs(Number(b.dataset.sz) - Zs.z) < 0.05));
-    if (!els.v.hidden && S.ready) { els.hint.hidden = false; els.hint.textContent = Zs.z > 1.01 ? (AVL ? "Drag to move the image · double-tap to zoom out" : "Dra for å flytte bildet · dobbelttrykk for å zoome ut") : (AVL ? "Pinch, scroll or double-tap to zoom in on the skier" : "Klyp, rull eller dobbelttrykk for å zoome inn på løperen"); }
+    if (!els.v.hidden && S.ready) { els.hint.hidden = false; els.hint.textContent = S.mark ? (AVL ? "Skier marked · tap «Analyse» or tap again to move the mark" : "Løperen er markert · trykk «Analyser» eller trykk på nytt for å flytte") : Zs.z > 1.01 ? (AVL ? "Tap the skier to mark · drag to move · double-tap to zoom out" : "Trykk på løperen for å markere · dra for å flytte · dobbelttrykk for å zoome ut") : (AVL ? "Tap the skier to mark · pinch or double-tap to zoom" : "Trykk på løperen for å markere · klyp eller dobbelttrykk for å zoome"); }
+    placeMark();
   }
   function zoomAt(cx, cy, nz) {
     nz = clamp(nz, 1, 6);
@@ -8008,10 +8250,43 @@ const GhostCore = (() => {
     if (!vg.moved && e.type === "pointerup") {   // dobbelttrykk: zoom inn der du trykker, eller ut igjen
       const now = performance.now();
       if (vTap && now - vTap.t < 330 && Math.hypot(pt.x - vTap.x, pt.y - vTap.y) < 40) { if (Zs.z > 1.01) zReset(); else zoomAt(pt.x, pt.y, 2.5); vTap = null; }
-      else vTap = { t: now, x: pt.x, y: pt.y };
+      else { const tp = vTap = { t: now, x: pt.x, y: pt.y }; setTimeout(() => { if (vTap === tp && !S.busy && !els.v.hidden) setMark(tp); }, 340); }
     }
     vg = null;
   };
+  // 1.9.83: markering av løperen før analysen (koordinater i videoens piksler, gjelder bare dette bildet)
+  var markEl = null;
+  function toVideoPx(p) {
+    const v = els.v, cw = els.stage.clientWidth, ch = els.stage.clientHeight, s = Math.min(cw / v.videoWidth, ch / v.videoHeight), ox = (cw - v.videoWidth * s) / 2, oy = (ch - v.videoHeight * s) / 2;
+    return { x: ((p.x - Zs.tx) / Zs.z - ox) / s, y: ((p.y - Zs.ty) / Zs.z - oy) / s, s, ox, oy };
+  }
+  function setMark(p) {
+    if (!els.v.videoWidth) return;
+    els.v.pause();
+    const q = toVideoPx(p);
+    if (q.x < 0 || q.y < 0 || q.x > els.v.videoWidth || q.y > els.v.videoHeight) return;
+    S.mark = { x: q.x, y: q.y, t: els.v.currentTime };
+    say(AVL ? "Skier marked. Tap «Analyse this frame»." : "Løperen er markert. Trykk «Analyser dette bildet».");
+    zApply();
+  }
+  function placeMark() {
+    if (!markEl) { markEl = document.createElement("span"); markEl.setAttribute("aria-hidden", "true");
+      markEl.style.cssText = "position:absolute;width:44px;height:44px;margin:-22px 0 0 -22px;border:3px solid #ff3b30;border-radius:50%;box-shadow:0 0 0 2px #fff;pointer-events:none;z-index:3";
+      els.stage.appendChild(markEl); }
+    const ok = S.mark && !els.v.hidden && Math.abs(S.mark.t - els.v.currentTime) < 0.05;
+    if (S.mark && !ok && !els.v.hidden) S.mark = null;
+    markEl.hidden = !ok; if (!ok) return;
+    const v = els.v, cw = els.stage.clientWidth, ch = els.stage.clientHeight, s = Math.min(cw / v.videoWidth, ch / v.videoHeight), ox = (cw - v.videoWidth * s) / 2, oy = (ch - v.videoHeight * s) / 2;
+    markEl.style.left = ((S.mark.x * s + ox) * Zs.z + Zs.tx) + "px"; markEl.style.top = ((S.mark.y * s + oy) * Zs.z + Zs.ty) + "px";
+  }
+  els.v.addEventListener("seeked", () => placeMark()); els.v.addEventListener("play", () => { S.mark = null; placeMark(); });
+  // det synlige utsnittet når du har zoomet, i koordinatene til bildet som analyseres
+  function viewRect(frame) {
+    const v = els.v; if (Zs.z < 1.05 || !v.videoWidth) return null;
+    const a = toVideoPx({ x: 0, y: 0 }), b = toVideoPx({ x: els.stage.clientWidth, y: els.stage.clientHeight }), k = frame.width / v.videoWidth;
+    const x0 = Math.max(0, a.x * k), y0 = Math.max(0, a.y * k), x1 = Math.min(frame.width, b.x * k), y1 = Math.min(frame.height, b.y * k);
+    return x1 - x0 > 8 && y1 - y0 > 8 ? { x: x0, y: y0, w: x1 - x0, h: y1 - y0 } : null;
+  }
   els.stage.addEventListener("pointerup", vEnd); els.stage.addEventListener("pointercancel", vEnd);
   els.stage.addEventListener("wheel", e => {
     if (els.v.hidden || !S.ready) return;
@@ -8109,12 +8384,32 @@ const GhostCore = (() => {
       return GhostCore.gateLike(g.getImageData(0, 0, w, h).data);
     } catch (e) { return false; }
   }
-  async function findPose(frame, at, near) {
+  // 1.9.83: personsøk i et utsnitt, forstørret så personfinneren ser løperen stort (også når den er langt unna)
+  function detectIn(m, frame, r) {
+    const x0 = Math.max(0, r.x), y0 = Math.max(0, r.y), w = Math.min(frame.width - x0, r.w), h = Math.min(frame.height - y0, r.h);
+    if (w < 8 || h < 8) return [];
+    const k = Math.min(4, 640 / Math.max(w, h)), c = Object.assign(document.createElement("canvas"), { width: Math.round(w * k), height: Math.round(h * k) });
+    c.getContext("2d").drawImage(frame, x0, y0, w, h, 0, 0, c.width, c.height);
+    return m.det.detect(c).detections.map(d => ({ categories: d.categories, boundingBox: { originX: x0 + d.boundingBox.originX / k, originY: y0 + d.boundingBox.originY / k, width: d.boundingBox.width / k, height: d.boundingBox.height / k } }));
+  }
+  const areaOf = d => d.boundingBox.width * d.boundingBox.height;
+  const personLike = (frame, d) => d.boundingBox.width >= 0.22 * d.boundingBox.height && !gateBox(frame, d.boundingBox);   // ikke stolpe, ikke flagg
+  async function findPose(frame, at, near, view) {
     const m = await models();
     const W = frame.width, H = frame.height;
-    const all = m.det.detect(frame).detections, real = all.filter(d => !gateBox(frame, d.boundingBox));
-    let ds = real.length ? real : all;   // ser alt ut som flagg, brukes alt som før
-    let b = choose(ds.slice(), at, near);
+    let all = m.det.detect(frame).detections;
+    if (view && !at) all = detectIn(m, frame, { x: view.x - view.w * 0.05, y: view.y - view.h * 0.05, w: view.w * 1.1, h: view.h * 1.1 }).concat(all.filter(d => { const q = d.boundingBox, cx = q.originX + q.width / 2, cy = q.originY + q.height / 2; return cx > view.x && cx < view.x + view.w && cy > view.y && cy < view.y + view.h; }));
+    if (at) {   // trykket: let også i et forstørret utsnitt rundt trykket, så en liten løper blir funnet
+      const hit = d => { const q = d.boundingBox; return at.x >= q.originX - q.width * 0.15 && at.x <= q.originX + q.width * 1.15 && at.y >= q.originY - q.height * 0.1 && at.y <= q.originY + q.height * 1.1; };
+      if (!all.some(hit)) { const sd = view ? Math.max(view.w, view.h) * 0.6 : H * 0.5; all = all.concat(detectIn(m, frame, { x: at.x - sd / 2, y: at.y - sd / 2, w: sd, h: sd })); }
+      const hits = all.filter(hit);
+      if (hits.length) all = hits.filter(d => personLike(frame, d)).length ? hits.filter(d => personLike(frame, d)) : hits;
+    }
+    const real = all.filter(d => personLike(frame, d));
+    let ds = real.length ? real : at ? all : [];   // ser alt ut som flagg eller stolper: heller ingen løper enn vinkler på en stolpe
+    const pick = list => at ? (list.length ? list.sort((a, c) => areaOf(c) - areaOf(a))[0].boundingBox : null)
+      : view ? (list.length ? list.sort((a, c) => areaOf(c) - areaOf(a))[0].boundingBox : null) : choose(list, at, near);
+    let b = pick(ds.slice());
     for (let tries = 0; ; tries++) {
     let box;
     if (b) box = { x: b.originX, y: b.originY, w: b.width, h: b.height };
@@ -8132,8 +8427,8 @@ const GhostCore = (() => {
       crop = { x: cx, y: cy, w: cw, h: ch };
     }
     // 1.9.81: ingen ledd i denne boksen: prøv neste person (høyst tre), så hele bildet
-    if (!lm && !at && b && tries < 2) { ds = ds.filter(d => d.boundingBox !== b); if (ds.length) { b = choose(ds.slice(), at, near); continue; } }
-    if (!lm && !at) {   // reserve: hele bildet
+    if (!lm && b && tries < 2) { ds = ds.filter(d => d.boundingBox !== b); if (ds.length) { b = pick(ds.slice()); continue; } }
+    if (!lm && !at && !view) {   // reserve: hele bildet (ikke når du har zoomet: da er det du ser, det som gjelder)
       const r = m.pose.detect(frame);
       if (r.landmarks[0]) lm = r.landmarks[0].map(p => ({ x: p.x * W, y: p.y * H, v: p.visibility ?? 1 }));
     }
@@ -8162,10 +8457,12 @@ const GhostCore = (() => {
     els.v.pause();
     S.busy = true; ui();
     try {
-      if (!at) { S.frame = grabFrame(); S.t = els.v.currentTime; }
+      if (!at) { S.frame = grabFrame(); S.t = els.v.currentTime;
+        if (S.mark && Math.abs(S.mark.t - S.t) < 0.05) { const k = S.frame.width / els.v.videoWidth; at = { x: S.mark.x * k, y: S.mark.y * k }; }
+        S.view = viewRect(S.frame); if (markEl) markEl.hidden = true; }
       say(at ? (AVL ? "Finding the skier where you tapped …" : "Finner løperen der du trykket …") : (AVL ? "Finding the skier and the joints …" : "Finner løperen og leddene …"));
       let r;
-      try { r = await findPose(S.frame, at, at ? null : viewCenter(S.frame)); }
+      try { r = await findPose(S.frame, at, at ? null : viewCenter(S.frame), S.view); }
       catch (e) { say((AVL ? "Could not load the analysis model. Check your connection and try again." : "Kunne ikke laste analysemodellen. Sjekk nettforbindelsen og prøv igjen."), true); return; }
       const W = S.frame.width, H = S.frame.height;
       S.found = !!r.pts;
@@ -8176,7 +8473,7 @@ const GhostCore = (() => {
       els.clock.hidden = true; els.ctl.hidden = true; els.ctl2.hidden = false; els.result.hidden = false;
       setZoomBtn();
       say(S.found ? (AVL ? "Check that the points are right. Drag a point to move it." : "Sjekk at punktene sitter riktig. Dra et punkt for å flytte det.")
-        : (AVL ? "Could not find the joints automatically. Drag the points into place, or tap «Wrong skier?» and tap the skier." : "Fant ikke leddene automatisk. Dra punktene på plass, eller trykk «Feil løper?» og trykk på løperen."), !S.found);
+        : (AVL ? "Could not find the skier. Tap «Wrong skier?» and tap the skier, or drag the points into place." : "Fant ikke løperen. Trykk «Feil løper?» og trykk på løperen, eller dra punktene på plass."), !S.found);
       draw(); angles();
     } finally { S.busy = false; ui(); }
   }
@@ -8402,7 +8699,7 @@ const GhostCore = (() => {
       if (hn) { hn.hidden = !on("nameView"); if (hn.hidden) hn.pause(); else if (!rm()) heroPlay(hn); } };
     for (const b of document.querySelectorAll(".tabs button[data-view]")) b.addEventListener("click", () => requestAnimationFrame(sync));
     sync(); }
-  const AV_VERSION = "1.9.82 · 20.11.2026";
+  const AV_VERSION = "1.9.93 · 23.11.2026";
   const btn = document.getElementById("menuBtn"), list = document.getElementById("menuList"), about = document.getElementById("about");
   document.getElementById("aboutVer").textContent = (AVL ? "Version " : "Versjon ") + AV_VERSION;
   const setOpen = open => { list.hidden = !open; btn.setAttribute("aria-expanded", String(open)); };
