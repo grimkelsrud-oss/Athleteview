@@ -5027,9 +5027,9 @@ const GhostCore = (() => {
     if (GH.softFilter === true) cfOk = false;
     return cfOk;
   }
-  function frameShown(p) {
+  function frameShown(p, exact) {
     const v = p.v;
-    if (!(AV_IOS || GH.rvfcWait === true) || GH.rvfcWait === false || !v.requestVideoFrameCallback || (p.rvMiss || 0) >= 3) return Promise.resolve();
+    if (!(AV_IOS || GH.rvfcWait === true || exact) || GH.rvfcWait === false || !v.requestVideoFrameCallback || (p.rvMiss || 0) >= (exact ? 12 : 3)) return Promise.resolve();
     return new Promise(res => { let done = false;
       const to = setTimeout(() => { if (!done) { done = true; p.rvMiss = (p.rvMiss || 0) + 1; res(); } }, 150);
       try { v.requestVideoFrameCallback(() => { if (!done) { done = true; clearTimeout(to); p.rvMiss = 0; GH.rvOk = (GH.rvOk || 0) + 1; res(); } }); } catch (e) { done = true; clearTimeout(to); res(); }
@@ -5048,11 +5048,35 @@ const GhostCore = (() => {
       p.pcG.drawImage(v, 0, 0, p.pc.width, p.pc.height); p.pcT = time; p.pcOn = true; GH.snapN = (GH.snapN || 0) + 1;
     } catch (e) { p.pcOn = false; }
   }
-  async function seekSure(p, time) {
+  function frameSig(p) {
+    const v = p.v; if (!p.sigC) { p.sigC = Object.assign(document.createElement("canvas"), { width: 48, height: 27 }); p.sigG = p.sigC.getContext("2d", { willReadFrequently: true }); }
+    try { p.sigG.drawImage(v, 0, 0, 48, 27); return p.sigG.getImageData(0, 0, 48, 27).data; } catch (e) { return null; }
+  }
+  async function freshFrame(p, time) {   // 1.9.97: vent til avspilleren faktisk viser et nytt bilde etter hoppet
+    if (GH.fresh === false) return;
+    let sg = frameSig(p);
+    // 1.9.98: samme tid som forrige gang (f.eks. valgbildet og første analysebilde) skal gi samme bilde, så da ventes det ikke på et nytt
+    const sameT = time != null && p.lastT != null && Math.abs(time - p.lastT) < 0.004; p.lastT = time;
+    if (sameT) p.lastSig = null;
+    const same = (a, b) => { if (!a || !b || a.length !== b.length) return false; for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false; return true; };
+    for (let round = 0; round < 2 && same(sg, p.lastSig); round++) {
+      // test 5: avspilleren kan henge i flere sekunder; da lastes videoen på nytt (høyst 6 ganger per analyse), ellers kommer bildet ett steg for sent
+      if (round) { if (time == null || (GH.freshRev || 0) >= 6) break; GH.freshRev = (GH.freshRev || 0) + 1; await reviveVideo(p); await seekExact(p, time);
+        if (p.v.seeking) await new Promise(r => { p.v.addEventListener("seeked", r, { once: true }); setTimeout(r, 4000); });
+        await new Promise(r => setTimeout(r, 300)); sg = frameSig(p); break; }   // etter ny lasting: ta bildet når det har satt seg (ikke vent på «nytt»)
+      for (let k = 0; k < 160 && same(sg, p.lastSig); k++) {   // test 4: maskinen kan være så travel at bildet kommer etter over 1 s; hopp da på nytt
+        if (k && k % 40 === 0 && time != null) { await seekExact(p, time); GH.freshRe = (GH.freshRe || 0) + 1; }
+        await new Promise(r => setTimeout(r, 25)); sg = frameSig(p); GH.freshWait = (GH.freshWait || 0) + 1; }
+    }
+    // test 3: bildet må også stå stille (to like avtrykk med 40 ms mellom), ellers kan et mellombilde fra hoppet bli brukt
+    for (let k = 0; k < 25; k++) { await new Promise(r => setTimeout(r, 40)); const s2 = frameSig(p); if (same(s2, sg)) break; sg = s2; GH.freshMove = (GH.freshMove || 0) + 1; }
+    p.lastSig = sg;
+  }
+  async function seekSure(p, time, exact) {   // exact (1.9.97): alltid hopp, og vent til bildet vises (samme bilde hver gang)
     if (document.hidden) { GH.hiddenN = (GH.hiddenN || 0) + 1;   // 1.9.74: siden er i bakgrunnen: vent til den vises igjen (videoene står stille imens)
       await new Promise(r => { const h = () => { if (!document.hidden) { document.removeEventListener("visibilitychange", h); setTimeout(r, 400); } }; document.addEventListener("visibilitychange", h); }); }
     if (p.fs && p.fs.ok) { try { await p.fs.frameAt(time); return; } catch (e) { console.warn("framesrc → avspiller", e); } }
-    if (await playGrab(p, time)) return;
+    if (!exact && await playGrab(p, time)) return;
     p.pcOn = false;
     const pause = [0, 300, 1000, 2500, 5000, 8000];   // gi nettleseren tid til å frigjøre minne mellom forsøkene
     for (let k = 0; k < pause.length; k++) {
@@ -5060,7 +5084,7 @@ const GhostCore = (() => {
       await seekExact(p, time);
       if (p.v.seeking) await new Promise(r => { p.v.addEventListener("seeked", r, { once: true }); setTimeout(r, 4000); });
       if (!p.v.error && !p.revP && p.v.readyState < 2) await new Promise(r => { p.v.addEventListener("loadeddata", r, { once: true }); setTimeout(r, 1500); });
-      if (!p.v.error && !p.revP) { p.revN = 0; await frameShown(p); snapFrame(p, time); return; }
+      if (!p.v.error && !p.revP) { p.revN = 0; await frameShown(p, exact); snapFrame(p, time); if (exact) { await freshFrame(p, time); GH.exactN = (GH.exactN || 0) + 1; } return; }
     }
     throw new Error((AVL ? "Video " : "Video ") + p.k + (AVL ? " stopped playing in the browser several times in a row." : " sluttet å spille i nettleseren flere ganger på rad."));
   }
@@ -5071,6 +5095,14 @@ const GhostCore = (() => {
     return { w: x.c.width, h: x.c.height, d: o, g: GhostCore.gates(d, x.c.width, x.c.height, 4) };   // g = røde og blå portflagg
   }
   const lerp = (a, b, f) => a + (b - a) * f;
+  // 1.9.96: myk bevegelse mellom analysebildene (kurve gjennom fire analysepunkter i stedet for rett linje mellom to)
+  const crS = (a, j, f) => { const p1 = a[j], p2 = a[j + 1];
+    if (p1 == null || p2 == null || GH.smoothR === false) return p2 == null ? p1 : p1 == null ? p2 : lerp(p1, p2, f);
+    let p0 = a[j - 1], p3 = a[j + 2]; if (p0 == null) p0 = 2 * p1 - p2; if (p3 == null) p3 = 2 * p2 - p1;
+    const f2 = f * f, f3 = f2 * f; return 0.5 * (2 * p1 + (p2 - p0) * f + (2 * p0 - 5 * p1 + 4 * p2 - p3) * f2 + (3 * p1 - p0 - 3 * p2 + p3) * f3); };
+  const crV = (a, j, f) => { const v1 = a[j], v2 = a[j + 1];
+    if (!v1 || !v2 || GH.smoothR === false) return !v1 ? v2 : !v2 ? v1 : v1.map((v, k) => lerp(v, v2[k], f));
+    const v0 = a[j - 1], v3 = a[j + 2]; return v1.map((_, k) => crS([v0 ? v0[k] : null, v1[k], v2[k], v3 ? v3[k] : null], 1, f)); };
   const lerpBox = (a, b, f) => !a ? b : !b ? a : a.map((v, k) => lerp(v, b[k], f));
 
   async function ghostAnalyze(m, t0, tEnd, picks, wantLines) {
@@ -5245,14 +5277,14 @@ const GhostCore = (() => {
       } else { r.miss++; if (r.v) { r.v = [r.v[0] * 0.8, r.v[1] * 0.8]; } }   // ikke funnet: fortsett i samme retning, litt saktere
       return all;
     };
-    const T = GH.T = { seek: 0, det: 0, feat: 0, reg: 0, seg: 0, draw: 0 }; GH.fixedN = 0; GH.goneN = 0; GH.goneAt = null; GH.roiFix = 0; GH.endAt = null; GH.endWho = null; GH.reseatN = 0; GH.goneFalse = 0; GH.altN = 0; GH.altDet = 0;
+    const T = GH.T = { seek: 0, det: 0, feat: 0, reg: 0, seg: 0, draw: 0 }; GH.exactN = 0; GH.freshWait = 0; GH.freshMove = 0; GH.freshRe = 0; GH.freshRev = 0; GH.fixedN = 0; GH.goneN = 0; GH.goneAt = null; GH.roiFix = 0; GH.endAt = null; GH.endWho = null; GH.reseatN = 0; GH.goneFalse = 0; GH.altN = 0; GH.altDet = 0;
     window.avPlay = { ok: 0, miss: 0 }; [P.A, P.B].forEach(p => { p.pgMiss = p.pgOkN = 0; p.pgBad = false; p.pcOn = false; });
     let tm = performance.now();
     const lap = k => { const now = performance.now(); T[k] += now - tm; tm = now; };
     for (let i = 0; i < N && !st.stopReq; i++) {
       const t = Math.min(tEnd, t0 + i * GH.step);
       tm = performance.now();
-      await Promise.all([A, B].map(x => seekSure(x.p, x.p.s + t)));
+      await Promise.all([A, B].map(x => seekSure(x.p, x.p.s + t, GH.exact !== false)));   // 1.9.97: samme bilde hver gang
       const gA = grabGray(A), gB = grabGray(B); lap("seek");
       const da = detect(A), db = detect(B); lap("det");
       dA.push(da); dB.push(db);
@@ -5552,7 +5584,7 @@ const GhostCore = (() => {
     st.stopReq = false;   // «Stopp her» under analysen: finn skiene for det som er analysert
     for (let i = 0; i < n && !st.stopReq; i++) {
       const t = Math.min(tEnd, t0 + i * GH.step);
-      await Promise.all([A, B].map(x => seekSure(x.p, x.p.s + t)));
+      await Promise.all([A, B].map(x => seekSure(x.p, x.p.s + t, GH.exact !== false)));
       fA[i] = footOf(A, trA[i]);
       const f = footOf(B, trB[i]);
       fB[i] = f && Hs[i] && alpha[i] > 0.5 ? GhostCore.apply(Hs[i], f[0], f[1]) : null;
@@ -5617,7 +5649,7 @@ const GhostCore = (() => {
     const dlg = $("#pickRun"), view = $("#prView"), cv = $("#prCanvas"), g = cv.getContext("2d");
     const shots = {}, one = opt && opt.only;
     for (const k of one ? [one] : ["A", "B"]) {
-      const p = P[k]; await seekSure(p, p.s + t0);
+      const p = P[k]; await seekSure(p, p.s + t0, GH.exact !== false);
       const kk = GH.an / Math.max(SRC(p).videoWidth, SRC(p).videoHeight);
       const c = Object.assign(document.createElement("canvas"), { width: Math.round(SRC(p).videoWidth * kk), height: Math.round(SRC(p).videoHeight * kk) });
       c.getContext("2d").drawImage(SRC(p), 0, 0, c.width, c.height);
@@ -5677,6 +5709,7 @@ const GhostCore = (() => {
       $("#prOk").textContent = (AVL ? `Confirm skier ${k}` : `Bekreft løper ${k}`); $("#prOk").disabled = !s.sel;
       $("#prBack").hidden = k === "A";
       if (zv.z === 1 && s.ds.length !== 1) $("#prHint").textContent += AVL ? " · Pinch or + to zoom" : " · Knip eller + for å forstørre";
+      if (s.sel && !s.sel.box) $("#prHint").textContent = AVL ? "Did not find the skier here. Tap the middle of the skier, or choose a slightly later start frame." : "Fant ikke løperen her. Trykk midt på løperen, eller velg et litt senere startbilde.";
       if (one) {   // hjelp underveis (1.9.44): bare én løper, og brukeren kan hoppe over
         const nm2 = runnerName(P[k]) || (AVL ? `skier ${k}` : (AVL ? `skier ${k}` : `løper ${k}`));
         $("#prTitle").textContent = AVL ? `Lost ${nm2} here. Tap ${nm2}` : `Mistet ${nm2} her. Trykk på ${nm2}`;
@@ -5699,9 +5732,9 @@ const GhostCore = (() => {
       const near0 = best && bd <= tol ? best : null;
       if (bd > 0) {   // 1.9.84: trykket traff ingen boks: let forstørret først, bruk boksen i nærheten bare hvis søket ikke finner noe   // ingen person funnet der: let i et forstørret utsnitt rundt trykket (små løpere langt unna)
         const c = Object.assign(document.createElement("canvas"), { width: 320, height: 320 }), cg = c.getContext("2d"), kb = s.img.width / s.w;
-        best = null; bd = 1e9;
+        best = null; bd = 1e9; let bestSide = 0;
         for (const f0 of [0.22, 0.12, 0.35]) {   // flere forstørrelser: løperen kan være liten eller middels stor
-          const side = Math.max(40, s.h * f0), sx = x - side / 2, sy = y - side / 2;
+          const side = Math.max(40, s.h * f0), sx = x - side / 2, sy = y - side / 2; bestSide = side;
           cg.fillStyle = "#000"; cg.fillRect(0, 0, 320, 320); cg.drawImage(s.img, sx * kb, sy * kb, side * kb, side * kb, 0, 0, 320, 320);
           let ds = [];
           try { ds = (m.det.detect(c).detections || []).map(d => { const b = d.boundingBox, f = side / 320; return [sx + b.originX * f, sy + b.originY * f, b.width * f, b.height * f]; }); } catch (e) {}
@@ -5712,6 +5745,14 @@ const GhostCore = (() => {
             const out = Math.hypot(Math.max(b[0] - x, 0, x - b[0] - b[2]), Math.max(b[1] - y, 0, y - b[1] - b[3]));
             const d = Math.hypot(b[0] + b[2] / 2 - x, b[1] + b[3] / 2 - y); if (out <= 0.5 * b[3] && d < bd) { bd = d; best = b; } }
           if (best) break;
+        }
+        if (best && GH.pickSnap !== false) for (let it = 0; it < 2; it++) {   // 1.9.98: samme boks uansett hvor nøyaktig det ble trykket
+          const side = bestSide, cx = Math.round((best[0] + best[2] / 2) / 4) * 4, cy = Math.round((best[1] + best[3] / 2) / 4) * 4, sx = cx - side / 2, sy = cy - side / 2;
+          cg.fillStyle = "#000"; cg.fillRect(0, 0, 320, 320); cg.drawImage(s.img, sx * kb, sy * kb, side * kb, side * kb, 0, 0, 320, 320);
+          let ds = []; try { ds = (m.det.detect(c).detections || []).map(d => { const b = d.boundingBox, f = side / 320; return [sx + b.originX * f, sy + b.originY * f, b.width * f, b.height * f]; }); } catch (e) {}
+          const pIou = (a, b) => { const w = Math.min(a[0] + a[2], b[0] + b[2]) - Math.max(a[0], b[0]), h = Math.min(a[1] + a[3], b[1] + b[3]) - Math.max(a[1], b[1]); if (w <= 0 || h <= 0) return 0; const i = w * h; return i / (a[2] * a[3] + b[2] * b[3] - i); };
+          let nb = null, ni = 0.3; for (const b of ds) { const v = pIou(b, best); if (v > ni) { ni = v; nb = b; } }
+          if (!nb) break; best = nb; GH.pickSnapN = (GH.pickSnapN || 0) + 1;
         }
         if (best) { s.ds.push(best); bd = 0; } else if (near0) { best = near0; bd = 0; }
       }
@@ -6134,7 +6175,7 @@ const GhostCore = (() => {
       const PW = Math.min(VW, mob ? 960 : 1280), PH = Math.round(VH * PW / VW), K = 21, np = PW * PH;
       const pc = Object.assign(document.createElement("canvas"), { width: PW, height: PH }), pg = pc.getContext("2d", { willReadFrequently: true });
       const S = [];
-      for (let q = 0; q < K; q++) { const t = t0 + (N - 1) * step * q / (K - 1); await seekSure(P.B, P.B.s + t); pg.drawImage(SRC(P.B), 0, 0, PW, PH);
+      for (let q = 0; q < K; q++) { const t = t0 + (N - 1) * step * q / (K - 1); await seekSure(P.B, P.B.s + t, GH.exact !== false); pg.drawImage(SRC(P.B), 0, 0, PW, PH);
         const d = pg.getImageData(0, 0, PW, PH).data, r = new Uint8Array(np * 3); for (let x = 0, y = 0; x < np; x++, y += 4) { r[x * 3] = d[y]; r[x * 3 + 1] = d[y + 1]; r[x * 3 + 2] = d[y + 2]; } S.push(r); }
       const out = pg.createImageData(PW, PH), o = out.data, L = new Float32Array(K), ix = new Int32Array(K);
       for (let x = 0; x < np; x++) { const b = x * 3;
@@ -6164,16 +6205,16 @@ const GhostCore = (() => {
       if (lp && (f < 0.02 || f > 0.98)) { const q = f > 0.5 ? j + 1 : j; if (!lp.buf.has(q)) try { lp.g.drawImage(SRC(P.B), 0, 0, lp.W, lp.H); lp.buf.set(q, lp.g.getImageData(0, 0, lp.W, lp.H).data);
         for (const key of lp.buf.keys()) if (key < q - 21) lp.buf.delete(key); } catch (e) {} }
       // 1) A med automatisk zoom
-      const kA = G.kA, sh = clamp(lerp(G.zoom[2][j], G.zoom[2][j + 1], f) / kA, 2, vh * 4), sw = sh * W / H;
+      const kA = G.kA, sh = clamp(crS(G.zoom[2], j, f) / kA, 2, vh * 4), sw = sh * W / H;
       // små utstikk utenfor A-bildet (fra utjevningen) trekkes inn; store betyr utzooming med vilje
       const snap = (v, size, F) => size <= F && v > -0.04 * size && v + size < F + 0.04 * size ? clamp(v, 0, F - size) : v;
-      const sx = snap(lerp(G.zoom[0][j], G.zoom[0][j + 1], f) / kA - sw / 2, sw, vw), sy = snap(lerp(G.zoom[1][j], G.zoom[1][j + 1], f) / kA - sh / 2, sh, vh);
+      const sx = snap(crS(G.zoom[0], j, f) / kA - sw / 2, sw, vw), sy = snap(crS(G.zoom[1], j, f) / kA - sh / 2, sh, vh);
       const so = H / sh, toOut = (x, y) => [(x / kA - sx) * so, (y / kA - sy) * so];   // A-analysekoordinater → utbilde
       ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.shadowBlur = 0;
       const ax0 = -sx * so, ay0 = -sy * so, ax1 = (vw - sx) * so, ay1 = (vh - sy) * so;   // A-bildet i utbildet
       const out = ax0 > 0.5 || ay0 > 0.5 || ax1 < W - 0.5 || ay1 < H - 0.5;
       const c0 = G.corners[j], c1 = G.corners[j + 1] || c0;
-      const Hm = c0 ? GhostCore.fitH(G.C, c0.map((v, k) => lerp(v, c1 ? c1[k] : v, f)), [0, 1, 2, 3]) : null;
+      const Hm = c0 ? GhostCore.fitH(G.C, crV(G.corners, j, f), [0, 1, 2, 3]) : null;
       if (out) {
         // Utzoomet: Bs film rundt A-bildet (litt dempet), så A-bildet med en tynn kant
         ctx.fillStyle = "#1d2228"; ctx.fillRect(0, 0, W, H);
@@ -6382,8 +6423,8 @@ const GhostCore = (() => {
       };
       // 1.9.44: usikker sporing tones ned (heller ingen ghost enn ghost på feil person)
       const qA = lerp(G.cA[j], G.cA[j + 1], f), qB = lerp(G.cB[j], G.cB[j + 1], f), sm = v => clamp((v - 0.3) / 0.3, 0, 1);
-      const al0b = lerp(G.alpha[j], G.alpha[j + 1], f), al = al0b * sm(qB), bb = lerpBox(G.trB[j], G.trB[j + 1], f);
-      const ab = sm(qA) > 0.02 ? lerpBox(G.trA[j], G.trA[j + 1], f) : null, aHead = ab ? toOut(ab[0] + ab[2] / 2, ab[1]) : null;
+      const al0b = lerp(G.alpha[j], G.alpha[j + 1], f), al = al0b * sm(qB), bb = crV(G.trB, j, f);
+      const ab = sm(qA) > 0.02 ? crV(G.trA, j, f) : null, aHead = ab ? toOut(ab[0] + ab[2] / 2, ab[1]) : null;
       let bHead = null; const cuts = [];
       if (al > 0.02 && bb && c0 && Hm) {
         const cB = cutout("B", SRC(P.B), bb, G.kB, Hm, { alpha: 0.95 * al, tint: `rgba(${GH.blue},.14)`, glow: `rgba(${GH.blue},.6)`, glowW: 0.15, filter: "contrast(1.2) saturate(1.1)", feet: { ab } });
@@ -6479,7 +6520,7 @@ const GhostCore = (() => {
     st.method = `ghost${lines ? " med linjer" : ""} · analyse ${secA.toFixed(1)} s (${G.n} bilder, bakgrunn matchet direkte i ${Math.round(G.okFrac * 100)} %, ${GH.bro || 0} via bro) · video ${((performance.now() - ts) / 1000).toFixed(1)} s` + (GH.cam ? ` · kamerabevegelse A ${GH.cam[0]} / B ${GH.cam[1]} px` : "") + (GH.steadyPx != null ? ` · ro ${GH.steadyPx} px` : "") + (GH.segUse ? ` · utklipp ${GH.segUse}` : "") + (GH.snowCut ? ` · snøsprut fjernet i ${GH.snowCut} bilder` : "") + (GH.segHold ? ` · maske holdt ${GH.segHold}` : "") + (GH.rvOk ? ` · bilde-vent ${GH.rvOk}` : "") + (GH.snapN ? ` · bildekopi ${GH.snapN}` : "") + (GH.filtSoft ? ` · kontrast i kode` : "") + (GH.segNormN ? ` · lysstrukket ${GH.segNormN}` : "") + (GH.reuseN ? ` · samme bilde ${GH.reuseN}` : "") + (GH.fixedN ? ` · faste ting avvist ${GH.fixedN}` : "") + (GH.goneN ? ` · ut av bildet ${GH.goneN}` : "") + (GH.endWho ? ` · slutt: ${GH.endWho} ut av bildet` : "") + (GH.roiFix ? ` · søket rettet sporingen ${GH.roiFix}` : "") + (GH.reseatN ? ` · søket flyttet ${GH.reseatN}` : "") + (GH.goneFalse ? ` · ikke ute likevel ${GH.goneFalse}` : "") + (GH.altDet ? ` · ekstra søk ${GH.altN}/${GH.altDet}` : "") + (GH.wake === true ? " · skjerm holdt på" : GH.wake === false ? " · skjermlås ikke mulig" : "") + (GH.hiddenN ? ` · ventet på synlig side ${GH.hiddenN}` : "") + (GH.plateNote ? ` · ${GH.plateNote} (${GH.plateUse || 0} bilder${GH.plateRej ? `, ${GH.plateRej} avvist` : ""})` : "") + (GH.hdNote ? ` · ${GH.hdNote}` : "") + (r4k ? " · film fra 4K" : "") + (encRe ? ` · ny videokoder ${encRe}` : "") + (window.avPlay && (avPlay.ok || avPlay.miss) ? ` · avspilt ${avPlay.ok}/${avPlay.ok + avPlay.miss}` : "") +
       ` · start A ${(startT() + P.A.s).toFixed(2)} / B ${(startT() + P.B.s).toFixed(2)} s · personfinner ${window.avDet || "?"}` +
       (segFail ? ` · utklipp feilet ${segFail}` : "") + ` · ${cfg.mux === "avc" ? "H.264" : "VP9"} · ` +
-      [P.A, P.B].map(p => p.k + ": " + (p.fs ? `fil (${p.fs.codec}${p.fs.sw ? ", programvare" : ", maskinvare"}${p.fs.ok ? "" : ", falt tilbake"}, ${p.fs.resets} starter${p.fs.misses ? `, ${p.fs.misses} omstart` : ""}${p.fs.check ? `, sjekk ${p.fs.check.d}/${p.fs.check.lum}/${p.fs.check.rep ?? "-"}` : ""}${p.fs.staleBad ? ", samme bilde" : ""}${p.fs.missBad ? ", mister bilder" : ""})` : "avspiller")).join(" · ") + " · " +
+      [P.A, P.B].map(p => p.k + ": " + (p.fs ? `fil (${p.fs.codec}${p.fs.sw ? ", programvare" : ", maskinvare"}${p.fs.ok ? "" : ", falt tilbake"}, ${p.fs.resets} starter${p.fs.misses ? `, ${p.fs.misses} omstart` : ""}${p.fs.check ? `, sjekk ${p.fs.check.d}/${p.fs.check.lum}/${p.fs.check.rep ?? "-"}` : ""}${p.fs.staleBad ? ", samme bilde" : ""}${p.fs.missBad ? ", mister bilder" : ""})` : "avspiller" + (p.fsWhy ? ` (${p.fsWhy})` : ""))).join(" · ") + (GH.exactN ? ` · nøyaktige bilder ${GH.exactN}${GH.freshWait ? `, ventet ${GH.freshWait}` : ""}${GH.freshMove ? `, byttet ${GH.freshMove}` : ""}${GH.freshRe ? `, hoppet på nytt ${GH.freshRe}` : ""}${GH.freshRev ? `, lastet på nytt ${GH.freshRev}` : ""}` : "") + " · " +
       Object.entries(GH.T).map(([k, v]) => `${k} ${(v / 1000).toFixed(1)} s`).join(" · ");
     muxer.finalize();
     done(new Blob([muxer.target.buffer], { type: "video/mp4" }), "mp4");
@@ -6901,7 +6942,7 @@ const GhostCore = (() => {
       // programvare først: forutsigbart, ingen grense på lånte bilder
       // 1.9.55: bare programvare. Maskinvaredekodere (HEVC i Chrome/Windows) ga bilder med feil tidsstempel; da brukes avspilleren
       for (const hw of ["prefer-software"]) { const c = await tryCfg(hw); if (c) cfgs.push(c); }
-      if (!cfgs.length) return null;
+      if (!cfgs.length) { openFrameSource.why = "ingen programvaredekoder for " + (codec.startsWith("hvc") || codec.startsWith("hev") ? "HEVC" : codec); return null; }
       const order = Array.from({ length: n }, (_, i) => i).sort((a, b) => pts[a] - pts[b]);   // visningsrekkefølge
       const step = n > 1 ? (pts[order[n - 1]] - pts[order[0]]) / (n - 1) : 1e6 / 30;
       const t0 = pts[order[0]];
@@ -7038,7 +7079,8 @@ const GhostCore = (() => {
     if (p.fs) try { p.fs.close(); } catch (e) {}
     p.fs = null;
     if (AV_IOS) return;   // 1.9.59: Safari på iPhone ga gjentatte bilder (sjekk rep 3) og falt alltid tilbake; avspilleren bruker også mindre minne
-    try { const fs = await openFrameSource(p.file); if (fs) { fs.file = p.file; fs.shownPts = null; p.fs = fs; } }
+    openFrameSource.why = "";
+    try { const fs = await openFrameSource(p.file); if (fs) { fs.file = p.file; fs.shownPts = null; p.fs = fs; } else p.fsWhy = openFrameSource.why || "ukjent videoformat"; }
     catch (e) { console.warn("framesrc åpning", e); p.fs = null; }
     // 1.9.47: kontroll av bildene fra dekoderen mot videoavspilleren på noen tidspunkt. Avviker de (feil bilde, feil tid,
     // feil farger, f.eks. HDR-video fra iPhone), brukes avspilleren som før 1.9.38.
@@ -8699,7 +8741,7 @@ const GhostCore = (() => {
       if (hn) { hn.hidden = !on("nameView"); if (hn.hidden) hn.pause(); else if (!rm()) heroPlay(hn); } };
     for (const b of document.querySelectorAll(".tabs button[data-view]")) b.addEventListener("click", () => requestAnimationFrame(sync));
     sync(); }
-  const AV_VERSION = "1.9.93 · 23.11.2026";
+  const AV_VERSION = "1.9.99 · 25.11.2026";
   const btn = document.getElementById("menuBtn"), list = document.getElementById("menuList"), about = document.getElementById("about");
   document.getElementById("aboutVer").textContent = (AVL ? "Version " : "Versjon ") + AV_VERSION;
   const setOpen = open => { list.hidden = !open; btn.setAttribute("aria-expanded", String(open)); };
