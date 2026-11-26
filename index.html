@@ -2199,6 +2199,7 @@ body.exporting #stage { position: fixed; inset: 0; z-index: 60; height: auto; mi
 body.exporting .panel .hud, body.exporting .panel .hint, body.exporting .panel .change { display: none !important; }
 .busy { position: fixed; left: 0; right: 0; bottom: 0; z-index: 61; background: #0b1016; color: #fff; padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px)); display: grid; grid-template-columns: 1fr auto; gap: 8px 12px; align-items: center; }
 .busy .bar { grid-column: 1 / -1; background: #2a3742; }
+.endrow { align-items: center; flex-wrap: wrap; } .endrow .endtxt { flex: 1 1 220px; font-size: 14px; opacity: .8; }
 .busy .btn { background: #18212a; color: #fff; border-color: #33414d; min-height: 40px; }
 #busyTxt { font-size: .95rem; }
 
@@ -3168,6 +3169,11 @@ body.exporting .mprog, body.zoomed .mprog { display: none !important; }
     <label class="check" id="linesOpt" hidden><input type="checkbox" id="withLines" autocomplete="off"> Med linjer (vis linjevalget til begge løperne)</label>
     <label for="name">Tittel på analysevideoen (valgfritt)</label>
     <input type="text" id="name" placeholder="F.eks. Storslalåm Hafjell" maxlength="80" autocomplete="off">
+    <div class="row endrow">
+      <button class="btn" id="setEnd" type="button" disabled>Sett slutt her</button>
+      <button class="btn" id="clrEnd" type="button" hidden>Fjern slutt</button>
+      <span class="endtxt" id="endTxt">Analysevideoen går til løpet slutter. Spill av eller dra i tidslinjen, og trykk «Sett slutt her» for å korte den ned.</span>
+    </div>
     <div class="row">
       <button class="btn primary" id="make" type="button" disabled>Lag analysevideo</button>
       <button class="btn" id="stop" type="button" hidden>Stopp her</button>
@@ -3845,7 +3851,7 @@ const GhostCore = (() => {
             c += 0.3 * w * Math.min(appD(p.app, d[8]), appD(startApp, d[8]) + 0.5);   // drakten varierer mye med lys og stilling: bare et lite tillegg
             dm = MA ? 0.75 * dm + 0.25 * Math.min(0.6, motion(pb, d, g)) : 0.2; sn = dm < 0.1 ? sn + g : 0;
             if (L && p.lg != null) c += 0.3 * Math.max(0, lagD(p.lg, L) - 4 - 0.12 * Math.min(i - p.lgi, 40));   // 1.9.88: hopp i tidsforskjell til A
-            c += backPen(p.hist, [dc[0], d[1] + d[3]], hs, i);   // 1.9.90: tilbake dit løperen var
+            if (!(track2.backMax && hs > track2.backMax * H)) c += backPen(p.hist, [dc[0], d[1] + d[3]], hs, i);   // 1.10.3   // 1.9.90: tilbake dit løperen var
             v = p.s + q(d) - c - stillPen(sn) * Math.min(g, 3);
           }
           v -= pj;
@@ -4296,6 +4302,7 @@ const GhostCore = (() => {
     return { min: Math.max(...ps.map(p => -p.s)), max: Math.min(...ps.map(p => p.dur - p.s)) };
   }
   const startT = () => Math.max(0, range().min);
+  const endT = () => { const m = range().max - 0.04; return st.endT != null && st.endT > startT() + 0.3 && st.endT < m ? st.endT : m; };   // 1.10.2
 
   // Coalesced seeking: only one seek in flight per video, the newest target wins.
   function seekTo(p, time) {
@@ -4327,7 +4334,13 @@ const GhostCore = (() => {
     if (!st.dragScrub) els.scrub.value = st.t;
     const ok = both() && !st.recording;
     for (const b of [els.play, els.scrub, els.back, els.fwd, els.make]) b.disabled = !ok;
-    document.body.classList.toggle("exporting", !!st.recording); $("#busy").hidden = !st.recording;
+    { const se = $("#setEnd"), ce = $("#clrEnd"), et = $("#endTxt");   // 1.10.2
+      if (se) { const f = v => v.toFixed(1).replace(".", AVL ? "." : ","), has = st.endT != null && endT() === st.endT, s0 = startT();
+        se.textContent = AVL ? "Set end here" : "Sett slutt her"; ce.textContent = AVL ? "Remove end" : "Fjern slutt";
+        se.disabled = !ok || st.t <= s0 + 0.3; ce.hidden = !has; ce.disabled = !ok;
+        et.textContent = has ? (AVL ? `The analysis video ends ${f(st.endT - s0)} s after the start (the run is ${f(range().max - s0)} s).` : `Analysevideoen slutter ${f(st.endT - s0)} s etter start (løpet er ${f(range().max - s0)} s).`)
+          : (AVL ? "The analysis video runs until the run ends. Play or drag the timeline, and tap «Set end here» to shorten it." : "Analysevideoen går til løpet slutter. Spill av eller dra i tidslinjen, og trykk «Sett slutt her» for å korte den ned."); } }
+    document.body.classList.toggle("exporting", !!st.recording); $("#busy").hidden = !st.recording; if (!st.recording) stopLabel(null);
     els.play.textContent = st.playing ? "❚❚" : "▶";
     els.play.setAttribute("aria-label", st.playing ? "Pause" : (AVL ? "Play" : "Spill av"));
   }
@@ -4341,7 +4354,7 @@ const GhostCore = (() => {
     pause();
     if (p.url) URL.revokeObjectURL(p.url);
     p.url = URL.createObjectURL(file); p.file = file;
-    p.ready = false; p.s = 0; p.name = file.name.replace(/\.[^.]+$/, "");
+    p.ready = false; p.s = 0; p.name = file.name.replace(/\.[^.]+$/, ""); st.endT = null;
     p.v.src = p.url; p.v.load();
     say((AVL ? "Loading " : "Laster ") + file.name + " …");
     if (/ zoom\.mp4$/i.test(file.name)) setTimeout(() => say((AVL ? `«${file.name}» is a zoomed copy. Use the original video (without «zoom» in the name) for the best ghost and lines.` : `«${file.name}» er en zoomet kopi. Bruk originalvideoen (uten «zoom» i navnet) for best ghost og linjer.`)), 1500);
@@ -4731,7 +4744,7 @@ const GhostCore = (() => {
     let encErr = null;
     const enc = new VideoEncoder({ output: (chunk, meta) => { const b = new Uint8Array(chunk.byteLength); chunk.copyTo(b); muxer.addVideoChunkRaw(b, chunk.type, chunk.timestamp, chunk.duration > 0 ? chunk.duration : 33333, meta); }, error: e => { encErr = e; } });
     enc.configure(cfg);
-    const t0 = startT(), tEnd = range().max - 0.04, step = FRAME * st.rate;
+    const t0 = startT(), tEnd = endT(), step = FRAME * st.rate;
     const N = Math.max(1, Math.floor((tEnd - t0) / step));
     const dur = Math.round(1e6 / 30);
     let wake = null;
@@ -5072,6 +5085,11 @@ const GhostCore = (() => {
     for (let k = 0; k < 25; k++) { await new Promise(r => setTimeout(r, 40)); const s2 = frameSig(p); if (same(s2, sg)) break; sg = s2; GH.freshMove = (GH.freshMove || 0) + 1; }
     p.lastSig = sg;
   }
+  function stopLabel(t, tot) {   // 1.10.1
+    const b = document.getElementById("busyStop"); if (!b) return;
+    const f = v => (Math.max(0, v)).toFixed(1).replace(".", AVL ? "." : ",");
+    b.textContent = (AVL ? "Stop here" : "Stopp her") + (t == null ? "" : ` · ${f(t)} s${tot ? (AVL ? ` of ${f(tot)} s` : ` av ${f(tot)} s`) : ""}`);
+  }
   async function seekSure(p, time, exact) {   // exact (1.9.97): alltid hopp, og vent til bildet vises (samme bilde hver gang)
     if (document.hidden) { GH.hiddenN = (GH.hiddenN || 0) + 1;   // 1.9.74: siden er i bakgrunnen: vent til den vises igjen (videoene står stille imens)
       await new Promise(r => { const h = () => { if (!document.hidden) { document.removeEventListener("visibilitychange", h); setTimeout(r, 400); } }; document.addEventListener("visibilitychange", h); }); }
@@ -5282,7 +5300,7 @@ const GhostCore = (() => {
     let tm = performance.now();
     const lap = k => { const now = performance.now(); T[k] += now - tm; tm = now; };
     for (let i = 0; i < N && !st.stopReq; i++) {
-      const t = Math.min(tEnd, t0 + i * GH.step);
+      const t = Math.min(tEnd, t0 + i * GH.step); stopLabel(t - t0, tEnd - t0);
       tm = performance.now();
       await Promise.all([A, B].map(x => seekSure(x.p, x.p.s + t, GH.exact !== false)));   // 1.9.97: samme bilde hver gang
       const gA = grabGray(A), gB = grabGray(B); lap("seek");
@@ -5399,23 +5417,23 @@ const GhostCore = (() => {
     let trA, trB, penB, cA, cB;
     let runTrack = () => {
       const TR = GH.robust === false ? GhostCore.track : GhostCore.track2;   // 1.9.86
-      GhostCore.track2.back = GH.back !== false; GhostCore.track2.wide = GH.size !== false; GhostCore.coursePen.gap = GH.course2 !== false;   // 1.9.90
+      GhostCore.track2.back = GH.back !== false; GhostCore.track2.backMax = GH.backAll === true ? 0 : 0.09; GhostCore.track2.wide = GH.size !== false; GhostCore.coursePen.gap = GH.course2 !== false;   // 1.9.90
       GhostCore.trackConf.thin = GH.robust === false ? 0.55 : 0.36; GhostCore.trackConf.hold = GH.hold === true ? Math.round(1 / GH.step) : 10;   // 1.9.87: GH.hold = true viser beregnede hull inntil ca. 1 s (reserve)
       trA = TR(dA, A.c.width, A.c.height, picks && picks.A, out.map(o => o.MA), anc.A.length ? force(dA, anc.A) : undefined);
       // B kjører samme løype som A: personer som havner langt fra A sitt spor (tilskuere, trenere ved siden av) straffes (1.9.41)
       penB = GhostCore.coursePen(dB, trA, out.map(o => o.MA), Hs, 60);
       if (anc.B.length) penB = force(dB, anc.B, penB);
-      if (GH.lag !== false && GH.robust !== false) penB.lag = GhostCore.courseLag(dB, trA, out.map(o => o.MA), Hs, 120);   // 1.9.88
+      if (GH.lag === true && GH.robust !== false) penB.lag = GhostCore.courseLag(dB, trA, out.map(o => o.MA), Hs, 120);   // 1.9.88
       trB = TR(dB, B.c.width, B.c.height, picks && picks.B, out.map(o => o.MB), penB);
       if (GH.mutual !== false && GH.robust !== false) {   // 1.9.90
         const HsI = Hs.map(h => h ? GhostCore.inv(h) : null);
         let penA = GhostCore.coursePen(dA, trB, out.map(o => o.MB), HsI, 60);
         if (anc.A.length) penA = force(dA, anc.A, penA);
-        if (GH.lag !== false) penA.lag = GhostCore.courseLag(dA, trB, out.map(o => o.MB), HsI, 120);
+        if (GH.lag === true) penA.lag = GhostCore.courseLag(dA, trB, out.map(o => o.MB), HsI, 120);
         trA = TR(dA, A.c.width, A.c.height, picks && picks.A, out.map(o => o.MA), penA);
         penB = GhostCore.coursePen(dB, trA, out.map(o => o.MA), Hs, 60);
         if (anc.B.length) penB = force(dB, anc.B, penB);
-        if (GH.lag !== false) penB.lag = GhostCore.courseLag(dB, trA, out.map(o => o.MA), Hs, 120);
+        if (GH.lag === true) penB.lag = GhostCore.courseLag(dB, trA, out.map(o => o.MA), Hs, 120);
         trB = TR(dB, B.c.width, B.c.height, picks && picks.B, out.map(o => o.MB), penB);
       }
       // hvor sikker sporingen er i hvert bilde (1 = trygg); usikre partier får ikke ghost eller linjer
@@ -5434,6 +5452,50 @@ const GhostCore = (() => {
     runTrack = () => { runTrack0(); if (GH.robust === false) { if (!anc.A.length) trA = trustRoi(dA, trA); if (!anc.B.length) trB = trustRoi(dB, trB); }
       cA = GhostCore.trackConf(trA, dA, null, [0, ...anc.A.map(a => a.i)]); cB = GhostCore.trackConf(trB, dB, penB, [0, ...anc.B.map(a => a.i)]); };
     runTrack();
+    // 1.10.0: hullsøk – let selv etter løperen i hull midt i løpet før brukeren eventuelt spørres
+    if (GH.gapFind !== false && !st.stopReq) {
+      const tG = performance.now(); GH.gapN = 0; GH.gapOk = 0; GH.gapBad = 0; let added = 0;
+      say(AVL ? "Searching for the skiers where they were lost …" : "Leter etter løperne der de ble borte …");
+      for (const k of ["A", "B"]) {
+        const x = k === "A" ? A : B, tr = k === "A" ? trA : trB, c = k === "A" ? cA : cB, Ms = out.map(o => o && o[k === "A" ? "MA" : "MB"]);
+        const good = j => j >= 0 && j < n && tr[j] && c[j] >= 0.45, gaps = [];
+        for (let i = 0; i < n; ) { if (!good(i)) { let e = i; while (e < n && !good(e)) e++; if (e - i >= 4 && e - i <= 75 && good(i - 1) && good(i - 2) && e < n) gaps.push([i, e]); i = e; } else i++; }
+        for (const [g0, g1] of gaps) {
+          if (st.stopReq) break;
+          const b0 = tr[g0 - 1]; let cx = b0[0] + b0[2] / 2, cy = b0[1] + b0[3] / 2, h = Math.max(szOf(b0), 4), vx = 0, vy = 0;
+          const back = [4, 3, 2].find(q => good(g0 - q));
+          if (back) { const bp = tr[g0 - back]; vx = (cx - bp[0] - bp[2] / 2) / (back - 1); vy = (cy - bp[1] - bp[3] / 2) / (back - 1); }
+          const chain = []; let miss = 0;
+          for (let j = g0; j < g1 && miss <= 3; j++) {
+            const M = Ms[j];
+            if (M) { const q = GhostCore.apply(M, cx, cy), kk = Math.sqrt(Math.abs(M[0] * M[4] - M[1] * M[3])) || 1; cx = q[0]; cy = q[1]; h *= kk; vx *= kk; vy *= kk; }
+            const px = cx + vx, py = cy + vy;
+            await seekSure(x.p, x.p.s + t0 + j * GH.step, GH.exact !== false); GH.gapN++;
+            const side = Math.min(Math.max(x.c.width, x.c.height), Math.max(48, h * (5 + miss)));
+            let best = null, bv = 1e9;
+            for (const b of detIn(x, px - side / 2, py - side / 2, side)) {
+              if (b[2] < 0.28 * b[3]) continue;
+              const d = Math.hypot(b[0] + b[2] / 2 - px, b[1] + b[3] / 2 - py) / Math.max(h, 6), sz = Math.abs(Math.log(szOf(b) / h));
+              if (d < 1.2 + 0.3 * miss && sz < 0.45 && d + sz < bv) { bv = d + sz; best = b; }
+            }
+            if (best) { const nx = best[0] + best[2] / 2, ny = best[1] + best[3] / 2; vx = 0.5 * vx + 0.5 * (nx - cx); vy = 0.5 * vy + 0.5 * (ny - cy);
+              cx = nx; cy = ny; h = 0.7 * h + 0.3 * szOf(best); miss = 0; chain.push({ i: j, box: best.slice(0, 4) }); }
+            else { cx = px; cy = py; miss++; }
+          }
+          // kjeden må nå fram til løperen etter hullet: samme sted (innen 1,5 høyder) og omtrent samme størrelse
+          const last = chain[chain.length - 1], b1 = tr[g1];
+          let ok = false;
+          if (last && g1 - last.i <= 4 && chain.length >= 0.5 * (g1 - g0)) {
+            let qx = last.box[0] + last.box[2] / 2 + vx * (g1 - last.i), qy = last.box[1] + last.box[3] / 2 + vy * (g1 - last.i);
+            for (let j = last.i + 1; j <= g1; j++) if (Ms[j]) { const q = GhostCore.apply(Ms[j], qx, qy); qx = q[0]; qy = q[1]; }
+            ok = Math.hypot(b1[0] + b1[2] / 2 - qx, b1[1] + b1[3] / 2 - qy) < 1.5 * Math.max(b1[3], h, 6) && Math.abs(Math.log(szOf(b1) / h)) < 0.6;
+          }
+          if (ok) { anc[k].push(...chain); added += chain.length; GH.gapOk++; } else GH.gapBad++;
+        }
+      }
+      if (added) runTrack();
+      GH.T.gap = performance.now() - tG;
+    }
     // Mistet løperen i et langt parti? Be brukeren peke ut løperen i ett bilde der, og spor på nytt derfra (én gang per løper).
     const lowRun = c => { let best = null; for (let i = 0; i < n; ) { if (c[i] < 0.45) { let k = i; while (k < n && c[k] < 0.45) k++; if (k - i >= 18 && (!best || k - i > best.len)) best = { i0: i, len: k - i }; i = k; } else i++; } return best; };
     if (GH.askHelp !== false && !st.stopReq) for (const k of ["A", "B"]) {
@@ -5583,7 +5645,7 @@ const GhostCore = (() => {
     const fA = new Array(n).fill(null), fB = new Array(n).fill(null);
     st.stopReq = false;   // «Stopp her» under analysen: finn skiene for det som er analysert
     for (let i = 0; i < n && !st.stopReq; i++) {
-      const t = Math.min(tEnd, t0 + i * GH.step);
+      const t = Math.min(tEnd, t0 + i * GH.step); stopLabel(t - t0, tEnd - t0);
       await Promise.all([A, B].map(x => seekSure(x.p, x.p.s + t, GH.exact !== false)));
       fA[i] = footOf(A, trA[i]);
       const f = footOf(B, trB[i]);
@@ -6057,7 +6119,7 @@ const GhostCore = (() => {
     } finally { st.picking = false; ui(); }
     startUI();
     try { sessionStorage.setItem("av.run", JSON.stringify({ at: Date.now(), w: Math.max(SRC(P.A).videoWidth, SRC(P.B).videoWidth) })); } catch (e) {}   // 1.9.58: oppdage at fanen krasjet
-    const t0 = startT(), tEnd = range().max - 0.04, ta = performance.now();
+    const t0 = startT(), tEnd = endT(), ta = performance.now();
     const G = await ghostAnalyze(m, t0, tEnd, picks, lines);
     window.avGhostLast = G;   // for feilsøking
     const secA = (performance.now() - ta) / 1000;
@@ -6197,7 +6259,7 @@ const GhostCore = (() => {
     const chainB = (j, q) => { let M = GhostCore.I3(); for (let h = j; h > q; h--) { const mb = G.out[h] && G.out[h].MB; if (!mb) return null; M = GhostCore.mul(M, mb); } return GhostCore.inv(M); };   // B_j → B_q
     let cutErr = null, shownGap = null, segFail = 0, ts = performance.now(), i = 0, topK = "B";
     for (; i < N && !st.stopReq && !encErr; i++) {
-      const t = t0 + i * step, uu = Math.min(G.n - 1.0001, (t - t0) / GH.step), j = Math.floor(uu), f = uu - j;
+      const t = t0 + i * step, uu = Math.min(G.n - 1.0001, (t - t0) / GH.step), j = Math.floor(uu), f = uu - j; stopLabel(t - t0, (G.n - 1) * GH.step);
       let tm = performance.now();
       try { await Promise.all([P.A, P.B].map(p => seekSure(p, p.s + t))); }
       catch (e) { cutErr = e; break; }   // avspilleren gir opp: lagre filmen fram hit i stedet for å miste alt
@@ -6520,7 +6582,7 @@ const GhostCore = (() => {
     st.method = `ghost${lines ? " med linjer" : ""} · analyse ${secA.toFixed(1)} s (${G.n} bilder, bakgrunn matchet direkte i ${Math.round(G.okFrac * 100)} %, ${GH.bro || 0} via bro) · video ${((performance.now() - ts) / 1000).toFixed(1)} s` + (GH.cam ? ` · kamerabevegelse A ${GH.cam[0]} / B ${GH.cam[1]} px` : "") + (GH.steadyPx != null ? ` · ro ${GH.steadyPx} px` : "") + (GH.segUse ? ` · utklipp ${GH.segUse}` : "") + (GH.snowCut ? ` · snøsprut fjernet i ${GH.snowCut} bilder` : "") + (GH.segHold ? ` · maske holdt ${GH.segHold}` : "") + (GH.rvOk ? ` · bilde-vent ${GH.rvOk}` : "") + (GH.snapN ? ` · bildekopi ${GH.snapN}` : "") + (GH.filtSoft ? ` · kontrast i kode` : "") + (GH.segNormN ? ` · lysstrukket ${GH.segNormN}` : "") + (GH.reuseN ? ` · samme bilde ${GH.reuseN}` : "") + (GH.fixedN ? ` · faste ting avvist ${GH.fixedN}` : "") + (GH.goneN ? ` · ut av bildet ${GH.goneN}` : "") + (GH.endWho ? ` · slutt: ${GH.endWho} ut av bildet` : "") + (GH.roiFix ? ` · søket rettet sporingen ${GH.roiFix}` : "") + (GH.reseatN ? ` · søket flyttet ${GH.reseatN}` : "") + (GH.goneFalse ? ` · ikke ute likevel ${GH.goneFalse}` : "") + (GH.altDet ? ` · ekstra søk ${GH.altN}/${GH.altDet}` : "") + (GH.wake === true ? " · skjerm holdt på" : GH.wake === false ? " · skjermlås ikke mulig" : "") + (GH.hiddenN ? ` · ventet på synlig side ${GH.hiddenN}` : "") + (GH.plateNote ? ` · ${GH.plateNote} (${GH.plateUse || 0} bilder${GH.plateRej ? `, ${GH.plateRej} avvist` : ""})` : "") + (GH.hdNote ? ` · ${GH.hdNote}` : "") + (r4k ? " · film fra 4K" : "") + (encRe ? ` · ny videokoder ${encRe}` : "") + (window.avPlay && (avPlay.ok || avPlay.miss) ? ` · avspilt ${avPlay.ok}/${avPlay.ok + avPlay.miss}` : "") +
       ` · start A ${(startT() + P.A.s).toFixed(2)} / B ${(startT() + P.B.s).toFixed(2)} s · personfinner ${window.avDet || "?"}` +
       (segFail ? ` · utklipp feilet ${segFail}` : "") + ` · ${cfg.mux === "avc" ? "H.264" : "VP9"} · ` +
-      [P.A, P.B].map(p => p.k + ": " + (p.fs ? `fil (${p.fs.codec}${p.fs.sw ? ", programvare" : ", maskinvare"}${p.fs.ok ? "" : ", falt tilbake"}, ${p.fs.resets} starter${p.fs.misses ? `, ${p.fs.misses} omstart` : ""}${p.fs.check ? `, sjekk ${p.fs.check.d}/${p.fs.check.lum}/${p.fs.check.rep ?? "-"}` : ""}${p.fs.staleBad ? ", samme bilde" : ""}${p.fs.missBad ? ", mister bilder" : ""})` : "avspiller" + (p.fsWhy ? ` (${p.fsWhy})` : ""))).join(" · ") + (GH.exactN ? ` · nøyaktige bilder ${GH.exactN}${GH.freshWait ? `, ventet ${GH.freshWait}` : ""}${GH.freshMove ? `, byttet ${GH.freshMove}` : ""}${GH.freshRe ? `, hoppet på nytt ${GH.freshRe}` : ""}${GH.freshRev ? `, lastet på nytt ${GH.freshRev}` : ""}` : "") + " · " +
+      [P.A, P.B].map(p => p.k + ": " + (p.fs ? `fil (${p.fs.codec}${p.fs.sw ? ", programvare" : ", maskinvare"}${p.fs.ok ? "" : ", falt tilbake"}, ${p.fs.resets} starter${p.fs.misses ? `, ${p.fs.misses} omstart` : ""}${p.fs.check ? `, sjekk ${p.fs.check.d}/${p.fs.check.lum}/${p.fs.check.rep ?? "-"}` : ""}${p.fs.staleBad ? ", samme bilde" : ""}${p.fs.missBad ? ", mister bilder" : ""})` : "avspiller" + (p.fsWhy ? ` (${p.fsWhy})` : ""))).join(" · ") + (GH.gapN ? ` · hullsøk ${GH.gapOk}/${GH.gapOk + GH.gapBad} hull, ${GH.gapN} bilder, ${((GH.T.gap || 0) / 1000).toFixed(1)} s` : "") + (GH.exactN ? ` · nøyaktige bilder ${GH.exactN}${GH.freshWait ? `, ventet ${GH.freshWait}` : ""}${GH.freshMove ? `, byttet ${GH.freshMove}` : ""}${GH.freshRe ? `, hoppet på nytt ${GH.freshRe}` : ""}${GH.freshRev ? `, lastet på nytt ${GH.freshRev}` : ""}` : "") + " · " +
       Object.entries(GH.T).map(([k, v]) => `${k} ${(v / 1000).toFixed(1)} s`).join(" · ");
     muxer.finalize();
     done(new Blob([muxer.target.buffer], { type: "video/mp4" }), "mp4");
@@ -6993,7 +7055,7 @@ const GhostCore = (() => {
     // 1.9.48: noen maskinvaredekodere (sett med iPhone-HEVC i Chrome på Windows) gir samme bilde om igjen i nesten et sekund.
     // Hvert nytt bilde får et lite fingeravtrykk; er det helt likt forrige gang flere ganger på rad, brukes avspilleren i stedet.
     // fingeravtrykk: 8 små ruter i full oppløsning (støyen gjør to ekte bilder forskjellige, også fra stativ)
-    let prevSig = null, same = 0;
+    let prevSig = null, same = 0, lastWant = null;   // 1.10.3: lastWant
     const sigNow = () => { const W = canvas.width, H = canvas.height, P = 24, out = [];
       for (let k = 0; k < 8; k++) { const x = Math.floor((0.1 + 0.8 * ((k % 4) / 3)) * (W - P)), y = Math.floor((k < 4 ? 0.3 : 0.7) * (H - P));
         out.push(g.getImageData(x, y, P, P).data); }
@@ -7002,9 +7064,10 @@ const GhostCore = (() => {
     fs.stale = 0;
     async function frameAt(t) {
       const ti = targetOf(t), want = pts[ti];
-      if (want === shownPts) return;
+      if (want === shownPts || want === lastWant) return;   // 1.10.3: samme bilde som sist (f.eks. flere tidspunkt før første bilde)
+      lastWant = null;
       const before = shownPts;
-      await frameAt0(ti, want);
+      await frameAt0(ti, want); lastWant = want;
       if (!fs.watch) return;
       const sg = sigNow(), eq = shownPts === before || sameAsPrev(sg); prevSig = sg;
       if (eq) { same++; fs.stale++; if (same >= 3) { fs.ok = false; fs.staleBad = true; throw new Error("dekoderen gir samme bilde om igjen"); } } else same = 0;
@@ -7125,6 +7188,8 @@ const GhostCore = (() => {
   els.make.addEventListener("click", () => st.kind === "ghost" ? makeGhost() : makeVideo());
   els.stop.addEventListener("click", finishRecording);
   $("#busyStop").addEventListener("click", finishRecording);
+  $("#setEnd").addEventListener("click", () => { if (st.playing) pause(); st.endT = st.t; ui(); });
+  $("#clrEnd").addEventListener("click", () => { st.endT = null; ui(); });
 
   // Saving: the phone's share sheet first (iPhone/Android: choose «Lagre video» to put it in the camera roll),
   // then a plain download on computers.
@@ -8741,7 +8806,7 @@ const GhostCore = (() => {
       if (hn) { hn.hidden = !on("nameView"); if (hn.hidden) hn.pause(); else if (!rm()) heroPlay(hn); } };
     for (const b of document.querySelectorAll(".tabs button[data-view]")) b.addEventListener("click", () => requestAnimationFrame(sync));
     sync(); }
-  const AV_VERSION = "1.9.99 · 25.11.2026";
+  const AV_VERSION = "1.10.3 · 26.11.2026";
   const btn = document.getElementById("menuBtn"), list = document.getElementById("menuList"), about = document.getElementById("about");
   document.getElementById("aboutVer").textContent = (AVL ? "Version " : "Versjon ") + AV_VERSION;
   const setOpen = open => { list.hidden = !open; btn.setAttribute("aria-expanded", String(open)); };
