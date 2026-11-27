@@ -2198,6 +2198,10 @@ input.today { width: 100%; max-width: 520px; box-sizing: border-box; font: inher
 .runner { display: grid; gap: 4px; padding-left: 10px; border-left: 4px solid var(--line); }
 .runner[data-k="A"] { border-left-color: var(--red); } .runner[data-k="B"] { border-left-color: var(--blue); }
 .runner .rs { font-size: .85rem; color: var(--muted); min-height: 1.2em; }
+.nalts { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 4px; font-size: .85rem; color: var(--muted); }
+.nalts button { font: 600 .9rem var(--body); color: var(--ink); background: var(--surface); border: 1.5px solid var(--line); border-radius: 999px; min-height: 36px; padding: 0 12px; cursor: pointer; }
+.nalts button:hover { border-color: var(--ink); }
+.nalts button:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
 .runner[data-state="missing"] .rs { color: var(--red); }
 .runner[data-state="listening"] .rs::before { content: "● "; color: #d9a21b; }
 .runners { display: grid; gap: 12px; grid-template-columns: 1fr 1fr; }
@@ -2282,6 +2286,10 @@ body.zoomed { overflow: hidden; }
 #singleView .sstage .pick .big { color: #fff; }
 #sCanvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; user-select: none; -webkit-user-select: none; cursor: crosshair; background: #000; }
 #sCanvas.grab { cursor: grabbing; }
+#singleView .salert { position: absolute; left: 10px; right: 10px; bottom: 10px; z-index: 5; background: rgba(20,22,26,.92); color: #fff; border-left: 4px solid #ff453a; border-radius: 10px; padding: 10px 12px; font-size: .95rem; line-height: 1.35; box-shadow: 0 4px 16px rgba(0,0,0,.35); }
+#singleView .salert p { margin: 0 0 8px; }
+#singleView .salert .srow { display: flex; gap: 8px; flex-wrap: wrap; }
+#singleView .salert .btn { min-height: 38px; padding: 6px 12px; font-size: .9rem; }
 .shint { position: absolute; left: 50%; top: 8px; transform: translateX(-50%); font-size: .8rem; color: #fff; background: rgba(0,0,0,.62); padding: 3px 10px; border-radius: 12px; white-space: nowrap; pointer-events: none; max-width: calc(100% - 16px); overflow: hidden; text-overflow: ellipsis; }
 .angles { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; }
 .ang { border: 1px solid var(--line); border-left: 5px solid var(--c, var(--line)); border-radius: 8px; padding: 6px 10px; background: var(--bg); }
@@ -3308,8 +3316,8 @@ body.exporting .mprog, body.zoomed .mprog { display: none !important; }
   <div class="side">
     <ol class="how" id="sHow">
       <li><span class="l-no"><b>Velg en video</b> av én løper, helst filmet forfra eller bakfra i en sving du velger.</span><span class="l-en" lang="en"><b>Choose a video</b> of one skier, preferably filmed from the front or from behind in a turn you choose.</span></li>
-      <li><span class="l-no"><b>Stopp videoen på bildet</b> du vil se på, med pil-knappene eller ved å dra i tidslinjen.</span><span class="l-en" lang="en"><b>Stop the video on the frame</b> you want to look at, with the arrow buttons or by dragging the timeline.</span></li>
-      <li><span class="l-no"><b>Trykk «Analyser dette bildet».</b> Athleteview finner løperen og leddene og tegner vinklene.</span><span class="l-en" lang="en"><b>Tap «Analyse this frame».</b> Athleteview finds the skier and the joints and draws the angles.</span></li>
+      <li><span class="l-no"><b>Finn bildet</b> du vil se på: dra sideveis i videoen, eller dra i tidslinjen.</span><span class="l-en" lang="en"><b>Find the frame</b> you want to look at: swipe sideways on the video, or drag the timeline.</span></li>
+      <li><span class="l-no"><b>Zoom inn på løperen</b> med to fingre eller dobbelttrykk, og trykk «Analyser dette bildet». Athleteview leter etter løperen i det du ser. Finner den ikke løperen, får du beskjed.</span><span class="l-en" lang="en"><b>Zoom in on the skier</b> with two fingers or a double-tap, and tap «Analyse this frame». Athleteview looks for the skier in what you see. If it cannot find the skier, it tells you.</span></li>
       <li><span class="l-no"><b>Sjekk punktene.</b> Sitter et punkt feil, drar du det på plass. Vinklene oppdateres med en gang.</span><span class="l-en" lang="en"><b>Check the points.</b> If a point is wrong, drag it into place. The angles update straight away.</span></li>
       <li><span class="l-no"><b>Lagre bildet</b> med vinklene til bilderullen eller en mappe.</span><span class="l-en" lang="en"><b>Save the image</b> with the angles to the camera roll or a folder.</span></li>
     </ol>
@@ -4411,6 +4419,7 @@ const GhostCore = (() => {
   async function hear(p, file, my) {
     if (!window.avHearName) { runnerState(p, "missing", (AVL ? "Enter who is skiing." : "Skriv inn hvem som kjører.")); return; }
     runnerState(p, "listening", (AVL ? "Listening for a name at the start of the video …" : "Lytter etter navn i starten av videoen …"));
+    if (window.avAlts) window.avAlts(p.rs, []);
     let r = null;
     try { r = await window.avHearName(file, t => { if (my === p.hearRun && !p.edited) runnerState(p, "listening", t); }); }
     catch (e) { r = { error: true }; }
@@ -4418,6 +4427,7 @@ const GhostCore = (() => {
     if (p.edited && runnerName(p)) { runnerState(p, "heard", (AVL ? "Name set by you." : "Navn satt av deg.")); return; }
     if (r && r.name) {
       p.run.value = r.name; tag(p);
+      if (window.avAlts) window.avAlts(p.rs, r.alts, r.name, n => { p.run.value = n; p.run.dispatchEvent(new Event("input")); });
       const inText = r.text && r.text.toLowerCase().includes(r.name.toLowerCase().split(" ")[0]);
       runnerState(p, r.known ? "heard" : "check", r.known ? (inText ? (AVL ? `Heard «${r.text}».` : `Hørte «${r.text}».`) : (AVL ? `Recognised ${r.name}.` : `Kjente igjen ${r.name}.`))
         : inText ? (AVL ? `Heard «${r.text}». Check the spelling.` : `Hørte «${r.text}». Sjekk stavingen.`) : (AVL ? "Best guess. Check the name." : "Beste gjetning. Sjekk navnet."));
@@ -7877,7 +7887,7 @@ const GhostCore = (() => {
         part[i].lp = lp; });
     }
     const nm = cands.filter(c => c.n).sort((a, b) => b.lp - a.lp), fr = cands.find(c => c.free);
-    return { best: nm[0] && nm[0].n, lp: nm[0] ? nm[0].lp : -1e9, second: nm[1] ? nm[1].lp : -1e9,
+    return { all: nm.map(c => ({ n: c.n, lp: c.lp })), best: nm[0] && nm[0].n, lp: nm[0] ? nm[0].lp : -1e9, second: nm[1] ? nm[1].lp : -1e9,
       noise: Math.max(...cands.filter(c => c.noise).map(c => c.lp)), free: fr ? fr.lp : -1e9 };
   }
   // Navnet godtas bare når det slår støy og nest beste navn tydelig, og ikke er mye dårligere enn det modellen skrev selv
@@ -7888,6 +7898,12 @@ const GhostCore = (() => {
     for (const n of [...TODAY, ...getRoster().slice().reverse()]) { const k = n.toLowerCase(); if (n && !seen.has(k)) { seen.add(k); names.push(n); } if (names.length >= (TODAY.length ? 24 : 16)) break; }
     if (!names.length) return null;
     const m = await getAsr(); let first = null;
+    if (N3()) {   // 1.10.10: hele de første 8 s mot navnelista (testet: 32 mot 29 av 47 Kvitfjell-klipp)
+      const r = await nameScores(m, audio.full || audio, names, free); window.avNameDbg = r;
+      if (!r || !r.best) return null;
+      const gap = r.lp - r.second;
+      return { name: r.best, sure: r.lp > r.noise && gap > 3, gap, alts: r.all.slice(0, 3).map(x => x.n) };
+    }
     for (const a of [audio, audio.full]) { if (!a) continue;
       const r = await nameScores(m, a, names, free); window.avNameDbg = r; if (!first) first = r;
       if (nameOk(r)) return { name: r.best, sure: true };
@@ -7913,6 +7929,29 @@ const GhostCore = (() => {
     const w = (text || "").replace(/[(\[*"«»♪][^)\]*"«»♪]*[)\]*"«»♪]?/g, " ").replace(/[^\p{L}\p{M}\s'-]+/gu, " ").split(/\s+/).filter(x => x && !/^-/.test(x) && !FILLER.has(x.toLowerCase()));
     return w.slice(0, 2).map(x => x[0].toUpperCase() + x.slice(1).toLowerCase()).join(" ");
   }
+  // 1.10.10: felles valg av navn + inntil tre forslag (brukes av Dobbel, Enkel og Volum)
+  function N3() { try { return localStorage.getItem("av.navn3") !== "0"; } catch (e) { return true; } }
+  async function decideName(audio, text) {
+    let known = text && matchRoster(text), sc = null;
+    if ((N3() || !known) && loud(audio)) try { sc = await scoreRoster(audio, text); } catch (e) { console.warn("navnesammenligning", e); }
+    if (!known && sc && sc.sure) known = sc.name;
+    const near = !known && text && (matchRoster(text, 0.7) || soundAlike(text, sc)), guess = !known && !near && text && guessName(text);
+    const name = known || (N3() ? (sc && sc.name) || near || guess : near || guess || (sc && sc.name)) || looseGuess(text) || "";
+    const alts = [];
+    if (N3()) for (const n of [name, known, near, guess, ...((sc && sc.alts) || [])]) if (n && !alts.some(x => x.toLowerCase() === n.toLowerCase())) alts.push(n);
+    return { known, near, guess, sc, name, alts: alts.slice(0, 3) };
+  }
+  // forslagsknapper rett etter et element; pick(navn) kalles ved trykk. Tom liste fjerner knappene.
+  window.avAlts = (after, alts, current, pick) => {
+    if (!after) return;
+    let box = after.nextElementSibling && after.nextElementSibling.classList.contains("nalts") ? after.nextElementSibling : null;
+    const rest = (alts || []).filter(n => n && (!current || n.toLowerCase() !== current.toLowerCase()));
+    if (!rest.length) { if (box) box.remove(); return; }
+    if (!box) { box = document.createElement("div"); box.className = "nalts"; after.after(box); }
+    const lab = document.createElement("span"); lab.textContent = AVL ? "Or:" : "Eller:";
+    box.replaceChildren(lab, ...rest.map(n => { const b = document.createElement("button"); b.type = "button"; b.textContent = n;
+      b.addEventListener("click", () => { box.remove(); pick(n); }); return b; }));
+  };
   window.avHearName = (file, onNote) => {
     const job = queue.then(async () => {
       note = onNote || null;
@@ -7921,10 +7960,8 @@ const GhostCore = (() => {
         if (onNote) onNote((AVL ? "Listening for a name at the start of the video …" : "Lytter etter navn i starten av videoen …"));
         const audio = await decodeStart(file);
         const text = audio ? await listen(audio) : "";
-        let known = text && matchRoster(text), sc = null;
-        if (!known && loud(audio)) try { sc = await scoreRoster(audio, text); if (sc && sc.sure) known = sc.name; } catch (e) { console.warn("navnesammenligning", e); }
-        const guess = !known && ((text && (matchRoster(text, 0.7) || soundAlike(text, sc) || guessName(text))) || (sc && sc.name) || looseGuess(text));
-        return { text, name: known || guess || "", known: !!known };
+        const d = await decideName(audio, text);
+        return { text, name: d.name, known: !!d.known, alts: d.alts };
       } finally { note = null; }
     });
     queue = job.catch(() => {});
@@ -8099,15 +8136,17 @@ const GhostCore = (() => {
       }
       if (my !== run) return false;
       if (c.edited) continue;
-      let known = text && matchRoster(text), sc = null;
-      if (!known && loud(audio)) { setState(c, "listening", (AVL ? "Comparing with known names …" : "Sammenligner med kjente navn …")); try { sc = await scoreRoster(audio, text); if (sc && sc.sure) known = sc.name; } catch (e) { console.warn("navnesammenligning", e); } }
+      if (loud(audio)) setState(c, "listening", (AVL ? "Comparing with known names …" : "Sammenligner med kjente navn …"));
+      const d = await decideName(audio, text), known = d.known;
       if (my !== run) return false;
       if (c.edited) continue;
-      const near = !known && text && (matchRoster(text, 0.7) || soundAlike(text, sc)), guess = !known && !near && text && guessName(text), unsure = near || (!known && !guess && ((sc && sc.name) || looseGuess(text)));
+      const guess = !known && d.name && d.name === d.guess ? d.guess : "", unsure = !known && !guess ? d.name : "";
+      const altsHere = () => window.avAlts(c.status, d.alts, c.input.value, n => { c.input.value = n; c.input.dispatchEvent(new Event("input")); });
       if (known) { c.input.value = known; setState(c, "heard", text && text.toLowerCase().includes(known.toLowerCase().split(" ")[0]) ? (AVL ? `Heard «${text}».` : `Hørte «${text}».`) : (AVL ? `Recognised ${known}.` : `Kjente igjen ${known}.`)); heard++; }
       else if (unsure) { c.input.value = unsure; setState(c, "check", (AVL ? `Best guess${text ? ` (heard «${text}»)` : ""}. Check the name.` : `Beste gjetning${text ? ` (hørte «${text}»)` : ""}. Sjekk navnet.`)); heard++; }
       else if (guess) { c.input.value = guess; setState(c, "check", (AVL ? `Heard «${text}». New skier? Check the spelling.` : `Hørte «${text}». Ny løper? Sjekk stavingen.`)); heard++; }
       else { setState(c, "missing", (AVL ? "Found no name. Enter who it is." : "Fant ikke noe navn. Skriv inn hvem det er.")); missing++; }
+      altsHere();
       newNames();
     }
     progress(null);
@@ -8309,9 +8348,10 @@ const GhostCore = (() => {
     S.url = URL.createObjectURL(file); S.ready = false; S.name = file.name.replace(/\.[^.]+$/, "");
     els.v.src = S.url; els.v.load();
     if (runner != null) els.runner.value = runner;
-    else { els.runner.value = ""; els.runner.dataset.edited = ""; const my = S.hear = (S.hear || 0) + 1, n = $("#sRunNote");   // 1.9.80: lytt etter navnet også i Enkel
+    else { els.runner.value = ""; els.runner.dataset.edited = ""; const my = S.hear = (S.hear || 0) + 1, n = $("#sRunNote"); if (window.avAlts) window.avAlts(n, []);   // 1.9.80: lytt etter navnet også i Enkel
       if (window.avHearName) { if (n) { n.hidden = false; n.textContent = AVL ? "Listening for a name at the start of the video …" : "Lytter etter navn i starten av videoen …"; }
         window.avHearName(file).then(r => { if (my !== S.hear || els.runner.dataset.edited) return;
+          if (r && r.name && window.avAlts && n) window.avAlts(n, r.alts, r.name, x => { els.runner.value = x; els.runner.dispatchEvent(new Event("input")); });
           if (r && r.name) { els.runner.value = r.name; if (n) n.textContent = r.known ? (AVL ? `Recognised ${r.name}.` : `Kjente igjen ${r.name}.`) : (AVL ? "Best guess. Check the name." : "Beste gjetning. Sjekk navnet."); }
           else if (n) n.textContent = AVL ? "Found no name. Enter it yourself." : "Fant ikke noe navn. Skriv det inn selv."; }).catch(() => { if (n && my === S.hear) n.hidden = true; }); } }
     say((AVL ? "Loading " : "Laster ") + file.name + " …");
@@ -8350,7 +8390,7 @@ const GhostCore = (() => {
     els.v.style.transform = Zs.z > 1.001 ? `translate(${Zs.tx}px, ${Zs.ty}px) scale(${Zs.z})` : "";
     els.stage.classList.toggle("zin", Zs.z > 1.01);
     for (const b of document.querySelectorAll("[data-sz]")) b.setAttribute("aria-pressed", String(Math.abs(Number(b.dataset.sz) - Zs.z) < 0.05));
-    if (!els.v.hidden && S.ready) { els.hint.hidden = false; els.hint.textContent = S.mark ? (AVL ? "Skier marked · tap «Analyse» or tap again to move the mark" : "Løperen er markert · trykk «Analyser» eller trykk på nytt for å flytte") : Zs.z > 1.01 ? (AVL ? "Tap the skier to mark · drag to move · double-tap to zoom out" : "Trykk på løperen for å markere · dra for å flytte · dobbelttrykk for å zoome ut") : (AVL ? "Tap the skier to mark · pinch or double-tap to zoom" : "Trykk på løperen for å markere · klyp eller dobbelttrykk for å zoome"); }
+    if (!els.v.hidden && S.ready) { els.hint.hidden = false; els.hint.textContent = S.mark ? (AVL ? "Skier marked · tap «Analyse» or tap again to move the mark" : "Løperen er markert · trykk «Analyser» eller trykk på nytt for å flytte") : Zs.z > 1.01 ? (AVL ? "Tap the skier to mark · drag to move · double-tap to zoom out" : "Dra for å flytte · trykk på løperen for å markere · dobbelttrykk for å zoome ut") : (AVL ? "Swipe sideways to step · pinch or double-tap to zoom" : "Dra sideveis for å spole · klyp eller dobbelttrykk for å zoome"); }
     placeMark();
   }
   function zoomAt(cx, cy, nz) {
@@ -8365,7 +8405,7 @@ const GhostCore = (() => {
   els.stage.addEventListener("pointerdown", e => {
     if (els.v.hidden || !S.ready || e.target.closest("label,button")) return;
     els.stage.setPointerCapture(e.pointerId); vpts.set(e.pointerId, vrel(e));
-    if (vpts.size === 1) { const p = vrel(e); vg = { mode: "pan", x: p.x, y: p.y, tx: Zs.tx, ty: Zs.ty, moved: false }; }
+    if (vpts.size === 1) { const p = vrel(e); vg = { mode: "pan", x: p.x, y: p.y, tx: Zs.tx, ty: Zs.ty, moved: false, t0: els.v.currentTime }; hideMiss(); }
     else if (vpts.size === 2) {
       const [a, b] = [...vpts.values()];
       vg = { mode: "pinch", d0: Math.hypot(a.x - b.x, a.y - b.y) || 1, m: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, z0: Zs.z, tx0: Zs.tx, ty0: Zs.ty, moved: true };
@@ -8382,6 +8422,10 @@ const GhostCore = (() => {
     const dx = pt.x - vg.x, dy = pt.y - vg.y;
     if (Math.abs(dx) > 6 || Math.abs(dy) > 6) vg.moved = true;
     if (vg.mode === "pan" && Zs.z > 1.01) { Zs.tx = vg.tx + dx; Zs.ty = vg.ty + dy; zApply(); }
+    else if (vg.mode === "pan" && vg.t0 != null && window.avEnkelSwipe !== false && (vg.scrub || (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy) * 1.5))) {   // 1.10.9: spole
+      vg.scrub = true; const span = Math.min(S.dur || 2, 2.5), t = clamp(vg.t0 + dx / (els.stage.clientWidth || 1) * span, 0, Math.max(0, S.dur - 0.02));
+      if (els.v.seeking) S.pendT = t; else { S.pendT = null; seek(t); }
+      els.scrub.value = t; }
   });
   const vEnd = e => {
     if (!vpts.has(e.pointerId)) return;
@@ -8420,7 +8464,9 @@ const GhostCore = (() => {
     const v = els.v, cw = els.stage.clientWidth, ch = els.stage.clientHeight, s = Math.min(cw / v.videoWidth, ch / v.videoHeight), ox = (cw - v.videoWidth * s) / 2, oy = (ch - v.videoHeight * s) / 2;
     markEl.style.left = ((S.mark.x * s + ox) * Zs.z + Zs.tx) + "px"; markEl.style.top = ((S.mark.y * s + oy) * Zs.z + Zs.ty) + "px";
   }
-  els.v.addEventListener("seeked", () => placeMark()); els.v.addEventListener("play", () => { S.mark = null; placeMark(); });
+  els.v.addEventListener("seeked", () => placeMark());
+  els.v.addEventListener("seeked", () => { if (S.pendT != null) { const t = S.pendT; S.pendT = null; seek(t); } else if (!S.drag) els.scrub.value = els.v.currentTime; });
+  els.scrub.addEventListener("input", () => hideMiss()); els.v.addEventListener("play", () => { S.mark = null; placeMark(); });
   // det synlige utsnittet når du har zoomet, i koordinatene til bildet som analyseres
   function viewRect(frame) {
     const v = els.v; if (Zs.z < 1.05 || !v.videoWidth) return null;
@@ -8450,6 +8496,7 @@ const GhostCore = (() => {
     zApply();
   }
   els.toVideo.addEventListener("click", () => { showVideo(); say(""); });
+  els.ctl2.after(els.msg);   // 1.10.9: beskjeder rett under knappene, ikke nederst på siden
 
   // ---- analysemodeller (MediaPipe), lastes først når de trengs. Egne kopier ved siden av siden, ellers fra nettet. ----
   const MP_VER = "0.10.14";
@@ -8530,10 +8577,42 @@ const GhostCore = (() => {
     const x0 = Math.max(0, r.x), y0 = Math.max(0, r.y), w = Math.min(frame.width - x0, r.w), h = Math.min(frame.height - y0, r.h);
     if (w < 8 || h < 8) return [];
     const k = Math.min(4, 640 / Math.max(w, h)), c = Object.assign(document.createElement("canvas"), { width: Math.round(w * k), height: Math.round(h * k) });
-    c.getContext("2d").drawImage(frame, x0, y0, w, h, 0, 0, c.width, c.height);
+    const HI = findPose.hi;   // 1.10.9: full oppløsning fra videoen
+    if (HI) c.getContext("2d").drawImage(HI.el, x0 / HI.k, y0 / HI.k, w / HI.k, h / HI.k, 0, 0, c.width, c.height); else c.getContext("2d").drawImage(frame, x0, y0, w, h, 0, 0, c.width, c.height);
     return m.det.detect(c).detections.map(d => ({ categories: d.categories, boundingBox: { originX: x0 + d.boundingBox.originX / k, originY: y0 + d.boundingBox.originY / k, width: d.boundingBox.width / k, height: d.boundingBox.height / k } }));
   }
   const areaOf = d => d.boundingBox.width * d.boundingBox.height;
+  // 1.10.9: let i overlappende, forstørrede ruter når løperen er for liten for søket i hele bildet
+  function blank(f) {
+    try { const c = Object.assign(document.createElement("canvas"), { width: 16, height: 16 }), g = c.getContext("2d", { willReadFrequently: true }); g.drawImage(f, 0, 0, 16, 16);
+      const d = g.getImageData(0, 0, 16, 16).data; let t = 0; for (let i = 0; i < d.length; i += 4) t += d[i] + d[i + 1] + d[i + 2]; return t / 768 < 4; } catch (e) { return false; }
+  }
+  function gridDetect(m, frame, R) {
+    const side = Math.min(R.w, R.h) * 0.5, cols = Math.max(1, Math.ceil(R.w / side)), rows = Math.max(1, Math.ceil(R.h / side));
+    if (cols * rows < 2) return [];
+    const tw = Math.min(R.w, R.w / cols * 1.3), th = Math.min(R.h, R.h / rows * 1.3), out = [];
+    for (let i = 0; i < cols; i++) for (let j = 0; j < rows; j++)
+      out.push(...detectIn(m, frame, { x: R.x + (cols > 1 ? i * (R.w - tw) / (cols - 1) : 0), y: R.y + (rows > 1 ? j * (R.h - th) / (rows - 1) : 0), w: tw, h: th }));
+    return out;
+  }
+  // 1.10.9: er leddene troverdige? Skuldre over hofter over ankler, en rimelig lang overkropp, og modellen ser leddene.
+  function poseScore(L, box) {
+    const P = i => L[i], mid = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+    const sh = mid(P(11), P(12)), hp = mid(P(23), P(24)), an = mid(P(27), P(28)), kn = mid(P(25), P(26));
+    const torso = Math.hypot(sh.x - hp.x, sh.y - hp.y), leg = Math.hypot(hp.x - an.x, hp.y - an.y), H = Math.max(box.h, box.w * 0.8);
+    if (!(sh.y < hp.y && hp.y < an.y && kn.y < an.y + H * 0.1)) return 0;
+    if (torso < 0.12 * H || leg < 0.15 * H || torso > 1.2 * H) return 0;
+    const inBox = [11, 12, 23, 24, 25, 26, 27, 28].filter(i => P(i).x > box.x - box.w * 0.4 && P(i).x < box.x + box.w * 1.4 && P(i).y > box.y - box.h * 0.4 && P(i).y < box.y + box.h * 1.4).length;
+    if (inBox < 7) return 0;
+    const vis = [11, 12, 23, 24, 25, 26, 27, 28].reduce((a, i) => a + Math.min(1, P(i).v), 0) / 8;
+    return 0.2 + 0.8 * vis;
+  }
+  function dedup(list) {
+    const iou = (a, b) => { const p = a.boundingBox, q = b.boundingBox, x0 = Math.max(p.originX, q.originX), y0 = Math.max(p.originY, q.originY), x1 = Math.min(p.originX + p.width, q.originX + q.width), y1 = Math.min(p.originY + p.height, q.originY + q.height);
+      const i = Math.max(0, x1 - x0) * Math.max(0, y1 - y0); return i / Math.min(areaOf(a), areaOf(b)); };
+    const out = []; for (const d of list.slice().sort((a, b) => areaOf(b) - areaOf(a))) if (!out.some(o => iou(o, d) > 0.6)) out.push(d);
+    return out;
+  }
   const personLike = (frame, d) => d.boundingBox.width >= 0.22 * d.boundingBox.height && !gateBox(frame, d.boundingBox);   // ikke stolpe, ikke flagg
   async function findPose(frame, at, near, view) {
     const m = await models();
@@ -8546,7 +8625,13 @@ const GhostCore = (() => {
       const hits = all.filter(hit);
       if (hits.length) all = hits.filter(d => personLike(frame, d)).length ? hits.filter(d => personLike(frame, d)) : hits;
     }
-    const real = all.filter(d => personLike(frame, d));
+    let real = all.filter(d => personLike(frame, d));
+    if (!real.length && !at && window.avEnkelGrid !== false) {   // 1.10.9: ingen løper: let i rutenett
+      const R = view || { x: 0, y: 0, w: W, h: H };
+      let g = gridDetect(m, frame, R);
+      if (view) g = g.filter(d => { const q = d.boundingBox, cx = q.originX + q.width / 2, cy = q.originY + q.height / 2; return cx > view.x && cx < view.x + view.w && cy > view.y && cy < view.y + view.h; });
+      all = all.concat(g); real = dedup(all.filter(d => personLike(frame, d)));
+    }
     let ds = real.length ? real : at ? all : [];   // ser alt ut som flagg eller stolper: heller ingen løper enn vinkler på en stolpe
     const pick = list => at ? (list.length ? list.sort((a, c) => areaOf(c) - areaOf(a))[0].boundingBox : null)
       : view ? (list.length ? list.sort((a, c) => areaOf(c) - areaOf(a))[0].boundingBox : null) : choose(list, at, near);
@@ -8557,21 +8642,25 @@ const GhostCore = (() => {
     else if (at) { const h = H * 0.35; box = { x: at.x - h * 0.3, y: at.y - h * 0.5, w: h * 0.6, h }; }
     // Utsnitt rundt løperen (med god margin så skiene kommer med), forstørret før leddene finnes
     let lm = null, crop = null;
-    if (box) {
-      const mg = 0.35, cx = box.x - box.w * mg, cy = box.y - box.h * mg, cw = box.w * (1 + 2 * mg), ch = box.h * (1 + 2 * mg);
+    let bestSc = 0;
+    if (box) for (const mg of [0.35, 0.15, 0.7]) {   // 1.10.9: flere utsnitt, beste troverdige ledd vinner
+      const cx = box.x - box.w * mg, cy = box.y - box.h * mg, cw = box.w * (1 + 2 * mg), ch = box.h * (1 + 2 * mg);
       const k = 640 / Math.max(cw, ch);
       const c = Object.assign(document.createElement("canvas"), { width: Math.round(cw * k), height: Math.round(ch * k) });
       const g = c.getContext("2d"); g.fillStyle = "#000"; g.fillRect(0, 0, c.width, c.height);
-      g.drawImage(frame, cx, cy, cw, ch, 0, 0, c.width, c.height);
-      const r = m.pose.detect(c);
-      if (r.landmarks[0]) lm = r.landmarks[0].map(p => ({ x: cx + p.x * cw, y: cy + p.y * ch, v: p.visibility ?? 1 }));
-      crop = { x: cx, y: cy, w: cw, h: ch };
+      const HI = findPose.hi;   // 1.10.8: full oppløsning fra videoen når bildet er nedskalert
+      if (HI) g.drawImage(HI.el, cx / HI.k, cy / HI.k, cw / HI.k, ch / HI.k, 0, 0, c.width, c.height); else g.drawImage(frame, cx, cy, cw, ch, 0, 0, c.width, c.height);
+      let r = null; try { r = m.pose.detect(c); } catch (e) { r = null; }
+      if (!crop) crop = { x: cx, y: cy, w: cw, h: ch };
+      if (r && r.landmarks[0]) { const L = r.landmarks[0].map(p => ({ x: cx + p.x * cw, y: cy + p.y * ch, v: p.visibility ?? 1 })), sc = poseScore(L, box);
+        if (sc > bestSc) { bestSc = sc; lm = L; crop = { x: cx, y: cy, w: cw, h: ch }; }
+        if (sc > 0.8) break; }
     }
     // 1.9.81: ingen ledd i denne boksen: prøv neste person (høyst tre), så hele bildet
     if (!lm && b && tries < 2) { ds = ds.filter(d => d.boundingBox !== b); if (ds.length) { b = pick(ds.slice()); continue; } }
     if (!lm && !at && !view) {   // reserve: hele bildet (ikke når du har zoomet: da er det du ser, det som gjelder)
-      const r = m.pose.detect(frame);
-      if (r.landmarks[0]) lm = r.landmarks[0].map(p => ({ x: p.x * W, y: p.y * H, v: p.visibility ?? 1 }));
+      let r = null; try { r = m.pose.detect(frame); } catch (e) {}
+      if (r && r.landmarks[0]) lm = r.landmarks[0].map(p => ({ x: p.x * W, y: p.y * H, v: p.visibility ?? 1 }));
     }
     if (!lm) return { box: crop || box, pts: null };
     const pts = {};
@@ -8596,28 +8685,73 @@ const GhostCore = (() => {
   async function analyze(at) {
     if (!S.ready || S.busy) return;
     els.v.pause();
-    S.busy = true; ui();
+    S.busy = true; ui(); hideMiss();
+    els.hint.hidden = false; els.hint.textContent = AVL ? "Finding the skier …" : "Finner løperen …";
     try {
-      if (!at) { S.frame = grabFrame(); S.t = els.v.currentTime;
+      if (!at) { S.frame = grabFrame();
+        for (let i = 0; i < 4 && blank(S.frame); i++) { await new Promise(r => setTimeout(r, 120)); S.frame = grabFrame(); }   // 1.10.9: svart bilde fra videoen: hent på nytt S.t = els.v.currentTime;
         if (S.mark && Math.abs(S.mark.t - S.t) < 0.05) { const k = S.frame.width / els.v.videoWidth; at = { x: S.mark.x * k, y: S.mark.y * k }; }
         S.view = viewRect(S.frame); if (markEl) markEl.hidden = true; }
       say(at ? (AVL ? "Finding the skier where you tapped …" : "Finner løperen der du trykket …") : (AVL ? "Finding the skier and the joints …" : "Finner løperen og leddene …"));
       let r;
+      { const v = els.v, k = S.frame.width / (v.videoWidth || S.frame.width);   // 1.10.8
+        findPose.hi = window.avEnkelHi !== false && k < 0.999 && v.paused && Math.abs(v.currentTime - S.t) < 0.02 && v.readyState >= 2 ? { el: v, k } : null; }
       try { r = await findPose(S.frame, at, at ? null : viewCenter(S.frame), S.view); }
-      catch (e) { say((AVL ? "Could not load the analysis model. Check your connection and try again." : "Kunne ikke laste analysemodellen. Sjekk nettforbindelsen og prøv igjen."), true); return; }
+      catch (e) { const loaded = await Promise.resolve(mpP).then(x => !!x, () => false);
+        const t = loaded ? (AVL ? "The analysis failed on this frame. Try a frame or two earlier or later." : "Analysen feilet på dette bildet. Prøv et bilde eller to før eller etter.")
+          : (AVL ? "Could not load the analysis model. Check your connection and try again." : "Kunne ikke laste analysemodellen. Sjekk nettforbindelsen og prøv igjen.");
+        say(t, true); showMiss(t, null); return; }
+      if (!r.pts && window.avEnkelFake !== true) {   // 1.10.9: fant ikke løperen eller leddene: si det tydelig
+        const t = at ? (AVL ? "Could not find a skier where you tapped. Zoom in (pinch or double-tap) and tap the middle of the skier." : "Fant ingen løper der du trykket. Zoom inn (klyp eller dobbelttrykk) og trykk midt på løperen.")
+          : r.box ? (AVL ? "Found the skier, but not the joints. Zoom in closer on the skier and try again, or set the points yourself." : "Fant løperen, men ikke leddene. Zoom nærmere inn på løperen og prøv igjen, eller sett punktene selv.")
+          : S.view ? (AVL ? "Could not find a skier in what you see. Move the zoom so the skier is in the middle, or tap the skier, and try again." : "Fant ingen løper i det du ser. Flytt utsnittet så løperen er midt i bildet, eller trykk på løperen, og prøv igjen.")
+          : (AVL ? "Could not find the skier in this frame. Zoom in on the skier (pinch or double-tap), or tap the skier, and try again." : "Fant ikke løperen i dette bildet. Zoom inn på løperen (klyp eller dobbelttrykk), eller trykk på løperen, og prøv igjen.");
+        say(t, true); showMiss(t, r.box || (S.view ? { x: S.view.x + S.view.w * 0.3, y: S.view.y + S.view.h * 0.15, w: S.view.w * 0.4, h: S.view.h * 0.7 } : null)); return; }
+      showResult(r);
+    } finally { S.busy = false; ui(); }
+  }
+  function showResult(r) {
+    {
+      hideMiss();
       const W = S.frame.width, H = S.frame.height;
       S.found = !!r.pts;
       S.pts = r.pts || defaultPts(r.box, W, H);
       S.outer = guessOuter(S.pts);
       S.box = r.box; S.full = false; S.picking = false;
+      S.hi = null;   // 1.10.8: skarpt utsnitt rundt løperen til visning og lagring
+      if (findPose.hi && r.box) try { const HI = findPose.hi, b = r.box, mg = 1.2, x0 = clamp(b.x - b.w * mg, 0, W), y0 = clamp(b.y - b.h * mg, 0, H), x1 = clamp(b.x + b.w * (1 + mg), 0, W), y1 = clamp(b.y + b.h * (1 + mg), 0, H);
+        const sc = Math.min(1 / HI.k, 1400 / Math.max(1, x1 - x0, y1 - y0));
+        const c = Object.assign(document.createElement("canvas"), { width: Math.max(1, Math.round((x1 - x0) * sc)), height: Math.max(1, Math.round((y1 - y0) * sc)) });
+        c.getContext("2d").drawImage(HI.el, x0 / HI.k, y0 / HI.k, (x1 - x0) / HI.k, (y1 - y0) / HI.k, 0, 0, c.width, c.height);
+        if (sc > 1.01) S.hi = { c, x: x0, y: y0, w: x1 - x0, h: y1 - y0, sc }; } catch (e) { S.hi = null; }
       els.v.hidden = true; els.cv.hidden = false;
       els.clock.hidden = true; els.ctl.hidden = true; els.ctl2.hidden = false; els.result.hidden = false;
       setZoomBtn();
       say(S.found ? (AVL ? "Check that the points are right. Drag a point to move it." : "Sjekk at punktene sitter riktig. Dra et punkt for å flytte det.")
         : (AVL ? "Could not find the skier. Tap «Wrong skier?» and tap the skier, or drag the points into place." : "Fant ikke løperen. Trykk «Feil løper?» og trykk på løperen, eller dra punktene på plass."), !S.found);
       draw(); angles();
-    } finally { S.busy = false; ui(); }
+      if (window.matchMedia && matchMedia("(max-width: 767px)").matches) { const b = els.stage.getBoundingClientRect(); if (b.top < 0 || b.top > innerHeight * 0.5) els.stage.scrollIntoView({ block: "start", behavior: "smooth" }); }
+    }
   }
+  // 1.10.9: beskjed oppå bildet når løperen ikke ble funnet
+  let missEl = null, missBox = null;
+  function showMiss(t, box) {
+    if (!missEl) {
+      missEl = document.createElement("div"); missEl.className = "salert"; missEl.setAttribute("role", "alert");
+      missEl.innerHTML = '<p></p><div class="srow"><button class="btn" type="button" data-a="self"></button><button class="btn" type="button" data-a="ok">OK</button></div>';
+      missEl.querySelector('[data-a="self"]').textContent = AVL ? "Set the points myself" : "Sett punktene selv";
+      missEl.addEventListener("click", e => { const a = e.target.closest("button"); if (!a) return;
+        if (a.dataset.a === "self" && S.frame) { showResult({ box: missBox, pts: null }); say(AVL ? "Drag each point onto the joint." : "Dra hvert punkt til leddet."); }
+        else hideMiss(); });
+      els.stage.appendChild(missEl);
+    }
+    missBox = box; missEl.querySelector("p").textContent = t;
+    missEl.querySelector('[data-a="self"]').hidden = !S.frame;
+    missEl.hidden = false;
+    if (!els.v.hidden) zApply(); else if (S.pts || S.picking) draw();
+    if (window.matchMedia && matchMedia("(max-width: 767px)").matches) { const b = els.stage.getBoundingClientRect(); if (b.bottom > innerHeight || b.top < 0) els.stage.scrollIntoView({ block: "start", behavior: "smooth" }); }
+  }
+  function hideMiss() { if (missEl) missEl.hidden = true; }
 
   // ---- geometri ----
   const mid = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
@@ -8661,6 +8795,9 @@ const GhostCore = (() => {
     const tx = p => ({ x: ox + (p.x - R.x) * k, y: oy + (p.y - R.y) * k });
     g.fillStyle = "#000"; g.fillRect(0, 0, outW, outH);
     g.drawImage(S.frame, R.x, R.y, R.w, R.h, ox, oy, R.w * k, R.h * k);
+    { const Hc = S.hi;   // 1.10.8: skarpere bilde rundt løperen
+      if (Hc && !S.picking) { const ix0 = Math.max(R.x, Hc.x), iy0 = Math.max(R.y, Hc.y), ix1 = Math.min(R.x + R.w, Hc.x + Hc.w), iy1 = Math.min(R.y + R.h, Hc.y + Hc.h);
+        if (ix1 > ix0 && iy1 > iy0 && k > 1.2) g.drawImage(Hc.c, (ix0 - Hc.x) * Hc.sc, (iy0 - Hc.y) * Hc.sc, (ix1 - ix0) * Hc.sc, (iy1 - iy0) * Hc.sc, ox + (ix0 - R.x) * k, oy + (iy0 - R.y) * k, (ix1 - ix0) * k, (iy1 - iy0) * k); } }
     if (!S.pts || S.picking) return { tx, k, ox, oy };
     const L = lines();
     const seg = (l, col) => {
@@ -8843,7 +8980,7 @@ const GhostCore = (() => {
       if (hn) { hn.hidden = !on("nameView"); if (hn.hidden) hn.pause(); else if (!rm()) heroPlay(hn); } };
     for (const b of document.querySelectorAll(".tabs button[data-view]")) b.addEventListener("click", () => requestAnimationFrame(sync));
     sync(); }
-  const AV_VERSION = "1.10.7 · 26.11.2026";
+  const AV_VERSION = "1.10.10 · 27.11.2026";
   const btn = document.getElementById("menuBtn"), list = document.getElementById("menuList"), about = document.getElementById("about");
   document.getElementById("aboutVer").textContent = (AVL ? "Version " : "Versjon ") + AV_VERSION;
   const setOpen = open => { list.hidden = !open; btn.setAttribute("aria-expanded", String(open)); };
