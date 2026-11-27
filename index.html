@@ -7,7 +7,7 @@ window.avWide = function () {   // 1.10.5: hva stikker ut til høyre? (til analy
     var all = document.querySelectorAll("body *");
     for (var i = 0; i < all.length && out.length < 8; i++) { var e = all[i]; if (e.closest("[hidden]")) continue; var r = e.getBoundingClientRect();
       if (r.width > 0 && r.right > W + 1) out.push((e.id ? "#" + e.id : e.tagName.toLowerCase() + (typeof e.className === "string" && e.className ? "." + e.className.trim().split(/\s+/)[0] : "")) + ":" + Math.round(r.right)); }
-    return { t: Math.round(performance.now() / 1000), cw: W, iw: window.innerWidth, sw: document.documentElement.scrollWidth, vvw: vv ? Math.round(vv.width) : null, zoom: vv ? Math.round(vv.scale * 100) / 100 : null, els: out };
+    return { t: Math.round(performance.now() / 1000), cw: W, scr: screen.width, top: window.top === window, iw: window.innerWidth, sw: document.documentElement.scrollWidth, vvw: vv ? Math.round(vv.width) : null, zoom: vv ? Math.round(vv.scale * 100) / 100 : null, els: out };
   } catch (e) { return { err: String(e) }; } };
 window.avWideLog = [];
 window.avWideNote = function (tag) { var w = window.avWide(); w.tag = tag; if ((w.els && w.els.length) || w.sw > w.cw + 1 || (w.zoom && w.zoom > 1.01) || window.avWideLog.length < 2) { window.avWideLog.push(w); if (window.avWideLog.length > 12) window.avWideLog.splice(2, 1); } };
@@ -2396,6 +2396,13 @@ html, body { overflow-x: clip; }
   table { display: block; max-width: 100%; overflow-x: auto; }
 }
 .panel { touch-action: pan-y pinch-zoom; }
+/* 1.10.12: hjelpetekster oppå bildet brytes og holder seg innenfor (hint-patch.py) */
+.zhint, .shint { max-width: calc(100% - 16px); box-sizing: border-box; white-space: normal; text-align: center; overflow-wrap: anywhere; }
+.zhint { width: max-content; }
+.zoom, .zview { max-width: 100%; overflow: hidden; }
+/* 1.10.11: to liggende videoer på stående mobil: A over B (hoyde-patch.py) */
+.stage.stack { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
+body.exporting .stage.stack { height: auto !important; }
 .mprog { position: fixed; z-index: 44; left: 50%; transform: translateX(-50%); top: calc(var(--hdrH, 64px) + 6px);
   width: min(440px, calc(100% - 24px)); box-sizing: border-box; background: var(--surface); color: var(--ink); border: 1px solid var(--line);
   border-radius: 10px; box-shadow: 0 6px 18px rgba(0,0,0,.18); padding: 8px 12px 10px; display: grid; gap: 6px; cursor: pointer; text-align: left; font: inherit; }
@@ -8980,7 +8987,7 @@ const GhostCore = (() => {
       if (hn) { hn.hidden = !on("nameView"); if (hn.hidden) hn.pause(); else if (!rm()) heroPlay(hn); } };
     for (const b of document.querySelectorAll(".tabs button[data-view]")) b.addEventListener("click", () => requestAnimationFrame(sync));
     sync(); }
-  const AV_VERSION = "1.10.10 · 27.11.2026";
+  const AV_VERSION = "1.10.12 · 27.11.2026";
   const btn = document.getElementById("menuBtn"), list = document.getElementById("menuList"), about = document.getElementById("about");
   document.getElementById("aboutVer").textContent = (AVL ? "Version " : "Versjon ") + AV_VERSION;
   const setOpen = open => { list.hidden = !open; btn.setAttribute("aria-expanded", String(open)); };
@@ -9586,6 +9593,35 @@ const GhostCore = (() => {
       was = res.hidden;
     }).observe(res, { attributes: true, attributeFilter: ["hidden"] });
   }
+})();
+</script>
+<script>
+/* 1.10.11 (hoyde-patch.py): A over B for liggende videoer på stående mobil, og fullskjerm over det som faktisk vises */
+(function () {
+  var st = document.getElementById("stage"), vA = document.getElementById("vA"), vB = document.getElementById("vB"), busy = document.getElementById("busy");
+  if (!st || !vA || !vB) return;
+  var mq = window.matchMedia ? window.matchMedia("(max-width: 767px) and (orientation: portrait)") : null;
+  function stack() {
+    var on = window.avStack !== false && mq && mq.matches && vA.videoWidth > vA.videoHeight && vB.videoWidth > vB.videoHeight;
+    st.classList.toggle("stack", !!on);
+    if (on) { var w = st.clientWidth || window.innerWidth, h = w * (vA.videoHeight / vA.videoWidth + vB.videoHeight / vB.videoWidth) + 4;
+      st.style.height = Math.round(Math.min(window.innerHeight * 0.84, Math.max(260, h))) + "px"; }
+    else st.style.height = "";
+  }
+  function fit() {
+    var vv = window.visualViewport, ex = document.body.classList.contains("exporting");
+    if (!ex || !vv || window.avVV === false) { st.style.left = st.style.top = st.style.width = st.style.right = st.style.bottom = st.style.boxSizing = ""; if (!ex) stack();
+      if (busy) busy.style.left = busy.style.width = busy.style.right = busy.style.bottom = busy.style.top = ""; return; }
+    st.style.left = vv.offsetLeft + "px"; st.style.top = vv.offsetTop + "px"; st.style.width = vv.width + "px"; st.style.right = "auto";
+    st.style.bottom = "auto"; st.style.boxSizing = "border-box"; st.style.setProperty("height", vv.height + "px", "important");
+    if (busy) { busy.style.left = vv.offsetLeft + "px"; busy.style.width = vv.width + "px"; busy.style.right = "auto"; busy.style.bottom = "auto";
+      busy.style.top = Math.round(vv.offsetTop + vv.height - busy.offsetHeight) + "px"; }
+  }
+  vA.addEventListener("loadedmetadata", stack); vB.addEventListener("loadedmetadata", stack);
+  window.addEventListener("resize", function () { stack(); fit(); }); window.addEventListener("orientationchange", function () { setTimeout(function () { stack(); fit(); }, 300); });
+  if (window.visualViewport) { window.visualViewport.addEventListener("resize", fit); window.visualViewport.addEventListener("scroll", fit); }
+  new MutationObserver(function () { fit(); }).observe(document.body, { attributes: true, attributeFilter: ["class"] });
+  window.avStackNow = stack;
 })();
 </script>
 </body>
