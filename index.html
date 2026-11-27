@@ -2400,6 +2400,21 @@ html, body { overflow-x: clip; }
 .zhint, .shint { max-width: calc(100% - 16px); box-sizing: border-box; white-space: normal; text-align: center; overflow-wrap: anywhere; }
 .zhint { width: max-content; }
 .zoom, .zview { max-width: 100%; overflow: hidden; }
+/* 1.10.13: steg 2 startsted og 4K-linje (start-patch.py) */
+.startstep { order: 1; margin: 10px 0 0; padding: 12px 14px; border: 2px solid var(--blue); border-radius: 10px; background: var(--surface, #fff); }
+.startstep.done { border-color: #1f9d55; }
+.startstep p { margin: 0 0 8px; }
+.startstep .ssrow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.startstep .ssok { font-weight: 700; color: #1f9d55; min-width: 0; margin-right: 8px; }
+.startstep .ssask { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line, #dde3e8); }
+.hdnote { order: 1; margin: 8px 0 0; }
+.panel .stok { position: absolute; left: 8px; top: 62px; font-size: .75rem; font-weight: 700; color: #fff; background: #1f9d55; padding: 2px 6px; border-radius: 4px; pointer-events: none; }
+body.exporting .panel .stok { display: none; }
+#make.go { box-shadow: 0 0 0 3px rgba(31,157,85,.45); }
+/* 1.10.13: løperne vises mens analysevideoen lages (live-patch.py) */
+.avlive { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 4; pointer-events: none; background: #000; display: none; }
+body.exporting .avlive.on { display: block; }
+#stage .avlive.out { z-index: 6; }
 /* 1.10.11: to liggende videoer på stående mobil: A over B (hoyde-patch.py) */
 .stage.stack { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
 body.exporting .stage.stack { height: auto !important; }
@@ -2558,7 +2573,7 @@ body.exporting .mprog, body.zoomed .mprog { display: none !important; }
         <p>Dobbel spiller av to videoer fra samme løype samtidig, så du ser hvor løperne vinner og taper tid. Du kan lagre resultatet som en analysevideo med løpernavn og Athleteview-logo.</p>
       </div></details>
       <details><summary>Hvordan bruker jeg Dobbel?</summary><div class="faqa">
-        <ol><li>Velg to videoer fra samme løype, helst filmet fra samme sted (det må det være for ghost). Sier du løperens navn høyt i starten av opptaket, så fylles navnet inn automatisk.</li><li>Dra sidelengs på hver video til begge løperne har samme startpunkt. Der du stiller dem likt, starter analysevideoen. Trykk «⤢ Forstørr» for å se én video i stort format og finjustere.</li><li>Lag analysevideoen: side om side, som ghost eller ghost med linjer. Side om side er klar på noen sekunder, ghost og ghost med linjer tar gjerne 1–4 minutter. La siden være åpen til den er ferdig.</li><li>Se analysevideoen, og lagre den på enheten du bruker.</li></ol>
+        <ol><li>Velg to videoer fra samme løype, helst filmet fra samme sted (det må det være for ghost). Sier du løperens navn høyt i starten av opptaket, så fylles navnet inn automatisk.</li><li>Dra sidelengs på hver video til begge løperne har samme startpunkt. Der du stiller dem likt, starter analysevideoen. Eller trykk «Sett start» for å se én video i stort format, finjustere og trykke «Bruk som start». Et grønt merke viser at startstedet er satt.</li><li>Lag analysevideoen: side om side, som ghost eller ghost med linjer. Side om side er klar på noen sekunder, ghost og ghost med linjer tar gjerne 1–4 minutter. La siden være åpen til den er ferdig.</li><li>Se analysevideoen, og lagre den på enheten du bruker.</li></ol>
       </div></details>
       <details><summary>Hvordan får løperne navn?</summary><div class="faqa">
         <p>Si løperens navn høyt når du starter opptaket, så fylles navnet inn automatisk. Du kan også skrive navnet selv under «Løpere». Navn du har brukt før, huskes på enheten.</p>
@@ -2688,6 +2703,9 @@ body.exporting .mprog, body.zoomed .mprog { display: none !important; }
       </div></details>
       <details><summary>HD eller 4K?</summary><div class="faqa">
         <p>Begge fungerer. 4K gir best resultat, fordi videoen kan zoomes mer inn på løperne: ca. 5× i 4K mot ca. 2,5× i HD (1080p).</p>
+      </div></details>
+      <details><summary>Hvorfor blir 4K gjort om til HD på mobil?</summary><div class="faqa">
+        <p>En telefon har for lite minne til å analysere to 4K-videoer samtidig. På mobil gjøres derfor 4K-videoer om til HD (1080p) på telefonen før analysen. Det tar litt tid, og analysevideoen blir i HD. Originalvideoene dine endres ikke. Vil du ha full 4K i analysen, bruker du Athleteview på en PC.</p>
       </div></details>
       <details><summary>Hvilken bildefrekvens bør jeg velge?</summary><div class="faqa">
         <p>30 bilder per sekund holder og gir mindre filer. Vil du lage sakte film på ½× eller ¼×, gir 60 bilder per sekund jevnere bevegelser. 25 fungerer også.</p>
@@ -2836,7 +2854,7 @@ body.exporting .mprog, body.zoomed .mprog { display: none !important; }
         <p>Double plays two videos from the same course at the same time, so you can see where the skiers gain and lose time. You can save the result as an analysis video with the skiers' names and the Athleteview logo.</p>
       </div></details>
       <details><summary>How do I use Double?</summary><div class="faqa">
-        <ol><li>Choose two videos from the same course, preferably filmed from the same spot (it must be for ghost). If you say the skier's name out loud at the start of the recording, the name is filled in automatically.</li><li>Drag sideways on each video until both skiers have the same start point. The analysis video starts where you line them up. Tap «⤢ Enlarge» to see one video in large format and fine-tune.</li><li>Make the analysis video: side by side, as a ghost or as a ghost with lines. Side by side is ready in a few seconds, ghost and ghost with lines usually take 1–4 minutes. Keep the page open until it is finished.</li><li>Watch the analysis video, and save it on the device you are using.</li></ol>
+        <ol><li>Choose two videos from the same course, preferably filmed from the same spot (it must be for ghost). If you say the skier's name out loud at the start of the recording, the name is filled in automatically.</li><li>Drag sideways on each video until both skiers have the same start point. The analysis video starts where you line them up. Or tap «Set start» to see one video in large format, fine-tune and tap «Use as start». A green mark shows that the start point is set.</li><li>Make the analysis video: side by side, as a ghost or as a ghost with lines. Side by side is ready in a few seconds, ghost and ghost with lines usually take 1–4 minutes. Keep the page open until it is finished.</li><li>Watch the analysis video, and save it on the device you are using.</li></ol>
       </div></details>
       <details><summary>How do the skiers get their names?</summary><div class="faqa">
         <p>Say the skier's name out loud when you start the recording, and the name is filled in automatically. You can also type the name yourself under «Skiers». Names you have used before are remembered on the device.</p>
@@ -2966,6 +2984,9 @@ body.exporting .mprog, body.zoomed .mprog { display: none !important; }
       </div></details>
       <details><summary>HD or 4K?</summary><div class="faqa">
         <p>Both work. 4K gives the best result, because the video can zoom further in on the skiers: about 5× in 4K versus about 2.5× in HD (1080p).</p>
+      </div></details>
+      <details><summary>Why is 4K converted to HD on a phone?</summary><div class="faqa">
+        <p>A phone does not have enough memory to analyse two 4K videos at the same time. On a phone, 4K videos are therefore converted to HD (1080p) on the phone before the analysis. It takes a little time, and the analysis video will be in HD. Your original videos are not changed. If you want full 4K in the analysis, use Athleteview on a PC.</p>
       </div></details>
       <details><summary>Which frame rate should I choose?</summary><div class="faqa">
         <p>30 frames per second is enough and gives smaller files. If you want to make slow motion at ½× or ¼×, 60 frames per second gives smoother movement. 25 also works.</p>
@@ -3138,7 +3159,7 @@ body.exporting .mprog, body.zoomed .mprog { display: none !important; }
       <span class="hint" hidden>← dra →</span>
       <div class="hud" hidden>
         <button type="button" data-step="-1" aria-label="Ett bilde tilbake for A">‹</button>
-        <button type="button" class="zbtn" data-zoom aria-label="Forstørr video A">⤢ Forstørr</button>
+        <button type="button" class="zbtn" data-zoom aria-label="Sett start for video A"><span class="l-no">Sett start</span><span class="l-en" lang="en">Set start</span></button>
         <button type="button" data-step="1" aria-label="Ett bilde frem for A">›</button>
       </div>
     </div>
@@ -3155,11 +3176,21 @@ body.exporting .mprog, body.zoomed .mprog { display: none !important; }
       <span class="hint" hidden>← dra →</span>
       <div class="hud" hidden>
         <button type="button" data-step="-1" aria-label="Ett bilde tilbake for B">‹</button>
-        <button type="button" class="zbtn" data-zoom aria-label="Forstørr video B">⤢ Forstørr</button>
+        <button type="button" class="zbtn" data-zoom aria-label="Sett start for video B"><span class="l-no">Sett start</span><span class="l-en" lang="en">Set start</span></button>
         <button type="button" data-step="1" aria-label="Ett bilde frem for B">›</button>
       </div>
     </div>
   </div>
+  <div class="startstep" id="startStep" hidden>
+    <p class="sst"><b><span class="l-no">Steg 2: Sett samme startsted</span><span class="l-en" lang="en">Step 2: Set the same start point</span></b></p>
+    <p class="ssd"><span class="l-no">Dra hver video sidelengs til løperen er på samme sted, for eksempel ut av startporten. Eller trykk «Sett start».</span><span class="l-en" lang="en">Drag each video sideways until the skier is at the same place, for example leaving the start gate. Or tap «Set start».</span></p>
+    <div class="ssrow">
+      <button class="btn" type="button" data-ss="A"><span class="l-no">Sett start A</span><span class="l-en" lang="en">Set start A</span></button><span class="ssok" data-ok="A"></span>
+      <button class="btn" type="button" data-ss="B"><span class="l-no">Sett start B</span><span class="l-en" lang="en">Set start B</span></button><span class="ssok" data-ok="B"></span>
+    </div>
+    <div class="ssask" hidden><p></p><div class="ssrow"><button class="btn primary" type="button" data-ask="go"></button><button class="btn" type="button" data-ask="set"></button></div></div>
+  </div>
+  <p class="note hdnote" id="hdNote" hidden></p>
 
 
   <div class="clockrow">
@@ -3181,11 +3212,10 @@ body.exporting .mprog, body.zoomed .mprog { display: none !important; }
   <div class="side">
   <ol class="how" id="how">
       <li><span class="l-no"><b>Velg to videoer</b> fra samme løype, helst filmet fra samme sted (det må det være for ghost). Sier du løperens navn høyt i starten av opptaket, så fylles navnet inn automatisk. Jo likere videoene er filmet, desto mer presis og visuelt bra blir analysevideoen. Les <a href="#" class="tipslink" onclick="var d=document.getElementById('tips');if(d){d.showModal?d.showModal():d.setAttribute('open','');}return false;">Tips om filming</a> for å få best mulig resultat.</span><span class="l-en" lang="en"><b>Choose two videos</b> from the same course, preferably filmed from the same spot (it must be for ghost). If you say the skier's name out loud at the start of the recording, the name is filled in automatically. The more alike the two videos are filmed, the more precise and better-looking the analysis video becomes. Read <a href="#" class="tipslink" onclick="var d=document.getElementById('tips');if(d){d.showModal?d.showModal():d.setAttribute('open','');}return false;">Filming tips</a> to get the best possible result.</span></li>
-      <li><span class="l-no"><b>Dra sidelengs på hver video</b> til begge løperne har samme startpunkt. Der du stiller dem likt, starter analysevideoen. Trykk <b>⤢ Forstørr</b> for å se én video i stort format og finjustere.</span><span class="l-en" lang="en"><b>Drag sideways on each video</b> until both skiers have the same start point. The analysis video starts where you line them up. Tap <b>⤢ Enlarge</b> to see one video in large format and fine-tune.</span></li>
+      <li><span class="l-no"><b>Dra sidelengs på hver video</b> til begge løperne har samme startpunkt. Der du stiller dem likt, starter analysevideoen. Eller trykk <b>Sett start</b> for å se én video i stort format og finjustere.</span><span class="l-en" lang="en"><b>Drag sideways on each video</b> until both skiers have the same start point. The analysis video starts where you line them up. Or tap <b>Set start</b> to see one video in large format and fine-tune.</span></li>
       <li><span class="l-no"><b>Lag analysevideoen</b>: side om side, som ghost eller ghost med linjer. Løpernavnene og Athleteview-logoen kommer med i videoen. Videoen lages fra startpunktet i valgt hastighet. Side om side er klar på noen sekunder, ghost og ghost med linjer tar gjerne 1–4 minutter, avhengig av videofilene. La siden være åpen til den er ferdig. Alt skjer på enheten du bruker (mobil, nettbrett eller PC), ingenting lastes opp.</span><span class="l-en" lang="en"><b>Make the analysis video</b>: side by side, as a ghost or as a ghost with lines. The skiers' names and the Athleteview logo are included in the video. The video is made from the start point at the chosen speed. Side by side is ready in a few seconds, ghost and ghost with lines usually take 1–4 minutes, depending on the video files. Keep the page open until it is finished. Everything happens on the device you are using (phone, tablet or PC), nothing is uploaded.</span></li>
       <li><span class="l-no"><b>Se analysevideoen</b>, og lagre den på enheten du bruker.</span><span class="l-en" lang="en"><b>Watch the analysis video</b>, and save it on the device you are using.</span></li>
     </ol>
-  <p class="note kbd">På PC: slipp videofiler rett på feltene. Mellomrom spiller av, piltastene flytter ett bilde, dobbeltklikk på en video forstørrer den.</p>
 
   <section class="card" id="runners">
     <h2>Løpere</h2>
@@ -3267,7 +3297,7 @@ body.exporting .mprog, body.zoomed .mprog { display: none !important; }
         <button type="button" data-zl="2" aria-pressed="false">2×</button>
         <button type="button" data-zl="3" aria-pressed="false">3×</button>
       </div>
-      <button class="btn primary" id="zDone" type="button">Ferdig</button>
+      <button class="btn primary" id="zDone" type="button"><span class="l-no">Bruk som start</span><span class="l-en" lang="en">Use as start</span></button>
     </div>
     <div class="zview" id="zView"><span class="zhint" id="zHint"></span></div>
     <div class="zctl">
@@ -4400,7 +4430,7 @@ const GhostCore = (() => {
     pause();
     if (p.url) URL.revokeObjectURL(p.url);
     p.url = URL.createObjectURL(file); p.file = file;
-    p.ready = false; p.s = 0; p.name = file.name.replace(/\.[^.]+$/, ""); st.endT = null;
+    p.ready = false; p.s = 0; p.startSet = false; p.name = file.name.replace(/\.[^.]+$/, ""); st.endT = null;
     p.v.src = p.url; p.v.load();
     say((AVL ? "Loading " : "Laster ") + file.name + " …");
     if (/ zoom\.mp4$/i.test(file.name)) setTimeout(() => say((AVL ? `«${file.name}» is a zoomed copy. Use the original video (without «zoom» in the name) for the best ghost and lines.` : `«${file.name}» er en zoomet kopi. Bruk originalvideoen (uten «zoom» i navnet) for best ghost og linjer.`)), 1500);
@@ -4486,7 +4516,7 @@ const GhostCore = (() => {
       p.s = frame - st.t;
       seekTo(p, frame); ui();
     });
-    const end = () => { if (drag) autoStart(); drag = null; };
+    const end = () => { if (drag) { if (Math.abs(p.s - drag.s) > 0.001) p.startSet = true; autoStart(); window.avStartUI && window.avStartUI(); } drag = null; };
     p.panel.addEventListener("pointerup", end);
     p.panel.addEventListener("pointercancel", end);
     $("[data-zoom]", p.panel).addEventListener("click", () => zOpen(p));
@@ -4501,7 +4531,7 @@ const GhostCore = (() => {
     for (const b of p.panel.querySelectorAll("[data-step]")) b.addEventListener("click", () => {
       if (st.playing) pause();
       const frame = clamp(p.s + st.t + Number(b.dataset.step) * FRAME, 0, p.dur - 0.02);
-      p.s = frame - st.t; seekTo(p, frame); autoStart();
+      p.s = frame - st.t; p.startSet = true; seekTo(p, frame); autoStart(); window.avStartUI && window.avStartUI();
     });
   }
 
@@ -4550,6 +4580,8 @@ const GhostCore = (() => {
   els.back.addEventListener("click", () => stepBoth(-1));
   els.fwd.addEventListener("click", () => stepBoth(1));
   // Startpunktet settes automatisk: der du sist justerte en av videoene, starter analysevideoen.
+  window.avDuoStart = () => [P.A, P.B].map(p => ({ k: p.k, ready: !!p.ready, set: !!p.startSet, s: p.s + st.t, big: Math.max(p.v.videoWidth || 0, p.v.videoHeight || 0) > 2000 || (!!p.hdFile && p.hdFile === p.file) }));   // 1.10.13
+  window.avDuoZoom = k => { const p = P[k]; if (p && p.ready) zOpen(p); };
   function autoStart() {
     if (!both()) return;
     for (const p of [P.A, P.B]) p.s += st.t;
@@ -5362,6 +5394,7 @@ const GhostCore = (() => {
       // første bilde: løperen du bekreftet er med, også om personfinneren ikke ser den her
       if (i === 0) for (const [ds, bx] of [[da, picks && picks.bA], [db, picks && picks.bB]]) if (bx && !ds.some(q => iou(q, bx) > 0.5)) ds.push([...bx.slice(0, 4), 0.9]);
       dA[i] = roiFind(A, roi.A, o && o.MA, da, FA[i - 1], fa); dB[i] = roiFind(B, roi.B, o && o.MB, db, FB[i - 1], fb);
+      if (window.avLive) { const mk = (x, r) => r && r.c && !r.gone ? [r.c[0] / x.k, r.c[1] / x.k, r.h / x.k] : null; window.avLive(SRC(A.p), SRC(B.p), { A: mk(A, roi.A), B: mk(B, roi.B) }); }   // 1.10.13
       if (GH.robust !== false) for (const [x, ds] of [[A, dA[i]], [B, dB[i]]]) for (const b of ds) { b[8] = appOf(x, b); b[9] = flagLike(x, b) ? 1 : 0; }   // 1.9.86
       lap("det");
       // 1.9.91: sporingen så langt bestemmer hvor søket leter, og om løperen virkelig har kjørt ut
@@ -5696,6 +5729,7 @@ const GhostCore = (() => {
       const t = Math.min(tEnd, t0 + i * GH.step); stopLabel(t - t0, tEnd - t0);
       await Promise.all([A, B].map(x => seekSure(x.p, x.p.s + t, GH.exact !== false)));
       fA[i] = footOf(A, trA[i]);
+      if (window.avLive) { const mk = (x, b) => b ? [(b[0] + b[2] / 2) / x.k, (b[1] + b[3] / 2) / x.k, b[3] / x.k] : null; window.avLive(SRC(A.p), SRC(B.p), { A: mk(A, trA[i]), B: mk(B, trB[i]) }); }   // 1.10.13
       const f = footOf(B, trB[i]);
       fB[i] = f && Hs[i] && alpha[i] > 0.5 ? GhostCore.apply(Hs[i], f[0], f[1]) : null;
       progress(0.45);
@@ -6312,6 +6346,7 @@ const GhostCore = (() => {
       try { await Promise.all([P.A, P.B].map(p => seekSure(p, p.s + t))); }
       catch (e) { cutErr = e; break; }   // avspilleren gir opp: lagre filmen fram hit i stedet for å miste alt
       GH.T.seek2 = (GH.T.seek2 || 0) + performance.now() - tm; tm = performance.now();
+      if (window.avLiveOut && i > 0) window.avLiveOut(canvas);   // 1.10.13: vis analysevideoen mens den lages
       if (lp && (f < 0.02 || f > 0.98)) { const q = f > 0.5 ? j + 1 : j; if (!lp.buf.has(q)) try { lp.g.drawImage(SRC(P.B), 0, 0, lp.W, lp.H); lp.buf.set(q, lp.g.getImageData(0, 0, lp.W, lp.H).data);
         for (const key of lp.buf.keys()) if (key < q - 21) lp.buf.delete(key); } catch (e) {} }
       // 1) A med automatisk zoom
@@ -7322,7 +7357,7 @@ const GhostCore = (() => {
     const p = Z.p; if (!p) return;
     p.v.style.transform = ""; p.panel.prepend(p.v);
     Z.p = null; Z.el.hidden = true; document.body.classList.remove("zoomed");
-    autoStart(); showAll(); ui();
+    p.startSet = true; autoStart(); showAll(); ui(); window.avStartUI && window.avStartUI();
     $("[data-zoom]", p.panel).focus({ preventScroll: true });
   }
   $("#zDone").addEventListener("click", zClose);
@@ -8987,7 +9022,7 @@ const GhostCore = (() => {
       if (hn) { hn.hidden = !on("nameView"); if (hn.hidden) hn.pause(); else if (!rm()) heroPlay(hn); } };
     for (const b of document.querySelectorAll(".tabs button[data-view]")) b.addEventListener("click", () => requestAnimationFrame(sync));
     sync(); }
-  const AV_VERSION = "1.10.12 · 27.11.2026";
+  const AV_VERSION = "1.10.13 · 27.11.2026";
   const btn = document.getElementById("menuBtn"), list = document.getElementById("menuList"), about = document.getElementById("about");
   document.getElementById("aboutVer").textContent = (AVL ? "Version " : "Versjon ") + AV_VERSION;
   const setOpen = open => { list.hidden = !open; btn.setAttribute("aria-expanded", String(open)); };
@@ -9593,6 +9628,80 @@ const GhostCore = (() => {
       was = res.hidden;
     }).observe(res, { attributes: true, attributeFilter: ["hidden"] });
   }
+})();
+</script>
+<script>
+/* 1.10.13 (start-patch.py): steg 2 «Sett samme startsted» og 4K-linje på mobil */
+(function () {
+  var box = document.getElementById("startStep"), hd = document.getElementById("hdNote"), make = document.getElementById("make"); if (!box || !window.avDuoStart) return;
+  var EN = function () { return document.documentElement.lang === "en"; }, ok = false;
+  var f = function (v) { return Math.max(0, v).toFixed(2).replace(".", EN() ? "." : ","); };
+  var mob = window.matchMedia && matchMedia("(pointer: coarse)").matches;
+  function upd() {
+    var d = window.avDuoStart(), both = d[0].ready && d[1].ready;
+    box.hidden = !both;
+    d.forEach(function (x, i) { var k = i ? "B" : "A", el = box.querySelector('[data-ok="' + k + '"]'), pan = document.querySelector('.panel[data-k="' + k + '"]');
+      if (el) el.textContent = x.set ? "✓ " + (EN() ? "Start " : "Start ") + f(x.s) + " s" : "";
+      var b = pan && pan.querySelector(".stok"); if (pan && !b) { b = document.createElement("span"); b.className = "stok"; pan.appendChild(b); }
+      if (b) { b.hidden = !(x.ready && x.set); b.textContent = "✓ Start " + f(x.s) + " s"; } });
+    var all = both && d[0].set && d[1].set;
+    box.classList.toggle("done", !!all); if (make) make.classList.toggle("go", !!all);
+    if (all) box.querySelector(".ssask").hidden = true;
+    var big = d.filter(function (x) { return x.ready && x.big; }).map(function (x) { return x.k; });
+    if (hd) { hd.hidden = !(mob && big.length);
+      hd.textContent = EN() ? "4K video (" + big.join(" and ") + "): converted to HD on the phone before the analysis, so the phone has enough memory. On a PC, full 4K is used."
+        : "4K-video (" + big.join(" og ") + "): gjøres om til HD på mobilen før analysen, så telefonen har nok minne. På PC brukes full 4K."; }
+  }
+  window.avStartUI = upd;
+  for (var k of ["A", "B"]) (function (k) { var b = box.querySelector('[data-ss="' + k + '"]'); if (b) b.addEventListener("click", function () { window.avDuoZoom(k); }); })(k);
+  ["vA", "vB"].forEach(function (id) { var v = document.getElementById(id); if (v) { v.addEventListener("loadedmetadata", function () { setTimeout(upd, 50); }); v.addEventListener("emptied", function () { setTimeout(upd, 50); }); } });
+  // spør før analysevideoen lages når startstedet ikke er satt for begge
+  var ask = box.querySelector(".ssask");
+  window.addEventListener("click", function (e) {
+    if (!make || e.target.closest("#make") !== make || make.disabled) return;
+    var d = window.avDuoStart(); if (!(d[0].ready && d[1].ready) || (d[0].set && d[1].set) || ok) { ok = false; return; }
+    e.preventDefault(); e.stopImmediatePropagation();
+    var miss = d.filter(function (x) { return !x.set; }).map(function (x) { return x.k; }), en = EN();
+    ask.querySelector("p").textContent = en ? "You have not set the start point for " + miss.join(" and ") + ". The analysis video starts where the videos are now. Make it anyway?"
+      : "Du har ikke satt startsted for " + miss.join(" og ") + ". Analysevideoen starter der videoene står nå. Lage den likevel?";
+    ask.querySelector('[data-ask="go"]').textContent = en ? "Make it anyway" : "Lag likevel";
+    ask.querySelector('[data-ask="set"]').textContent = en ? "Set start " + miss[0] : "Sett start " + miss[0];
+    ask.hidden = false; box.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, true);
+  ask.querySelector('[data-ask="go"]').addEventListener("click", function () { ask.hidden = true; ok = true; make.click(); });
+  ask.querySelector('[data-ask="set"]').addEventListener("click", function () { var d = window.avDuoStart(), m = d.filter(function (x) { return !x.set; })[0]; ask.hidden = true; if (m) window.avDuoZoom(m.k); });
+  setTimeout(upd, 0);
+})();
+</script>
+<script>
+/* 1.10.13 (live-patch.py): tegn bildene som analyseres, og analysevideoen mens den lages */
+(function () {
+  var st = document.getElementById("stage"); if (!st) return;
+  var pan = { A: st.querySelector('.panel[data-k="A"]'), B: st.querySelector('.panel[data-k="B"]') }, cv = {}, last = 0, lastO = 0, outC = null;
+  var col = { A: "#ff3b30", B: "#2f6fe4" };
+  function mk(parent, cls) { var c = document.createElement("canvas"); c.className = "avlive " + cls; parent.appendChild(c); return c; }
+  function fit(c) { var r = window.devicePixelRatio > 1 ? Math.min(2, window.devicePixelRatio) : 1, w = Math.max(2, Math.round(c.clientWidth * r)), h = Math.max(2, Math.round(c.clientHeight * r)); if (c.width !== w || c.height !== h) { c.width = w; c.height = h; } return r; }
+  function draw(c, src, mark, color) {
+    var sw = src.videoWidth || src.width, sh = src.videoHeight || src.height; if (!sw || !sh) return;
+    c.classList.add("on"); var r = fit(c), g = c.getContext("2d"), k = Math.min(c.width / sw, c.height / sh), ox = (c.width - sw * k) / 2, oy = (c.height - sh * k) / 2;
+    g.fillStyle = "#000"; g.fillRect(0, 0, c.width, c.height);
+    try { g.drawImage(src, 0, 0, sw, sh, ox, oy, sw * k, sh * k); } catch (e) { return; }
+    if (mark) { var rad = Math.max(10 * r, mark[2] * k * 0.75); g.lineWidth = 3 * r; g.strokeStyle = color; g.beginPath(); g.arc(ox + mark[0] * k, oy + mark[1] * k, rad, 0, Math.PI * 2); g.stroke(); }
+  }
+  window.avLive = function (a, b, marks) {
+    if (window.avLiveOff || !document.body.classList.contains("exporting")) return;
+    var now = performance.now(); if (now - last < 80) return; last = now;
+    if (outC) outC.classList.remove("on");
+    for (var k of ["A", "B"]) { if (!pan[k]) continue; if (!cv[k]) cv[k] = mk(pan[k], "in"); draw(cv[k], k === "A" ? a : b, marks && marks[k], col[k]); }
+  };
+  window.avLiveOut = function (src) {
+    if (window.avLiveOff || !src || !document.body.classList.contains("exporting")) return;
+    var now = performance.now(); if (now - lastO < 80) return; lastO = now;
+    if (!outC) outC = mk(st, "out");
+    draw(outC, src, null, null);
+  };
+  new MutationObserver(function () { if (!document.body.classList.contains("exporting")) { for (var k in cv) cv[k].classList.remove("on"); if (outC) outC.classList.remove("on"); } })
+    .observe(document.body, { attributes: true, attributeFilter: ["class"] });
 })();
 </script>
 <script>
