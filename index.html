@@ -5394,7 +5394,7 @@ const GhostCore = (() => {
       // første bilde: løperen du bekreftet er med, også om personfinneren ikke ser den her
       if (i === 0) for (const [ds, bx] of [[da, picks && picks.bA], [db, picks && picks.bB]]) if (bx && !ds.some(q => iou(q, bx) > 0.5)) ds.push([...bx.slice(0, 4), 0.9]);
       dA[i] = roiFind(A, roi.A, o && o.MA, da, FA[i - 1], fa); dB[i] = roiFind(B, roi.B, o && o.MB, db, FB[i - 1], fb);
-      if (window.avLive) { const mk = (x, r) => r && r.c && !r.gone ? [r.c[0] / x.k, r.c[1] / x.k, r.h / x.k] : null; window.avLive(SRC(A.p), SRC(B.p), { A: mk(A, roi.A), B: mk(B, roi.B) }); }   // 1.10.13
+      if (window.avLive) { const mk = (x, r) => r && r.c && !r.gone ? [r.c[0] / x.k, r.c[1] / x.k, r.h / x.k] : null; window.avLive(SRC(A.p), SRC(B.p), { A: mk(A, roi.A), B: mk(B, roi.B) }, "search"); }   // 1.10.13 (1.10.14: foreløpig søk)
       if (GH.robust !== false) for (const [x, ds] of [[A, dA[i]], [B, dB[i]]]) for (const b of ds) { b[8] = appOf(x, b); b[9] = flagLike(x, b) ? 1 : 0; }   // 1.9.86
       lap("det");
       // 1.9.91: sporingen så langt bestemmer hvor søket leter, og om løperen virkelig har kjørt ut
@@ -9022,7 +9022,7 @@ const GhostCore = (() => {
       if (hn) { hn.hidden = !on("nameView"); if (hn.hidden) hn.pause(); else if (!rm()) heroPlay(hn); } };
     for (const b of document.querySelectorAll(".tabs button[data-view]")) b.addEventListener("click", () => requestAnimationFrame(sync));
     sync(); }
-  const AV_VERSION = "1.10.13 · 27.11.2026";
+  const AV_VERSION = "1.10.14 · 27.11.2026";
   const btn = document.getElementById("menuBtn"), list = document.getElementById("menuList"), about = document.getElementById("about");
   document.getElementById("aboutVer").textContent = (AVL ? "Version " : "Versjon ") + AV_VERSION;
   const setOpen = open => { list.hidden = !open; btn.setAttribute("aria-expanded", String(open)); };
@@ -9681,18 +9681,22 @@ const GhostCore = (() => {
   var col = { A: "#ff3b30", B: "#2f6fe4" };
   function mk(parent, cls) { var c = document.createElement("canvas"); c.className = "avlive " + cls; parent.appendChild(c); return c; }
   function fit(c) { var r = window.devicePixelRatio > 1 ? Math.min(2, window.devicePixelRatio) : 1, w = Math.max(2, Math.round(c.clientWidth * r)), h = Math.max(2, Math.round(c.clientHeight * r)); if (c.width !== w || c.height !== h) { c.width = w; c.height = h; } return r; }
-  function draw(c, src, mark, color) {
+  function draw(c, src, mark, color, mode) {
     var sw = src.videoWidth || src.width, sh = src.videoHeight || src.height; if (!sw || !sh) return;
     c.classList.add("on"); var r = fit(c), g = c.getContext("2d"), k = Math.min(c.width / sw, c.height / sh), ox = (c.width - sw * k) / 2, oy = (c.height - sh * k) / 2;
     g.fillStyle = "#000"; g.fillRect(0, 0, c.width, c.height);
     try { g.drawImage(src, 0, 0, sw, sh, ox, oy, sw * k, sh * k); } catch (e) { return; }
-    if (mark) { var rad = Math.max(10 * r, mark[2] * k * 0.75); g.lineWidth = 3 * r; g.strokeStyle = color; g.beginPath(); g.arc(ox + mark[0] * k, oy + mark[1] * k, rad, 0, Math.PI * 2); g.stroke(); }
+    if (mark) { var rad = Math.max(10 * r, mark[2] * k * 0.75), srch = mode === "search"; g.lineWidth = (srch ? 2 : 3) * r; g.strokeStyle = color;
+      g.setLineDash(srch ? [6 * r, 5 * r] : []); g.beginPath(); g.arc(ox + mark[0] * k, oy + mark[1] * k, rad, 0, Math.PI * 2); g.stroke(); g.setLineDash([]); }
+    if (mode) { var en = document.documentElement.lang === "en", t = mode === "search" ? (en ? "Searching … (preliminary)" : "Leter … (foreløpig)") : (en ? "Chosen skier" : "Valgt løper");
+      g.font = "600 " + Math.round(12 * r) + "px system-ui, sans-serif"; var w = g.measureText(t).width + 12 * r;
+      g.fillStyle = "rgba(0,0,0,.6)"; g.fillRect(c.width - w - 8 * r, 8 * r, w, 20 * r); g.fillStyle = "#fff"; g.textBaseline = "middle"; g.fillText(t, c.width - w - 2 * r, 18 * r); }
   }
-  window.avLive = function (a, b, marks) {
+  window.avLive = function (a, b, marks, mode) {
     if (window.avLiveOff || !document.body.classList.contains("exporting")) return;
     var now = performance.now(); if (now - last < 80) return; last = now;
     if (outC) outC.classList.remove("on");
-    for (var k of ["A", "B"]) { if (!pan[k]) continue; if (!cv[k]) cv[k] = mk(pan[k], "in"); draw(cv[k], k === "A" ? a : b, marks && marks[k], col[k]); }
+    for (var k of ["A", "B"]) { if (!pan[k]) continue; if (!cv[k]) cv[k] = mk(pan[k], "in"); draw(cv[k], k === "A" ? a : b, marks && marks[k], col[k], mode || "final"); }
   };
   window.avLiveOut = function (src) {
     if (window.avLiveOff || !src || !document.body.classList.contains("exporting")) return;
