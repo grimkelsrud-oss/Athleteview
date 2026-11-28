@@ -7335,7 +7335,7 @@ const GhostCore = (() => {
   }
   function zApply() {
     const W = Z.view.clientWidth, H = Z.view.clientHeight;
-    Z.z = clamp(Z.z, 1, 6);
+    Z.z = clamp(Z.z, 1, (window.avVidZoomCap === false || !matchMedia("(pointer: coarse)").matches ? 6 : clamp(7800 / (Math.max(W, H) * Math.min(3, window.devicePixelRatio || 1)), 2, 6)));   // 1.10.17: grense på mobil
     Z.tx = clamp(Z.tx, W - W * Z.z, 0); Z.ty = clamp(Z.ty, H - H * Z.z, 0);
     if (Z.p) Z.p.v.style.transform = `translate(${Z.tx}px, ${Z.ty}px) scale(${Z.z})`;
     const zin = Z.z > 1.01;
@@ -8436,7 +8436,7 @@ const GhostCore = (() => {
   const Zs = { z: 1, tx: 0, ty: 0 };
   function zApply() {
     const W = els.stage.clientWidth, H = els.stage.clientHeight;
-    Zs.z = clamp(Zs.z, 1, 6);
+    Zs.z = clamp(Zs.z, 1, (window.avVidZoomCap === false || !matchMedia("(pointer: coarse)").matches ? 6 : clamp(7800 / (Math.max(W, H) * Math.min(3, window.devicePixelRatio || 1)), 2, 6)));   // 1.10.17: grense på mobil
     Zs.tx = clamp(Zs.tx, W - W * Zs.z, 0); Zs.ty = clamp(Zs.ty, H - H * Zs.z, 0);
     els.v.style.transform = Zs.z > 1.001 ? `translate(${Zs.tx}px, ${Zs.ty}px) scale(${Zs.z})` : "";
     els.stage.classList.toggle("zin", Zs.z > 1.01);
@@ -9031,7 +9031,7 @@ const GhostCore = (() => {
       if (hn) { hn.hidden = !on("nameView"); if (hn.hidden) hn.pause(); else if (!rm()) heroPlay(hn); } };
     for (const b of document.querySelectorAll(".tabs button[data-view]")) b.addEventListener("click", () => requestAnimationFrame(sync));
     sync(); }
-  const AV_VERSION = "1.10.16 · 27.11.2026";
+  const AV_VERSION = "1.10.17 · 28.11.2026";
   const btn = document.getElementById("menuBtn"), list = document.getElementById("menuList"), about = document.getElementById("about");
   document.getElementById("aboutVer").textContent = (AVL ? "Version " : "Versjon ") + AV_VERSION;
   const setOpen = open => { list.hidden = !open; btn.setAttribute("aria-expanded", String(open)); };
@@ -9744,6 +9744,25 @@ const GhostCore = (() => {
   if (window.visualViewport) { window.visualViewport.addEventListener("resize", fit); window.visualViewport.addEventListener("scroll", fit); }
   new MutationObserver(function () { fit(); }).observe(document.body, { attributes: true, attributeFilter: ["class"] });
   window.avStackNow = stack;
+})();
+</script>
+<style>#pickRun, #zoom { touch-action: pan-y; } #prView, #prCanvas, .zview, #sStage { touch-action: none; }</style>
+<script>
+/* 1.10.17 zoomsvart2-patch.py: stopp Safaris knipe-zoom av hele siden der appen har sin egen zoom */
+(function () {
+  if (window.avNoPagePinch === false) return;
+  function inZoom(t) {
+    var open = document.querySelector("#pickRun:not([hidden]), #zoom:not([hidden])");
+    if (open) return true;
+    return !!(t && t.closest && t.closest("#sStage, .zview, #prView"));
+  }
+  var opt = { passive: false };
+  ["gesturestart", "gesturechange"].forEach(function (ev) {
+    document.addEventListener(ev, function (e) { if (inZoom(e.target)) e.preventDefault(); }, opt);
+  });
+  document.addEventListener("touchmove", function (e) {
+    if (e.touches && e.touches.length > 1 && inZoom(e.target)) e.preventDefault();
+  }, opt);
 })();
 </script>
 </body>
