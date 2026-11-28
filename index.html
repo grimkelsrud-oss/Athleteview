@@ -7337,7 +7337,7 @@ const GhostCore = (() => {
     const W = Z.view.clientWidth, H = Z.view.clientHeight;
     Z.z = clamp(Z.z, 1, (window.avVidZoomCap === false || !matchMedia("(pointer: coarse)").matches ? 6 : clamp(7800 / (Math.max(W, H) * Math.min(3, window.devicePixelRatio || 1)), 2, 6)));   // 1.10.17: grense på mobil
     Z.tx = clamp(Z.tx, W - W * Z.z, 0); Z.ty = clamp(Z.ty, H - H * Z.z, 0);
-    if (Z.p) Z.p.v.style.transform = `translate(${Z.tx}px, ${Z.ty}px) scale(${Z.z})`;
+    if (Z.p) { if (window.avZoomCanvas !== false && window.avZC) window.avZC(Z.p.v, Z.view, Z.z, Z.tx, Z.ty); else Z.p.v.style.transform = `translate(${Z.tx}px, ${Z.ty}px) scale(${Z.z})`; }   // 1.10.19
     const zin = Z.z > 1.01;
     Z.view.classList.toggle("zin", zin);
     Z.hint.textContent = zin ? (AVL ? "Drag to move the image · double-tap to zoom out" : "Dra for å flytte bildet · dobbelttrykk for å zoome ut")
@@ -7350,7 +7350,7 @@ const GhostCore = (() => {
     Z.z = nz; Z.tx = cx - px * nz; Z.ty = cy - py * nz; zApply();
   }
   function zShow(p) {
-    if (Z.p) { Z.p.v.style.transform = ""; Z.p.panel.prepend(Z.p.v); }
+    if (Z.p) { Z.p.v.style.transform = ""; window.avZC && window.avZC(Z.p.v, null, 1); Z.p.panel.prepend(Z.p.v); }
     Z.p = p; Z.z = 1; Z.tx = Z.ty = 0;
     Z.view.prepend(p.v);
     zApply(); zUpdate(); seekTo(p, frameOf(p));
@@ -7364,7 +7364,7 @@ const GhostCore = (() => {
   }
   function zClose() {
     const p = Z.p; if (!p) return;
-    p.v.style.transform = ""; p.panel.prepend(p.v);
+    p.v.style.transform = ""; window.avZC && window.avZC(p.v, null, 1); p.panel.prepend(p.v);
     Z.p = null; Z.el.hidden = true; document.body.classList.remove("zoomed");
     p.startSet = true; autoStart(); showAll(); ui(); window.avStartUI && window.avStartUI();
     $("[data-zoom]", p.panel).focus({ preventScroll: true });
@@ -8438,7 +8438,8 @@ const GhostCore = (() => {
     const W = els.stage.clientWidth, H = els.stage.clientHeight;
     Zs.z = clamp(Zs.z, 1, (window.avVidZoomCap === false || !matchMedia("(pointer: coarse)").matches ? 6 : clamp(7800 / (Math.max(W, H) * Math.min(3, window.devicePixelRatio || 1)), 2, 6)));   // 1.10.17: grense på mobil
     Zs.tx = clamp(Zs.tx, W - W * Zs.z, 0); Zs.ty = clamp(Zs.ty, H - H * Zs.z, 0);
-    els.v.style.transform = Zs.z > 1.001 ? `translate(${Zs.tx}px, ${Zs.ty}px) scale(${Zs.z})` : "";
+    if (window.avZoomCanvas !== false && window.avZC) window.avZC(els.v, els.stage, Zs.z, Zs.tx, Zs.ty);   // 1.10.19: lerret i stedet for CSS-forstørring
+    else els.v.style.transform = Zs.z > 1.001 ? `translate(${Zs.tx}px, ${Zs.ty}px) scale(${Zs.z})` : "";
     els.stage.classList.toggle("zin", Zs.z > 1.01);
     for (const b of document.querySelectorAll("[data-sz]")) b.setAttribute("aria-pressed", String(Math.abs(Number(b.dataset.sz) - Zs.z) < 0.05));
     if (!els.v.hidden && S.ready) { els.hint.hidden = false; els.hint.textContent = S.mark ? (AVL ? "Skier marked · tap «Analyse» or tap again to move the mark" : "Løperen er markert · trykk «Analyser» eller trykk på nytt for å flytte") : Zs.z > 1.01 ? (AVL ? "Tap the skier to mark · drag to move · double-tap to zoom out" : "Dra for å flytte · trykk på løperen for å markere · dobbelttrykk for å zoome ut") : (AVL ? "Swipe sideways to step · pinch or double-tap to zoom" : "Dra sideveis for å spole · klyp eller dobbelttrykk for å zoome"); }
@@ -8669,7 +8670,13 @@ const GhostCore = (() => {
     const m = await models();
     const W = frame.width, H = frame.height;
     let all = m.det.detect(frame).detections;
-    if (view && !at) all = detectIn(m, frame, { x: view.x - view.w * 0.05, y: view.y - view.h * 0.05, w: view.w * 1.1, h: view.h * 1.1 }).concat(all.filter(d => { const q = d.boundingBox, cx = q.originX + q.width / 2, cy = q.originY + q.height / 2; return cx > view.x && cx < view.x + view.w && cy > view.y && cy < view.y + view.h; }));
+    const MIDT = window.avEnkelMidt !== false && view && !at;   // 1.10.18: personen midt i det du ser
+    const vIn = d => { const q = d.boundingBox, cx = q.originX + q.width / 2, cy = q.originY + q.height / 2; return cx > view.x && cx < view.x + view.w && cy > view.y && cy < view.y + view.h; };
+    const vKey = d => { const q = d.boundingBox, vx = view.x + view.w / 2, vy = view.y + view.h / 2, inside = vx >= q.originX && vx <= q.originX + q.width && vy >= q.originY && vy <= q.originY + q.height;
+      return Math.hypot(q.originX + q.width / 2 - vx, q.originY + q.height / 2 - vy) / Math.max(view.w, view.h) - (inside ? 0.5 : 0) - 0.25 * Math.min(1, q.height / view.h); };
+    if (MIDT) all = dedup(detectIn(m, frame, { x: view.x - view.w * 0.05, y: view.y - view.h * 0.05, w: view.w * 1.1, h: view.h * 1.1 })
+        .concat(detectIn(m, frame, { x: view.x - view.w * 0.4, y: view.y - view.h * 0.4, w: view.w * 1.8, h: view.h * 1.8 })).concat(all)).filter(vIn);
+    else if (view && !at) all = detectIn(m, frame, { x: view.x - view.w * 0.05, y: view.y - view.h * 0.05, w: view.w * 1.1, h: view.h * 1.1 }).concat(all.filter(d => { const q = d.boundingBox, cx = q.originX + q.width / 2, cy = q.originY + q.height / 2; return cx > view.x && cx < view.x + view.w && cy > view.y && cy < view.y + view.h; }));
     if (at) {   // trykket: let også i et forstørret utsnitt rundt trykket, så en liten løper blir funnet
       const hit = d => { const q = d.boundingBox; return at.x >= q.originX - q.width * 0.15 && at.x <= q.originX + q.width * 1.15 && at.y >= q.originY - q.height * 0.1 && at.y <= q.originY + q.height * 1.1; };
       if (!all.some(hit)) { const sd = view ? Math.max(view.w, view.h) * 0.6 : H * 0.5; all = all.concat(detectIn(m, frame, { x: at.x - sd / 2, y: at.y - sd / 2, w: sd, h: sd })); }
@@ -8685,6 +8692,7 @@ const GhostCore = (() => {
     }
     let ds = real.length ? real : at ? all : [];   // ser alt ut som flagg eller stolper: heller ingen løper enn vinkler på en stolpe
     const pick = list => at ? (list.length ? list.sort((a, c) => areaOf(c) - areaOf(a))[0].boundingBox : null)
+      : MIDT ? (list.length ? list.sort((a, c) => vKey(a) - vKey(c))[0].boundingBox : null)
       : view ? (list.length ? list.sort((a, c) => areaOf(c) - areaOf(a))[0].boundingBox : null) : choose(list, at, near);
     let b = pick(ds.slice());
     for (let tries = 0; ; tries++) {
@@ -8708,7 +8716,7 @@ const GhostCore = (() => {
         if (sc > 0.8) break; }
     }
     // 1.9.81: ingen ledd i denne boksen: prøv neste person (høyst tre), så hele bildet
-    if (!lm && b && tries < 2) { ds = ds.filter(d => d.boundingBox !== b); if (ds.length) { b = pick(ds.slice()); continue; } }
+    if (!lm && b && tries < 2) { ds = ds.filter(d => d.boundingBox !== b && (!MIDT || vKey(d) < 0.05)); if (ds.length) { b = pick(ds.slice()); continue; } }   // 1.10.18: ved zoom bare personer nær midten
     if (!lm && !at && !view) {   // reserve: hele bildet (ikke når du har zoomet: da er det du ser, det som gjelder)
       let r = null; try { r = m.pose.detect(frame); } catch (e) {}
       if (r && r.landmarks[0]) lm = r.landmarks[0].map(p => ({ x: p.x * W, y: p.y * H, v: p.visibility ?? 1 }));
@@ -9031,7 +9039,7 @@ const GhostCore = (() => {
       if (hn) { hn.hidden = !on("nameView"); if (hn.hidden) hn.pause(); else if (!rm()) heroPlay(hn); } };
     for (const b of document.querySelectorAll(".tabs button[data-view]")) b.addEventListener("click", () => requestAnimationFrame(sync));
     sync(); }
-  const AV_VERSION = "1.10.17 · 28.11.2026";
+  const AV_VERSION = "1.10.19 · 28.11.2026";
   const btn = document.getElementById("menuBtn"), list = document.getElementById("menuList"), about = document.getElementById("about");
   document.getElementById("aboutVer").textContent = (AVL ? "Version " : "Versjon ") + AV_VERSION;
   const setOpen = open => { list.hidden = !open; btn.setAttribute("aria-expanded", String(open)); };
@@ -9763,6 +9771,52 @@ const GhostCore = (() => {
   document.addEventListener("touchmove", function (e) {
     if (e.touches && e.touches.length > 1 && inZoom(e.target)) e.preventDefault();
   }, opt);
+})();
+</script>
+<script>
+/* 1.10.19 zoomlerret-patch.py: forstørret video tegnes som utsnitt på et lerret i skjermstørrelse */
+(function () {
+  if (window.avZoomCanvas === false) return;
+  if (window.avVidZoomCap === undefined) window.avVidZoomCap = false;   // ingen stor CSS-forstørring lenger: 6× også på mobil
+  var M = new WeakMap();
+  function draw(st) {
+    var v = st.v, c = st.c, box = st.box; if (!box || !v.videoWidth) return;
+    var W = box.clientWidth, H = box.clientHeight, dpr = Math.min(2.5, window.devicePixelRatio || 1);
+    var cw = Math.max(1, Math.round(W * dpr)), ch = Math.max(1, Math.round(H * dpr));
+    if (c.width !== cw || c.height !== ch) { c.width = cw; c.height = ch; }
+    var g = c.getContext("2d"), vw = v.videoWidth, vh = v.videoHeight, s = Math.min(W / vw, H / vh), ox = (W - vw * s) / 2, oy = (H - vh * s) / 2, z = st.z;
+    g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = "#000"; g.fillRect(0, 0, cw, ch);
+    // synlig område i elementets koordinater (før forstørring), snittet med videobildet
+    var x0 = Math.max(ox, -st.tx / z), y0 = Math.max(oy, -st.ty / z), x1 = Math.min(ox + vw * s, (W - st.tx) / z), y1 = Math.min(oy + vh * s, (H - st.ty) / z);
+    if (x1 <= x0 || y1 <= y0) return;
+    try { g.imageSmoothingQuality = "high";
+      g.drawImage(v, (x0 - ox) / s, (y0 - oy) / s, (x1 - x0) / s, (y1 - y0) / s, (x0 * z + st.tx) * dpr, (y0 * z + st.ty) * dpr, (x1 - x0) * z * dpr, (y1 - y0) * z * dpr);
+    } catch (e) {}
+  }
+  function loop(st) {
+    if (st.raf) return;
+    var tick = function () { st.raf = 0; if (!st.on) return; draw(st); if (!st.v.paused && !st.v.ended) st.raf = requestAnimationFrame(tick); };
+    st.raf = requestAnimationFrame(tick);
+  }
+  window.avZC = function (v, box, z, tx, ty) {
+    var st = M.get(v);
+    if (!box || !(z > 1.001)) {
+      if (st) { st.on = false; st.c.hidden = true; }
+      v.style.transform = ""; v.style.opacity = "";
+      return;
+    }
+    if (!st) {
+      st = { v: v, c: document.createElement("canvas"), on: false, raf: 0 };
+      st.c.className = "avzc"; st.c.setAttribute("aria-hidden", "true");
+      st.c.style.cssText = "position:absolute;inset:0;width:100%;height:100%;pointer-events:none;background:#000";
+      ["seeked", "loadeddata", "timeupdate", "play"].forEach(function (ev) { v.addEventListener(ev, function () { if (st.on) { draw(st); if (!v.paused) loop(st); } }); });
+      M.set(v, st);
+    }
+    if (st.c.parentNode !== v.parentNode || st.c.previousSibling !== v) v.after(st.c);
+    st.box = box; st.z = z; st.tx = tx; st.ty = ty; st.on = true; st.c.hidden = false;
+    v.style.transform = ""; v.style.opacity = "0";
+    draw(st); if (!v.paused) loop(st);
+  };
 })();
 </script>
 </body>
